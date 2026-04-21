@@ -9,22 +9,21 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:        #0a0a0b;
-      --surface:   #111114;
-      --card:      #16161a;
-      --border:    rgba(255,255,255,0.06);
-      --border2:   rgba(255,255,255,0.12);
-      --text:      #f2f2f4;
-      --muted:     #6b6b78;
-      --accent:    #c8f04c;
+      --bg: #0a0a0b;
+      --surface: #111114;
+      --card: #16161a;
+      --border: rgba(255,255,255,0.06);
+      --border2: rgba(255,255,255,0.12);
+      --text: #f2f2f4;
+      --muted: #6b6b78;
+      --accent: #c8f04c;
       --accent-bg: rgba(200,240,76,0.08);
-      --red:       #ff4d4d;
-      --radius:    16px;
+      --red: #ff4d4d;
+      --red-bg: rgba(255,77,77,0.08);
+      --radius: 16px;
       --radius-sm: 10px;
     }
-
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; overflow: hidden; }
 
     #app { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -43,23 +42,24 @@
     .header { padding: 16px 20px 0; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
     .back-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border2); background: var(--card); color: var(--text); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .back-btn:active { background: var(--border2); }
-    .header-info { flex: 1; }
-    .header-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: -0.2px; }
+    .header-info { flex: 1; min-width: 0; }
+    .header-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: -0.2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .header-sub { font-size: 12px; color: var(--muted); margin-top: 1px; font-weight: 300; }
 
     /* SEARCH */
-    .search-wrap { padding: 12px 20px 8px; flex-shrink: 0; }
-    .search-box { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 12px; transition: border-color 0.2s; }
+    .search-wrap { padding: 12px 20px 8px; flex-shrink: 0; display: flex; gap: 8px; align-items: center; }
+    .search-box { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 12px; transition: border-color 0.2s; }
     .search-box:focus-within { border-color: var(--border2); }
     .search-icon { color: var(--muted); font-size: 15px; }
     .search-input { flex: 1; background: none; border: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 10px 0; outline: none; }
     .search-input::placeholder { color: var(--muted); }
+    .icon-btn { width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--accent); color: #0a0a0b; border: none; font-size: 22px; font-weight: 300; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s, transform 0.1s; }
+    .icon-btn:active { opacity: 0.85; transform: scale(0.95); }
 
     /* SCROLL */
     .scroll-body { flex: 1; overflow-y: auto; padding: 6px 20px 28px; -webkit-overflow-scrolling: touch; }
     .scroll-body::-webkit-scrollbar { display: none; }
 
-    /* SECTION LABEL */
     .slabel { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 14px 0 8px; }
 
     /* DRIVER CARD */
@@ -75,22 +75,27 @@
     .d-avatar { width: 42px; height: 42px; border-radius: 11px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
     .d-info { flex: 1; min-width: 0; }
     .d-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.1px; }
-    .d-plate { font-size: 11px; color: var(--muted); margin-top: 3px; font-weight: 300; letter-spacing: 0.03em; }
+    .d-plate { font-size: 11px; color: var(--muted); margin-top: 3px; font-weight: 300; letter-spacing: 0.03em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .d-chip { flex-shrink: 0; background: var(--accent-bg); border: 1px solid rgba(200,240,76,0.15); color: var(--accent); border-radius: 20px; padding: 4px 9px; font-size: 11px; font-weight: 600; }
     .d-chip.zero { background: transparent; border-color: var(--border); color: var(--muted); }
 
-    /* PROFILE */
-    .profile-top { padding: 18px 20px 0; flex-shrink: 0; }
-    .profile-name { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
-    .profile-car { font-size: 13px; color: var(--muted); margin-top: 5px; font-weight: 300; }
-    .profile-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
-    .p-chip { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: 11px; color: var(--muted); }
-    .p-chip.hi { background: var(--accent-bg); border-color: rgba(200,240,76,0.2); color: var(--accent); }
+    /* PROFILE CARD (info block) */
+    .info-block { margin: 16px 20px 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; flex-shrink: 0; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--border); gap: 12px; }
+    .info-row:last-child { border-bottom: none; }
+    .info-key { font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: 0.03em; text-transform: uppercase; flex-shrink: 0; }
+    .info-val { font-size: 14px; color: var(--text); font-weight: 500; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .info-val.mono { font-family: 'DM Sans', monospace; letter-spacing: 0.02em; }
 
-    .upload-btn { margin: 14px 20px 0; flex-shrink: 0; width: calc(100% - 40px); padding: 12px 20px; background: var(--accent); color: #0a0a0b; border: none; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.02em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.15s, transform 0.1s; }
-    .upload-btn:active { opacity: 0.85; transform: scale(0.98); }
+    /* PROFILE ACTIONS */
+    .action-btn { width: 100%; padding: 14px; border: none; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.02em; }
+    .action-btn.primary { background: var(--accent); color: #0a0a0b; }
+    .action-btn.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border2); }
+    .action-btn.danger { background: transparent; color: var(--red); border: 1px solid rgba(255,77,77,0.3); }
+    .action-btn:active { transform: scale(0.98); opacity: 0.85; }
 
-    /* DIVIDER */
+    .actions-wrap { padding: 12px 20px 0; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+
     .divider { height: 1px; background: var(--border); margin: 14px 20px 0; flex-shrink: 0; }
 
     /* PHOTO GRID */
@@ -110,18 +115,19 @@
     .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 100; display: none; flex-direction: column; }
     .lightbox.open { display: flex; }
     .lb-bar { padding: 12px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .lb-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+    .lb-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; flex-shrink: 0; }
+    .lb-btn.danger { background: rgba(255,77,77,0.15); border-color: rgba(255,77,77,0.3); color: var(--red); }
     .lb-title { flex: 1; font-size: 12px; color: rgba(255,255,255,0.5); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 300; }
     .lb-img-wrap { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
     .lb-img-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; }
     .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.5); color: #fff; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    .lb-nav.prev { left: 8px; }
-    .lb-nav.next { right: 8px; }
+    .lb-nav.prev { left: 8px; } .lb-nav.next { right: 8px; }
     .lb-counter { text-align: center; padding: 10px; font-size: 11px; color: rgba(255,255,255,0.3); flex-shrink: 0; }
 
-    /* UPLOAD */
-    .upload-body { flex: 1; overflow-y: auto; padding: 18px 20px 32px; display: flex; flex-direction: column; gap: 16px; }
-    .form-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    /* FORMS */
+    .form-body { flex: 1; overflow-y: auto; padding: 18px 20px 32px; display: flex; flex-direction: column; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
     .drop-zone { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 30px 20px; text-align: center; cursor: pointer; background: var(--card); transition: border-color 0.2s, background 0.2s; }
     .drop-zone.has-file { border-color: var(--accent); background: var(--accent-bg); }
     .drop-zone-icon { font-size: 30px; margin-bottom: 8px; }
@@ -129,10 +135,11 @@
     .drop-zone-sub { font-size: 11px; color: var(--muted); margin-top: 3px; opacity: 0.6; }
     .upload-preview { width: 100%; max-height: 180px; object-fit: contain; border-radius: 10px; display: none; margin-top: 12px; }
     .upload-preview.visible { display: block; }
-    .form-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; transition: border-color 0.2s; }
-    .form-input:focus { border-color: var(--border2); }
+    .form-input, .form-select { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; transition: border-color 0.2s; }
+    .form-input:focus, .form-select:focus { border-color: var(--border2); }
     .form-input::placeholder { color: var(--muted); }
-    .submit-btn { width: 100%; padding: 14px; background: var(--accent); color: #0a0a0b; border: none; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: auto; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.02em; }
+    .form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6b78' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
+    .submit-btn { width: 100%; padding: 14px; background: var(--accent); color: #0a0a0b; border: none; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.02em; }
     .submit-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .submit-btn:not(:disabled):active { opacity: 0.85; transform: scale(0.98); }
 
@@ -154,6 +161,21 @@
     .toast.show { transform: translateX(-50%) translateY(0); }
     .toast.success { border-color: rgba(200,240,76,0.3); color: var(--accent); }
     .toast.error { border-color: rgba(255,77,77,0.3); color: var(--red); }
+
+    /* MODAL (confirm) */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: none; align-items: flex-end; justify-content: center; animation: fadeIn 0.2s ease; }
+    .modal-overlay.open { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(40px); } to { transform: translateY(0); } }
+    .modal { width: 100%; max-width: 420px; background: var(--surface); border-top: 1px solid var(--border2); border-radius: 20px 20px 0 0; padding: 24px 20px 28px; animation: slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+    .modal-icon { width: 52px; height: 52px; background: var(--red-bg); border: 1px solid rgba(255,77,77,0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 14px; }
+    .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 6px; letter-spacing: -0.2px; }
+    .modal-text { font-size: 13px; color: var(--muted); text-align: center; line-height: 1.5; margin-bottom: 18px; font-weight: 300; }
+    .modal-actions { display: flex; gap: 8px; }
+    .modal-btn { flex: 1; padding: 13px; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.02em; }
+    .modal-btn.cancel { background: var(--card); color: var(--text); border: 1px solid var(--border2); }
+    .modal-btn.confirm { background: var(--red); color: #fff; }
+    .modal-btn:active { transform: scale(0.97); opacity: 0.85; }
   </style>
 </head>
 <body>
@@ -168,7 +190,7 @@
     <div class="wip-wrap">
       <div class="wip-pill">⚙ В разработке</div>
       <div class="wip-title">Скоро будет доступно</div>
-      <div class="wip-sub" id="wip-debug">Этот раздел находится в разработке. Следите за обновлениями.</div>
+      <div class="wip-sub">Этот раздел находится в разработке. Следите за обновлениями.</div>
     </div>
   </div>
 
@@ -184,7 +206,7 @@
     </div>
   </div>
 
-  <!-- DRIVERS -->
+  <!-- DRIVERS LIST -->
   <div class="screen" id="screen-drivers">
     <div class="logo-bar">
       <div class="logo-mark"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" fill="#0a0a0b"/></svg></div>
@@ -196,11 +218,12 @@
         <span class="search-icon">⌕</span>
         <input class="search-input" id="search-input" placeholder="Поиск по имени или номеру..." oninput="filterDrivers()" />
       </div>
+      <button class="icon-btn" onclick="showAddDriver()" title="Добавить">+</button>
     </div>
     <div class="scroll-body" id="driver-list"></div>
   </div>
 
-  <!-- PROFILE -->
+  <!-- DRIVER PROFILE -->
   <div class="screen" id="screen-profile">
     <div class="header">
       <button class="back-btn" onclick="showDrivers()">←</button>
@@ -208,15 +231,37 @@
         <div class="header-title" id="profile-title"></div>
         <div class="header-sub" id="profile-sub"></div>
       </div>
-      <div class="logo-badge" id="profile-count"></div>
     </div>
-    <div class="profile-chips" style="padding: 10px 20px 0;" id="profile-chips"></div>
-    <button class="upload-btn" onclick="showUpload()">
-      <span style="font-size:17px;line-height:1">+</span> Загрузить документ
-    </button>
+    <div class="info-block" id="info-block"></div>
+    <div class="actions-wrap">
+      <button class="action-btn primary" onclick="showDocuments()">
+        📁 Документы водителя
+      </button>
+      <button class="action-btn danger" onclick="confirmDeleteDriver()">
+        🗑 Удалить водителя
+      </button>
+    </div>
+    <div style="flex:1"></div>
+  </div>
+
+  <!-- DOCUMENTS -->
+  <div class="screen" id="screen-docs">
+    <div class="header">
+      <button class="back-btn" onclick="showProfile()">←</button>
+      <div class="header-info">
+        <div class="header-title">Документы</div>
+        <div class="header-sub" id="docs-sub"></div>
+      </div>
+      <div class="logo-badge" id="docs-count"></div>
+    </div>
+    <div class="actions-wrap">
+      <button class="action-btn primary" onclick="showUpload()">
+        <span style="font-size:17px;line-height:1">+</span> Загрузить документ
+      </button>
+    </div>
     <div class="divider"></div>
     <div class="scroll-body">
-      <div class="slabel">Документы</div>
+      <div class="slabel">Все файлы</div>
       <div class="photo-grid" id="photo-grid"></div>
     </div>
   </div>
@@ -224,15 +269,15 @@
   <!-- UPLOAD -->
   <div class="screen" id="screen-upload">
     <div class="header">
-      <button class="back-btn" onclick="showProfile()">←</button>
+      <button class="back-btn" onclick="showDocuments()">←</button>
       <div class="header-info">
         <div class="header-title">Новый документ</div>
         <div class="header-sub" id="upload-sub"></div>
       </div>
     </div>
     <div class="divider"></div>
-    <div class="upload-body">
-      <div>
+    <div class="form-body">
+      <div class="form-group">
         <div class="form-label">Фото документа</div>
         <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
           <div class="drop-zone-icon">📎</div>
@@ -242,11 +287,52 @@
         </div>
         <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileSelect(event)" />
       </div>
-      <div>
+      <div class="form-group">
         <div class="form-label">Название документа</div>
-        <input class="form-input" id="doc-name" placeholder="Напр.: TLC License, Passport..." />
+        <input class="form-input" id="doc-name" placeholder="Напр.: TLC License, Passport..." oninput="checkUploadReady()" />
       </div>
-      <button class="submit-btn" id="submit-btn" onclick="submitUpload()" disabled>Загрузить</button>
+      <button class="submit-btn" id="upload-btn" onclick="submitUpload()" disabled>Загрузить</button>
+    </div>
+  </div>
+
+  <!-- ADD DRIVER -->
+  <div class="screen" id="screen-add">
+    <div class="header">
+      <button class="back-btn" onclick="showDrivers()">←</button>
+      <div class="header-info">
+        <div class="header-title">Новый водитель</div>
+        <div class="header-sub">Заполните данные</div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="form-body">
+      <div class="form-group">
+        <div class="form-label">Telegram ID</div>
+        <input class="form-input" id="add-id" type="text" inputmode="numeric" placeholder="Напр.: 5348697217" oninput="checkAddReady()" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Имя</div>
+        <input class="form-input" id="add-name" type="text" placeholder="Напр.: Александр" oninput="checkAddReady()" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Модель авто</div>
+        <input class="form-input" id="add-model" type="text" placeholder="Напр.: Toyota Sienna Hybrid (WAV)" oninput="checkAddReady()" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Номер авто</div>
+        <input class="form-input" id="add-number" type="text" placeholder="Напр.: TLC-4827" oninput="checkAddReady()" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Тариф</div>
+        <select class="form-select" id="add-tariff" onchange="checkAddReady()">
+          <option value="">Выберите тариф...</option>
+          <option value="Эконом ($650/нед · 3500 миль/мес)">Эконом — $650/нед · 3500 миль/мес</option>
+          <option value="Стандарт ($700/нед · 4500 миль/мес)">Стандарт — $700/нед · 4500 миль/мес</option>
+          <option value="Интенсив ($750/нед · 5500 миль/мес)">Интенсив — $750/нед · 5500 миль/мес</option>
+          <option value="Double Shift ($1000/нед · безлимит)">Double Shift — $1000/нед · безлимит</option>
+        </select>
+      </div>
+      <button class="submit-btn" id="add-btn" onclick="submitAddDriver()" disabled>Добавить водителя</button>
     </div>
   </div>
 
@@ -256,6 +342,7 @@
       <button class="lb-btn" onclick="closeLightbox()">✕</button>
       <div class="lb-title" id="lb-title"></div>
       <a class="lb-btn" id="lb-download" target="_blank">↓</a>
+      <button class="lb-btn danger" onclick="confirmDeleteFile()">🗑</button>
     </div>
     <div class="lb-img-wrap">
       <button class="lb-nav prev" id="lb-prev" onclick="lightboxNav(-1)">‹</button>
@@ -266,13 +353,33 @@
   </div>
 </div>
 
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-icon">⚠</div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-text" id="modal-text"></div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeModal()">Отмена</button>
+      <button class="modal-btn confirm" id="modal-confirm">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
 const API = 'https://tg-bot-prime-fusion-production.up.railway.app';
 const tg = window.Telegram?.WebApp;
-const state = { drivers:[], filtered:[], currentDriver:null, currentFiles:[], lbIndex:0, selectedFile:null, initData:'' };
+const state = {
+  drivers: [], filtered: [],
+  currentDriver: null, currentFiles: [],
+  lbIndex: 0, selectedFile: null,
+  initData: '', pendingAction: null,
+};
 
+// ===== INIT =====
 async function init() {
   if (tg) { tg.ready(); tg.expand(); state.initData = tg.initData || ''; }
   showScreen('loading');
@@ -284,120 +391,333 @@ async function init() {
   } catch(e) { showScreen('wip'); }
 }
 
+// ===== API =====
 async function api(path, opts={}) {
-  const r = await fetch(API+path, { headers:{'Content-Type':'application/json','X-Telegram-Init-Data':state.initData,...(opts.headers||{})}, ...opts });
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const r = await fetch(API+path, {
+    headers: {'Content-Type':'application/json', 'X-Telegram-Init-Data':state.initData, ...(opts.headers||{})},
+    ...opts,
+  });
+  if (!r.ok) {
+    let msg = `HTTP ${r.status}`;
+    try { const j = await r.json(); if (j.error) msg = j.error; } catch {}
+    throw new Error(msg);
+  }
   return r.json();
 }
 
-function showScreen(n) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById('screen-'+n).classList.add('active'); }
+// ===== SCREENS =====
+function showScreen(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+n).classList.add('active');
+}
 
+// ===== DRIVERS LIST =====
 async function loadDrivers() {
   const data = await api('/drivers');
-  state.drivers=data; state.filtered=data; renderDriverList(data);
+  state.drivers = data; state.filtered = data;
+  renderDriverList(data);
 }
 
 function renderDriverList(drivers) {
   const el = document.getElementById('driver-list');
-  if (!drivers.length) { el.innerHTML=`<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">Нет водителей</div><div class="empty-sub">Добавьте через бота</div></div>`; return; }
-  const n=drivers.length, s=n===1?'ь':n<5?'я':'ей';
-  el.innerHTML=`<div class="slabel">${n} водител${s}</div>`+drivers.map(d=>`
+  if (!drivers.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">Нет водителей</div><div class="empty-sub">Нажмите + чтобы добавить</div></div>`;
+    return;
+  }
+  const n = drivers.length;
+  const s = n === 1 ? 'ь' : n < 5 ? 'я' : 'ей';
+  el.innerHTML = `<div class="slabel">${n} водител${s}</div>` + drivers.map(d => `
     <div class="driver-card" onclick="openDriver('${d.id}')">
       <div class="d-avatar">🚗</div>
       <div class="d-info">
-        <div class="d-name">${d.name}</div>
-        <div class="d-plate">${d.car_model} · ${d.car_number} · ${d.tariff}</div>
+        <div class="d-name">${esc(d.name)}</div>
+        <div class="d-plate">${esc(d.car_model)} · ${esc(d.car_number)}</div>
       </div>
-      <div class="d-chip ${d.file_count===0?'zero':''}">${d.file_count} фото</div>
-    </div>`).join('');
+      <div class="d-chip ${d.file_count === 0 ? 'zero' : ''}">${d.file_count}</div>
+    </div>
+  `).join('');
 }
 
 function filterDrivers() {
-  const q=document.getElementById('search-input').value.toLowerCase();
-  state.filtered=state.drivers.filter(d=>d.name.toLowerCase().includes(q)||d.car_number.toLowerCase().includes(q));
+  const q = document.getElementById('search-input').value.toLowerCase();
+  state.filtered = state.drivers.filter(d =>
+    d.name.toLowerCase().includes(q) || d.car_number.toLowerCase().includes(q)
+  );
   renderDriverList(state.filtered);
 }
-function showDrivers() { showScreen('drivers'); }
 
+function showDrivers() {
+  document.getElementById('search-input').value = '';
+  showScreen('drivers');
+}
+
+// ===== PROFILE =====
 async function openDriver(id) {
   showScreen('loading');
   try {
-    const data=await api(`/driver/${id}/files`);
-    state.currentDriver=data.driver; state.currentFiles=data.files;
-    renderProfile(data.driver, data.files); showScreen('profile');
-  } catch(e) { toast('Ошибка загрузки','error'); showScreen('drivers'); }
+    const data = await api(`/driver/${id}`);
+    state.currentDriver = data.driver;
+    state.currentFiles = data.files;
+    renderProfile(data.driver, data.files);
+    showScreen('profile');
+  } catch(e) { toast('Ошибка загрузки', 'error'); showScreen('drivers'); }
 }
 
 function renderProfile(d, files) {
-  document.getElementById('profile-title').textContent=d.name;
-  document.getElementById('profile-sub').textContent=d.car_number;
-  document.getElementById('profile-count').textContent=`${files.length} фото`;
-  document.getElementById('upload-sub').textContent=d.name;
-  document.getElementById('profile-chips').innerHTML=
-    `<span class="p-chip">${d.car_model}</span><span class="p-chip">${d.tariff}</span><span class="p-chip hi">${files.length} документов</span>`;
-  const grid=document.getElementById('photo-grid');
-  if (!files.length) { grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📂</div><div class="empty-title">Нет документов</div><div class="empty-sub">Загрузите первый</div></div>`; return; }
-  grid.innerHTML=files.map((f,i)=>`
-    <div class="photo-cell" onclick="openLightbox(${i})">
-      <img src="${f.url}" loading="lazy" alt="${f.name}"/>
-      <div class="photo-label">${f.name}</div>
-    </div>`).join('');
+  document.getElementById('profile-title').textContent = d.name;
+  document.getElementById('profile-sub').textContent = d.car_number;
+
+  document.getElementById('info-block').innerHTML = `
+    <div class="info-row">
+      <span class="info-key">Имя</span>
+      <span class="info-val">${esc(d.name)}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">Авто</span>
+      <span class="info-val">${esc(d.car_model)}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">Номер</span>
+      <span class="info-val mono">${esc(d.car_number)}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">Тариф</span>
+      <span class="info-val">${esc(d.tariff)}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">ID</span>
+      <span class="info-val mono">${esc(d.id)}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">Документов</span>
+      <span class="info-val" style="color:var(--accent)">${files.length}</span>
+    </div>
+  `;
 }
+
 function showProfile() { showScreen('profile'); }
 
-function openLightbox(i) { state.lbIndex=i; updateLightbox(); document.getElementById('lightbox').classList.add('open'); }
-function updateLightbox() {
-  const f=state.currentFiles[state.lbIndex];
-  document.getElementById('lb-img').src=f.url;
-  document.getElementById('lb-title').textContent=f.name;
-  document.getElementById('lb-download').href=f.url;
-  document.getElementById('lb-counter').textContent=`${state.lbIndex+1} / ${state.currentFiles.length}`;
-  document.getElementById('lb-prev').style.display=state.lbIndex>0?'flex':'none';
-  document.getElementById('lb-next').style.display=state.lbIndex<state.currentFiles.length-1?'flex':'none';
+// ===== DOCUMENTS =====
+function showDocuments() {
+  const d = state.currentDriver;
+  document.getElementById('docs-sub').textContent = d.name;
+  document.getElementById('docs-count').textContent = `${state.currentFiles.length} фото`;
+  renderDocs(state.currentFiles);
+  showScreen('docs');
 }
-function lightboxNav(d) { state.lbIndex=Math.max(0,Math.min(state.currentFiles.length-1,state.lbIndex+d)); updateLightbox(); }
-function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
-let tx=0;
-document.getElementById('lightbox').addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
-document.getElementById('lightbox').addEventListener('touchend',e=>{ if(Math.abs(tx-e.changedTouches[0].clientX)>50) lightboxNav(tx>e.changedTouches[0].clientX?1:-1); });
 
+function renderDocs(files) {
+  const grid = document.getElementById('photo-grid');
+  if (!files.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📂</div><div class="empty-title">Нет документов</div><div class="empty-sub">Загрузите первый</div></div>`;
+    return;
+  }
+  grid.innerHTML = files.map((f, i) => `
+    <div class="photo-cell" onclick="openLightbox(${i})">
+      <img src="${f.url}" loading="lazy" alt="${esc(f.name)}"/>
+      <div class="photo-label">${esc(f.name)}</div>
+    </div>
+  `).join('');
+}
+
+// ===== LIGHTBOX =====
+function openLightbox(i) {
+  state.lbIndex = i;
+  updateLightbox();
+  document.getElementById('lightbox').classList.add('open');
+}
+function updateLightbox() {
+  const f = state.currentFiles[state.lbIndex];
+  document.getElementById('lb-img').src = f.url;
+  document.getElementById('lb-title').textContent = f.name;
+  document.getElementById('lb-download').href = f.url;
+  document.getElementById('lb-counter').textContent = `${state.lbIndex + 1} / ${state.currentFiles.length}`;
+  document.getElementById('lb-prev').style.display = state.lbIndex > 0 ? 'flex' : 'none';
+  document.getElementById('lb-next').style.display = state.lbIndex < state.currentFiles.length - 1 ? 'flex' : 'none';
+}
+function lightboxNav(d) {
+  state.lbIndex = Math.max(0, Math.min(state.currentFiles.length - 1, state.lbIndex + d));
+  updateLightbox();
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+let tx = 0;
+document.getElementById('lightbox').addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
+document.getElementById('lightbox').addEventListener('touchend', e => {
+  if (Math.abs(tx - e.changedTouches[0].clientX) > 50) lightboxNav(tx > e.changedTouches[0].clientX ? 1 : -1);
+});
+
+// ===== UPLOAD =====
 function showUpload() {
-  state.selectedFile=null;
-  document.getElementById('file-input').value='';
-  document.getElementById('doc-name').value='';
+  state.selectedFile = null;
+  document.getElementById('file-input').value = '';
+  document.getElementById('doc-name').value = '';
   document.getElementById('upload-preview').classList.remove('visible');
   document.getElementById('drop-zone').classList.remove('has-file');
-  document.getElementById('drop-zone').querySelector('.drop-zone-text').textContent='Нажмите чтобы выбрать';
-  document.getElementById('submit-btn').disabled=true;
+  document.getElementById('drop-zone').querySelector('.drop-zone-text').textContent = 'Нажмите чтобы выбрать';
+  document.getElementById('upload-btn').disabled = true;
+  document.getElementById('upload-btn').textContent = 'Загрузить';
+  document.getElementById('upload-sub').textContent = state.currentDriver.name;
   showScreen('upload');
 }
+
 function handleFileSelect(e) {
-  const file=e.target.files[0]; if(!file) return;
-  state.selectedFile=file;
-  const r=new FileReader();
-  r.onload=ev=>{ const p=document.getElementById('upload-preview'); p.src=ev.target.result; p.classList.add('visible'); document.getElementById('drop-zone').classList.add('has-file'); document.getElementById('drop-zone').querySelector('.drop-zone-text').textContent=file.name; checkReady(); };
+  const file = e.target.files[0]; if (!file) return;
+  state.selectedFile = file;
+  const r = new FileReader();
+  r.onload = ev => {
+    const p = document.getElementById('upload-preview');
+    p.src = ev.target.result; p.classList.add('visible');
+    document.getElementById('drop-zone').classList.add('has-file');
+    document.getElementById('drop-zone').querySelector('.drop-zone-text').textContent = file.name;
+    checkUploadReady();
+  };
   r.readAsDataURL(file);
 }
-function checkReady() { document.getElementById('submit-btn').disabled=!(state.selectedFile&&document.getElementById('doc-name').value.trim().length>0); }
-document.addEventListener('DOMContentLoaded',()=>{ document.getElementById('doc-name').addEventListener('input',checkReady); });
 
-async function submitUpload() {
-  const btn=document.getElementById('submit-btn');
-  btn.disabled=true; btn.textContent='Загружаю...';
-  try {
-    const r=new FileReader();
-    r.onload=async ev=>{
-      const name=document.getElementById('doc-name').value.trim();
-      await api(`/driver/${state.currentDriver.id}/upload`,{method:'POST',body:JSON.stringify({image:ev.target.result,name})});
-      toast('Документ загружен','success');
-      const data=await api(`/driver/${state.currentDriver.id}/files`);
-      state.currentFiles=data.files; renderProfile(data.driver,data.files); showScreen('profile');
-    };
-    r.readAsDataURL(state.selectedFile);
-  } catch(e) { toast('Ошибка загрузки','error'); btn.disabled=false; btn.textContent='Загрузить'; }
+function checkUploadReady() {
+  document.getElementById('upload-btn').disabled =
+    !(state.selectedFile && document.getElementById('doc-name').value.trim().length > 0);
 }
 
-function toast(msg,type='') { const el=document.getElementById('toast'); el.textContent=msg; el.className='toast show '+type; setTimeout(()=>el.classList.remove('show'),2500); }
+async function submitUpload() {
+  const btn = document.getElementById('upload-btn');
+  btn.disabled = true; btn.textContent = 'Загружаю...';
+  try {
+    const r = new FileReader();
+    r.onload = async ev => {
+      const name = document.getElementById('doc-name').value.trim();
+      await api(`/driver/${state.currentDriver.id}/upload`, {
+        method: 'POST',
+        body: JSON.stringify({ image: ev.target.result, name }),
+      });
+      toast('Документ загружен', 'success');
+      const data = await api(`/driver/${state.currentDriver.id}`);
+      state.currentFiles = data.files;
+      renderDocs(data.files);
+      document.getElementById('docs-count').textContent = `${data.files.length} фото`;
+      showScreen('docs');
+    };
+    r.readAsDataURL(state.selectedFile);
+  } catch(e) {
+    toast('Ошибка: ' + e.message, 'error');
+    btn.disabled = false; btn.textContent = 'Загрузить';
+  }
+}
+
+// ===== ADD DRIVER =====
+function showAddDriver() {
+  ['add-id', 'add-name', 'add-model', 'add-number'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('add-tariff').value = '';
+  document.getElementById('add-btn').disabled = true;
+  document.getElementById('add-btn').textContent = 'Добавить водителя';
+  showScreen('add');
+}
+
+function checkAddReady() {
+  const ok = ['add-id', 'add-name', 'add-model', 'add-number', 'add-tariff']
+    .every(id => document.getElementById(id).value.trim().length > 0);
+  document.getElementById('add-btn').disabled = !ok;
+}
+
+async function submitAddDriver() {
+  const btn = document.getElementById('add-btn');
+  btn.disabled = true; btn.textContent = 'Добавляю...';
+  try {
+    await api('/drivers', {
+      method: 'POST',
+      body: JSON.stringify({
+        id: document.getElementById('add-id').value.trim(),
+        name: document.getElementById('add-name').value.trim(),
+        car_model: document.getElementById('add-model').value.trim(),
+        car_number: document.getElementById('add-number').value.trim(),
+        tariff: document.getElementById('add-tariff').value.trim(),
+      }),
+    });
+    toast('Водитель добавлен', 'success');
+    await loadDrivers();
+    showScreen('drivers');
+  } catch(e) {
+    toast('Ошибка: ' + e.message, 'error');
+    btn.disabled = false; btn.textContent = 'Добавить водителя';
+  }
+}
+
+// ===== DELETE DRIVER =====
+function confirmDeleteDriver() {
+  const d = state.currentDriver;
+  openModal(
+    'Удалить водителя?',
+    `Удалить ${d.name} (${d.car_number})? Все документы будут удалены без возможности восстановления.`,
+    deleteDriver
+  );
+}
+
+async function deleteDriver() {
+  closeModal();
+  showScreen('loading');
+  try {
+    await api(`/driver/${state.currentDriver.id}`, { method: 'DELETE' });
+    toast('Водитель удалён', 'success');
+    await loadDrivers();
+    showScreen('drivers');
+  } catch(e) {
+    toast('Ошибка: ' + e.message, 'error');
+    showScreen('profile');
+  }
+}
+
+// ===== DELETE FILE =====
+function confirmDeleteFile() {
+  const f = state.currentFiles[state.lbIndex];
+  openModal(
+    'Удалить документ?',
+    `Удалить "${f.name}"? Это действие нельзя отменить.`,
+    deleteFile
+  );
+}
+
+async function deleteFile() {
+  closeModal();
+  const f = state.currentFiles[state.lbIndex];
+  try {
+    await api('/file', {
+      method: 'DELETE',
+      body: JSON.stringify({ public_id: f.public_id }),
+    });
+    toast('Документ удалён', 'success');
+    closeLightbox();
+    const data = await api(`/driver/${state.currentDriver.id}`);
+    state.currentFiles = data.files;
+    renderDocs(data.files);
+    document.getElementById('docs-count').textContent = `${data.files.length} фото`;
+  } catch(e) {
+    toast('Ошибка: ' + e.message, 'error');
+  }
+}
+
+// ===== MODAL =====
+function openModal(title, text, onConfirm) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-text').textContent = text;
+  document.getElementById('modal-confirm').onclick = onConfirm;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+// ===== UTILS =====
+function esc(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
 
 init();
 </script>
