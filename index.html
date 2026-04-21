@@ -473,7 +473,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API = 'https://miniappfusion-backend-production.up.railway.app';
+const API = 'https://your-api-server.com'; // замените на реальный URL бэкенда
 const tg = window.Telegram?.WebApp;
 
 let state = {
@@ -499,12 +499,16 @@ async function init() {
   try {
     const me = await api('/me');
     if (!me.is_admin) {
+      document.querySelector('.wip-sub').textContent =
+        'ID: '+ me.id + '  is_admin: '+ me.is_admin + '  initData: '+ state.initData.length +'chars';
       showScreen('wip');
       return;
     }
     await loadDrivers();
     showScreen('drivers');
   } catch (e) {
+    document.querySelector('.wip-sub').textContent =
+      'Error: '+ e.message + '  initData: '+ state.initData.length +'chars';
     showScreen('wip');
   }
 }
