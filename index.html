@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Prime Fusion — Documents</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f0f;
+      --bg2: #1a1a1a;
+      --bg3: #242424;
+      --border: rgba(255,255,255,0.08);
+      --text: #f0f0f0;
+      --text2: #888;
+      --accent: #4a90e2;
+      --accent-dim: rgba(74,144,226,0.15);
+      --danger: #e25555;
+      --success: #4caf50;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ========== SCREENS ========== */
+    .screen { display: none; flex-direction: column; min-height: 100vh; }
+    .screen.active { display: flex; }
+
+    /* ========== TOP BAR ========== */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar-back {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: none;
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .topbar-title { font-size: 17px; font-weight: 600; flex: 1; }
+    .topbar-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
+
+    /* ========== SEARCH ========== */
+    .search-wrap { padding: 12px 16px; }
+    .search-input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+    }
+    .search-input::placeholder { color: var(--text2); }
+
+    /* ========== DRIVER LIST ========== */
+    .driver-list { flex: 1; overflow-y: auto; padding: 0 16px 24px; }
+    .driver-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .driver-card:active { background: var(--bg3); }
+    .driver-avatar {
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .driver-info { flex: 1; min-width: 0; }
+    .driver-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .driver-meta { font-size: 12px; color: var(--text2); margin-top: 3px; }
+    .driver-badge {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border-radius: 20px;
+      padding: 3px 9px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* ========== DRIVER PROFILE ========== */
+    .profile-header {
+      padding: 20px 16px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .profile-name { font-size: 20px; font-weight: 700; }
+    .profile-car { font-size: 14px; color: var(--text2); margin-top: 4px; }
+    .profile-tags { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .tag {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .upload-btn {
+      margin: 14px 16px 0;
+      width: calc(100% - 32px);
+      padding: 13px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.15s;
+    }
+    .upload-btn:active { opacity: 0.8; }
+
+    /* ========== PHOTO GRID ========== */
+    .photo-grid-wrap { flex: 1; overflow-y: auto; padding: 14px 16px 24px; }
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+    }
+    .photo-thumb {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      background: var(--bg3);
+      position: relative;
+    }
+    .photo-thumb img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: opacity 0.2s;
+    }
+    .photo-thumb-name {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.7));
+      color: #fff;
+      font-size: 9px;
+      padding: 8px 4px 4px;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text2);
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-text { font-size: 15px; }
+
+    /* ========== LIGHTBOX ========== */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      flex-shrink: 0;
+    }
+    .lightbox-close {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .lightbox-title { font-size: 14px; color: rgba(255,255,255,0.7); flex: 1; text-align: center; padding: 0 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lightbox-download {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none;
+    }
+    .lightbox-img-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .lightbox-img-wrap img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      user-select: none;
+    }
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .lightbox-nav.prev { left: 8px; }
+    .lightbox-nav.next { right: 8px; }
+    .lightbox-counter {
+      text-align: center;
+      padding: 12px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      flex-shrink: 0;
+    }
+
+    /* ========== UPLOAD SCREEN ========== */
+    .upload-screen-body { flex: 1; padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; }
+    .upload-drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-drop-zone.has-file {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .upload-drop-icon { font-size: 40px; margin-bottom: 10px; }
+    .upload-drop-text { font-size: 15px; color: var(--text2); }
+    .upload-preview {
+      width: 100%;
+      max-height: 240px;
+      object-fit: contain;
+      border-radius: 10px;
+      display: none;
+      margin-top: 10px;
+    }
+    .upload-preview.visible { display: block; }
+    .form-label { font-size: 13px; color: var(--text2); margin-bottom: 6px; }
+    .form-input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+    }
+    .form-input:focus { border-color: var(--accent); }
+    .form-input::placeholder { color: var(--text2); }
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: auto;
+      transition: opacity 0.15s;
+    }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .submit-btn:not(:disabled):active { opacity: 0.8; }
+
+    /* ========== WIP SCREEN ========== */
+    .wip-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 24px;
+      gap: 16px;
+    }
+    .wip-icon { font-size: 64px; }
+    .wip-title { font-size: 22px; font-weight: 700; }
+    .wip-sub { font-size: 15px; color: var(--text2); line-height: 1.6; max-width: 280px; }
+
+    /* ========== LOADING ========== */
+    .loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ========== TOAST ========== */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #222;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 999;
+      transition: transform 0.3s;
+      white-space: nowrap;
+      border: 1px solid var(--border);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: var(--success); }
+    .toast.error { border-color: var(--danger); }
+  </style>
+</head>
+<body>
+
+<!-- ===== WIP SCREEN (for non-admins) ===== -->
+<div class="screen active" id="screen-wip">
+  <div class="wip-screen">
+    <div class="wip-icon">🚧</div>
+    <div class="wip-title">В разработке</div>
+    <div class="wip-sub">Этот раздел скоро будет доступен. Следите за обновлениями.</div>
+  </div>
+</div>
+
+<!-- ===== LOADING SCREEN ===== -->
+<div class="screen" id="screen-loading">
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<!-- ===== DRIVER LIST SCREEN ===== -->
+<div class="screen" id="screen-drivers">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Документы водителей</div>
+      <div class="topbar-sub">Prime Fusion</div>
+    </div>
+  </div>
+  <div class="search-wrap">
+    <input class="search-input" id="search-input" placeholder="Поиск по имени или номеру авто..." oninput="filterDrivers()" />
+  </div>
+  <div class="driver-list" id="driver-list">
+    <div class="loader"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- ===== DRIVER PROFILE SCREEN ===== -->
+<div class="screen" id="screen-profile">
+  <div class="topbar">
+    <button class="topbar-back" onclick="showDrivers()">←</button>
+    <div>
+      <div class="topbar-title" id="profile-title">Водитель</div>
+      <div class="topbar-sub" id="profile-sub"></div>
+    </div>
+  </div>
+  <div class="profile-header">
+    <div class="profile-name" id="profile-name"></div>
+    <div class="profile-car" id="profile-car"></div>
+    <div class="profile-tags" id="profile-tags"></div>
+  </div>
+  <button class="upload-btn" onclick="showUpload()">
+    <span>+</span> Загрузить документ
+  </button>
+  <div class="photo-grid-wrap">
+    <div class="photo-grid" id="photo-grid"></div>
+  </div>
+</div>
+
+<!-- ===== UPLOAD SCREEN ===== -->
+<div class="screen" id="screen-upload">
+  <div class="topbar">
+    <button class="topbar-back" onclick="showProfile()">←</button>
+    <div>
+      <div class="topbar-title">Загрузить документ</div>
+    </div>
+  </div>
+  <div class="upload-screen-body">
+    <div>
+      <div class="form-label">Фото документа</div>
+      <div class="upload-drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div class="upload-drop-icon">📄</div>
+        <div class="upload-drop-text">Нажмите чтобы выбрать фото</div>
+        <img class="upload-preview" id="upload-preview" />
+      </div>
+      <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileSelect(event)" />
+    </div>
+    <div>
+      <div class="form-label">Название документа</div>
+      <input class="form-input" id="doc-name" placeholder="Например: TLC License, Passport..." />
+    </div>
+    <button class="submit-btn" id="submit-btn" onclick="submitUpload()" disabled>Загрузить</button>
+  </div>
+</div>
+
+<!-- ===== LIGHTBOX ===== -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-topbar">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <div class="lightbox-title" id="lb-title"></div>
+    <a class="lightbox-download" id="lb-download" target="_blank" download>↓</a>
+  </div>
+  <div class="lightbox-img-wrap">
+    <button class="lightbox-nav prev" id="lb-prev" onclick="lightboxNav(-1)">‹</button>
+    <img id="lb-img" src="" alt="" />
+    <button class="lightbox-nav next" id="lb-next" onclick="lightboxNav(1)">›</button>
+  </div>
+  <div class="lightbox-counter" id="lb-counter"></div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://your-api-server.com'; // замените на реальный URL бэкенда
+const tg = window.Telegram?.WebApp;
+
+let state = {
+  drivers: [],
+  filtered: [],
+  currentDriver: null,
+  currentFiles: [],
+  lbIndex: 0,
+  selectedFile: null,
+  initData: '',
+};
+
+// ========== INIT ==========
+async function init() {
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    state.initData = tg.initData || '';
+  }
+
+  showScreen('loading');
+
+  try {
+    const me = await api('/me');
+    if (!me.is_admin) {
+      showScreen('wip');
+      return;
+    }
+    await loadDrivers();
+    showScreen('drivers');
+  } catch (e) {
+    showScreen('wip');
+  }
+}
+
+// ========== API ==========
+async function api(path, options = {}) {
+  const res = await fetch(API + path, {
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Telegram-Init-Data': state.initData,
+      ...options.headers,
+    },
+    ...options,
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// ========== SCREENS ==========
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+// ========== DRIVERS ==========
+async function loadDrivers() {
+  const data = await api('/drivers');
+  state.drivers = data;
+  state.filtered = data;
+  renderDriverList(data);
+}
+
+function renderDriverList(drivers) {
+  const el = document.getElementById('driver-list');
+  if (!drivers.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-text">Нет водителей</div></div>';
+    return;
+  }
+  el.innerHTML = drivers.map(d => `
+    <div class="driver-card" onclick="openDriver('${d.id}')">
+      <div class="driver-avatar">🚗</div>
+      <div class="driver-info">
+        <div class="driver-name">${d.name}</div>
+        <div class="driver-meta">${d.car_model} · ${d.car_number}</div>
+        <div class="driver-meta">${d.tariff}</div>
+      </div>
+      <div class="driver-badge">${d.file_count} фото</div>
+    </div>
+  `).join('');
+}
+
+function filterDrivers() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  state.filtered = state.drivers.filter(d =>
+    d.name.toLowerCase().includes(q) || d.car_number.toLowerCase().includes(q)
+  );
+  renderDriverList(state.filtered);
+}
+
+function showDrivers() {
+  showScreen('drivers');
+}
+
+// ========== PROFILE ==========
+async function openDriver(driverId) {
+  showScreen('loading');
+  try {
+    const data = await api(`/driver/${driverId}/files`);
+    state.currentDriver = data.driver;
+    state.currentFiles = data.files;
+    renderProfile(data.driver, data.files);
+    showScreen('profile');
+  } catch (e) {
+    toast('Ошибка загрузки', 'error');
+    showScreen('drivers');
+  }
+}
+
+function renderProfile(driver, files) {
+  document.getElementById('profile-title').textContent = driver.name;
+  document.getElementById('profile-sub').textContent = driver.car_number;
+  document.getElementById('profile-name').textContent = driver.name;
+  document.getElementById('profile-car').textContent = `${driver.car_model} · ${driver.car_number}`;
+  document.getElementById('profile-tags').innerHTML = `
+    <span class="tag">${driver.tariff}</span>
+    <span class="tag">ID: ${driver.id}</span>
+    <span class="tag">${files.length} документов</span>
+  `;
+
+  const grid = document.getElementById('photo-grid');
+  if (!files.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📂</div><div class="empty-text">Документов пока нет</div></div>';
+    return;
+  }
+  grid.innerHTML = files.map((f, i) => `
+    <div class="photo-thumb" onclick="openLightbox(${i})">
+      <img src="${f.url}" loading="lazy" alt="${f.name}" />
+      <div class="photo-thumb-name">${f.name}</div>
+    </div>
+  `).join('');
+}
+
+function showProfile() {
+  showScreen('profile');
+}
+
+// ========== LIGHTBOX ==========
+function openLightbox(index) {
+  state.lbIndex = index;
+  updateLightbox();
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function updateLightbox() {
+  const f = state.currentFiles[state.lbIndex];
+  document.getElementById('lb-img').src = f.url;
+  document.getElementById('lb-title').textContent = f.name;
+  document.getElementById('lb-download').href = f.url;
+  document.getElementById('lb-counter').textContent = `${state.lbIndex + 1} / ${state.currentFiles.length}`;
+  document.getElementById('lb-prev').style.display = state.lbIndex > 0 ? 'flex' : 'none';
+  document.getElementById('lb-next').style.display = state.lbIndex < state.currentFiles.length - 1 ? 'flex' : 'none';
+}
+
+function lightboxNav(dir) {
+  state.lbIndex = Math.max(0, Math.min(state.currentFiles.length - 1, state.lbIndex + dir));
+  updateLightbox();
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+// ========== UPLOAD ==========
+function showUpload() {
+  state.selectedFile = null;
+  document.getElementById('file-input').value = '';
+  document.getElementById('doc-name').value = '';
+  document.getElementById('upload-preview').classList.remove('visible');
+  document.getElementById('drop-zone').classList.remove('has-file');
+  document.getElementById('drop-zone').querySelector('.upload-drop-text').textContent = 'Нажмите чтобы выбрать фото';
+  document.getElementById('submit-btn').disabled = true;
+  showScreen('upload');
+}
+
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  state.selectedFile = file;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const preview = document.getElementById('upload-preview');
+    preview.src = e.target.result;
+    preview.classList.add('visible');
+    document.getElementById('drop-zone').classList.add('has-file');
+    document.getElementById('drop-zone').querySelector('.upload-drop-text').textContent = file.name;
+    checkSubmitReady();
+  };
+  reader.readAsDataURL(file);
+}
+
+function checkSubmitReady() {
+  const hasFile = !!state.selectedFile;
+  const hasName = document.getElementById('doc-name').value.trim().length > 0;
+  document.getElementById('submit-btn').disabled = !(hasFile && hasName);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('doc-name').addEventListener('input', checkSubmitReady);
+});
+
+async function submitUpload() {
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Загружаю...';
+
+  try {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64 = e.target.result;
+      const name = document.getElementById('doc-name').value.trim();
+
+      await api(`/driver/${state.currentDriver.id}/upload`, {
+        method: 'POST',
+        body: JSON.stringify({ image: base64, name }),
+      });
+
+      toast('Документ загружен', 'success');
+
+      // Reload profile
+      const data = await api(`/driver/${state.currentDriver.id}/files`);
+      state.currentFiles = data.files;
+      renderProfile(data.driver, data.files);
+
+      showScreen('profile');
+    };
+    reader.readAsDataURL(state.selectedFile);
+  } catch (e) {
+    toast('Ошибка загрузки', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Загрузить';
+  }
+}
+
+// ========== TOAST ==========
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ========== SWIPE LIGHTBOX ==========
+let touchStartX = 0;
+document.getElementById('lightbox').addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+document.getElementById('lightbox').addEventListener('touchend', e => {
+  const diff = touchStartX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 50) lightboxNav(diff > 0 ? 1 : -1);
+});
+
+init();
+</script>
+</body>
+</html>
