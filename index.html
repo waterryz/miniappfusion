@@ -3,731 +3,401 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Prime Fusion — Documents</title>
+  <title>Prime Fusion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f0f0f;
-      --bg2: #1a1a1a;
-      --bg3: #242424;
-      --border: rgba(255,255,255,0.08);
-      --text: #f0f0f0;
-      --text2: #888;
-      --accent: #4a90e2;
-      --accent-dim: rgba(74,144,226,0.15);
-      --danger: #e25555;
-      --success: #4caf50;
-      --radius: 12px;
+      --bg:        #0a0a0b;
+      --surface:   #111114;
+      --card:      #16161a;
+      --border:    rgba(255,255,255,0.06);
+      --border2:   rgba(255,255,255,0.12);
+      --text:      #f2f2f4;
+      --muted:     #6b6b78;
+      --accent:    #c8f04c;
+      --accent-bg: rgba(200,240,76,0.08);
+      --red:       #ff4d4d;
+      --radius:    16px;
+      --radius-sm: 10px;
     }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-      -webkit-tap-highlight-color: transparent;
-    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; overflow: hidden; }
 
-    /* ========== SCREENS ========== */
-    .screen { display: none; flex-direction: column; min-height: 100vh; }
+    #app { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
     .screen.active { display: flex; }
 
-    /* ========== TOP BAR ========== */
-    .topbar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 16px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    .topbar-back {
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      background: var(--bg3);
-      border: none;
-      color: var(--text);
-      font-size: 18px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .topbar-title { font-size: 17px; font-weight: 600; flex: 1; }
-    .topbar-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
+    /* LOGO BAR */
+    .logo-bar { padding: 18px 20px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .logo-mark { width: 30px; height: 30px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .logo-mark svg { width: 16px; height: 16px; }
+    .logo-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+    .logo-tag { margin-left: auto; font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    .logo-badge { margin-left: auto; background: var(--accent-bg); border: 1px solid rgba(200,240,76,0.2); color: var(--accent); border-radius: 20px; padding: 3px 9px; font-size: 10px; font-weight: 600; }
 
-    /* ========== SEARCH ========== */
-    .search-wrap { padding: 12px 16px; }
-    .search-input {
-      width: 100%;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 14px;
-      color: var(--text);
-      font-size: 15px;
-      outline: none;
-    }
-    .search-input::placeholder { color: var(--text2); }
+    /* HEADER */
+    .header { padding: 16px 20px 0; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .back-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border2); background: var(--card); color: var(--text); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .back-btn:active { background: var(--border2); }
+    .header-info { flex: 1; }
+    .header-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: -0.2px; }
+    .header-sub { font-size: 12px; color: var(--muted); margin-top: 1px; font-weight: 300; }
 
-    /* ========== DRIVER LIST ========== */
-    .driver-list { flex: 1; overflow-y: auto; padding: 0 16px 24px; }
-    .driver-card {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px;
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin-bottom: 10px;
-      cursor: pointer;
-      transition: background 0.15s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .driver-card:active { background: var(--bg3); }
-    .driver-avatar {
-      width: 46px; height: 46px;
-      border-radius: 50%;
-      background: var(--accent-dim);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-    .driver-info { flex: 1; min-width: 0; }
-    .driver-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .driver-meta { font-size: 12px; color: var(--text2); margin-top: 3px; }
-    .driver-badge {
-      background: var(--accent-dim);
-      color: var(--accent);
-      border-radius: 20px;
-      padding: 3px 9px;
-      font-size: 12px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
+    /* SEARCH */
+    .search-wrap { padding: 12px 20px 8px; flex-shrink: 0; }
+    .search-box { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 12px; transition: border-color 0.2s; }
+    .search-box:focus-within { border-color: var(--border2); }
+    .search-icon { color: var(--muted); font-size: 15px; }
+    .search-input { flex: 1; background: none; border: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 10px 0; outline: none; }
+    .search-input::placeholder { color: var(--muted); }
 
-    /* ========== DRIVER PROFILE ========== */
-    .profile-header {
-      padding: 20px 16px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .profile-name { font-size: 20px; font-weight: 700; }
-    .profile-car { font-size: 14px; color: var(--text2); margin-top: 4px; }
-    .profile-tags { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-    .tag {
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 4px 10px;
-      font-size: 12px;
-      color: var(--text2);
-    }
+    /* SCROLL */
+    .scroll-body { flex: 1; overflow-y: auto; padding: 6px 20px 28px; -webkit-overflow-scrolling: touch; }
+    .scroll-body::-webkit-scrollbar { display: none; }
 
-    .upload-btn {
-      margin: 14px 16px 0;
-      width: calc(100% - 32px);
-      padding: 13px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: opacity 0.15s;
-    }
-    .upload-btn:active { opacity: 0.8; }
+    /* SECTION LABEL */
+    .slabel { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 14px 0 8px; }
 
-    /* ========== PHOTO GRID ========== */
-    .photo-grid-wrap { flex: 1; overflow-y: auto; padding: 14px 16px 24px; }
-    .photo-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
-    }
-    .photo-thumb {
-      aspect-ratio: 1;
-      border-radius: 8px;
-      overflow: hidden;
-      cursor: pointer;
-      background: var(--bg3);
-      position: relative;
-    }
-    .photo-thumb img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      display: block;
-      transition: opacity 0.2s;
-    }
-    .photo-thumb-name {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      background: linear-gradient(transparent, rgba(0,0,0,0.7));
-      color: #fff;
-      font-size: 9px;
-      padding: 8px 4px 4px;
-      text-align: center;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text2);
-    }
-    .empty-icon { font-size: 48px; margin-bottom: 12px; }
-    .empty-text { font-size: 15px; }
+    /* DRIVER CARD */
+    .driver-card { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 14px; margin-bottom: 7px; cursor: pointer; transition: border-color 0.15s, transform 0.1s; position: relative; overflow: hidden; animation: fadeUp 0.22s ease both; }
+    .driver-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); opacity: 0; transition: opacity 0.15s; }
+    .driver-card:active { transform: scale(0.985); border-color: var(--border2); }
+    .driver-card:active::before { opacity: 1; }
+    .driver-card:nth-child(2) { animation-delay: 40ms; }
+    .driver-card:nth-child(3) { animation-delay: 80ms; }
+    .driver-card:nth-child(4) { animation-delay: 120ms; }
+    .driver-card:nth-child(5) { animation-delay: 160ms; }
 
-    /* ========== LIGHTBOX ========== */
-    .lightbox {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.95);
-      z-index: 100;
-      display: none;
-      flex-direction: column;
-    }
+    .d-avatar { width: 42px; height: 42px; border-radius: 11px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .d-info { flex: 1; min-width: 0; }
+    .d-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.1px; }
+    .d-plate { font-size: 11px; color: var(--muted); margin-top: 3px; font-weight: 300; letter-spacing: 0.03em; }
+    .d-chip { flex-shrink: 0; background: var(--accent-bg); border: 1px solid rgba(200,240,76,0.15); color: var(--accent); border-radius: 20px; padding: 4px 9px; font-size: 11px; font-weight: 600; }
+    .d-chip.zero { background: transparent; border-color: var(--border); color: var(--muted); }
+
+    /* PROFILE */
+    .profile-top { padding: 18px 20px 0; flex-shrink: 0; }
+    .profile-name { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
+    .profile-car { font-size: 13px; color: var(--muted); margin-top: 5px; font-weight: 300; }
+    .profile-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+    .p-chip { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: 11px; color: var(--muted); }
+    .p-chip.hi { background: var(--accent-bg); border-color: rgba(200,240,76,0.2); color: var(--accent); }
+
+    .upload-btn { margin: 14px 20px 0; flex-shrink: 0; width: calc(100% - 40px); padding: 12px 20px; background: var(--accent); color: #0a0a0b; border: none; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.02em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.15s, transform 0.1s; }
+    .upload-btn:active { opacity: 0.85; transform: scale(0.98); }
+
+    /* DIVIDER */
+    .divider { height: 1px; background: var(--border); margin: 14px 20px 0; flex-shrink: 0; }
+
+    /* PHOTO GRID */
+    .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+    .photo-cell { aspect-ratio: 1; background: var(--card); border-radius: 8px; overflow: hidden; cursor: pointer; position: relative; }
+    .photo-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .photo-cell:active img { opacity: 0.8; }
+    .photo-label { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.75)); padding: 14px 5px 5px; font-size: 9px; color: rgba(255,255,255,0.8); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* EMPTY */
+    .empty { text-align: center; padding: 48px 20px; }
+    .empty-icon { width: 56px; height: 56px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 14px; }
+    .empty-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; margin-bottom: 5px; }
+    .empty-sub { font-size: 12px; color: var(--muted); font-weight: 300; }
+
+    /* LIGHTBOX */
+    .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 100; display: none; flex-direction: column; }
     .lightbox.open { display: flex; }
-    .lightbox-topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      flex-shrink: 0;
-    }
-    .lightbox-close {
-      background: rgba(255,255,255,0.1);
-      border: none;
-      color: #fff;
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .lightbox-title { font-size: 14px; color: rgba(255,255,255,0.7); flex: 1; text-align: center; padding: 0 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .lightbox-download {
-      background: var(--accent);
-      border: none;
-      color: #fff;
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      text-decoration: none;
-    }
-    .lightbox-img-wrap {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
-    }
-    .lightbox-img-wrap img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      user-select: none;
-    }
-    .lightbox-nav {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background: rgba(255,255,255,0.1);
-      border: none;
-      color: #fff;
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      font-size: 20px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .lightbox-nav.prev { left: 8px; }
-    .lightbox-nav.next { right: 8px; }
-    .lightbox-counter {
-      text-align: center;
-      padding: 12px;
-      font-size: 13px;
-      color: rgba(255,255,255,0.5);
-      flex-shrink: 0;
-    }
+    .lb-bar { padding: 12px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .lb-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+    .lb-title { flex: 1; font-size: 12px; color: rgba(255,255,255,0.5); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 300; }
+    .lb-img-wrap { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+    .lb-img-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; }
+    .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.5); color: #fff; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .lb-nav.prev { left: 8px; }
+    .lb-nav.next { right: 8px; }
+    .lb-counter { text-align: center; padding: 10px; font-size: 11px; color: rgba(255,255,255,0.3); flex-shrink: 0; }
 
-    /* ========== UPLOAD SCREEN ========== */
-    .upload-screen-body { flex: 1; padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; }
-    .upload-drop-zone {
-      border: 2px dashed var(--border);
-      border-radius: var(--radius);
-      padding: 40px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .upload-drop-zone.has-file {
-      border-color: var(--accent);
-      background: var(--accent-dim);
-    }
-    .upload-drop-icon { font-size: 40px; margin-bottom: 10px; }
-    .upload-drop-text { font-size: 15px; color: var(--text2); }
-    .upload-preview {
-      width: 100%;
-      max-height: 240px;
-      object-fit: contain;
-      border-radius: 10px;
-      display: none;
-      margin-top: 10px;
-    }
+    /* UPLOAD */
+    .upload-body { flex: 1; overflow-y: auto; padding: 18px 20px 32px; display: flex; flex-direction: column; gap: 16px; }
+    .form-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .drop-zone { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 30px 20px; text-align: center; cursor: pointer; background: var(--card); transition: border-color 0.2s, background 0.2s; }
+    .drop-zone.has-file { border-color: var(--accent); background: var(--accent-bg); }
+    .drop-zone-icon { font-size: 30px; margin-bottom: 8px; }
+    .drop-zone-text { font-size: 13px; color: var(--muted); }
+    .drop-zone-sub { font-size: 11px; color: var(--muted); margin-top: 3px; opacity: 0.6; }
+    .upload-preview { width: 100%; max-height: 180px; object-fit: contain; border-radius: 10px; display: none; margin-top: 12px; }
     .upload-preview.visible { display: block; }
-    .form-label { font-size: 13px; color: var(--text2); margin-bottom: 6px; }
-    .form-input {
-      width: 100%;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      color: var(--text);
-      font-size: 15px;
-      outline: none;
-    }
-    .form-input:focus { border-color: var(--accent); }
-    .form-input::placeholder { color: var(--text2); }
-    .submit-btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: auto;
-      transition: opacity 0.15s;
-    }
-    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .submit-btn:not(:disabled):active { opacity: 0.8; }
+    .form-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; transition: border-color 0.2s; }
+    .form-input:focus { border-color: var(--border2); }
+    .form-input::placeholder { color: var(--muted); }
+    .submit-btn { width: 100%; padding: 14px; background: var(--accent); color: #0a0a0b; border: none; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: auto; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.02em; }
+    .submit-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .submit-btn:not(:disabled):active { opacity: 0.85; transform: scale(0.98); }
 
-    /* ========== WIP SCREEN ========== */
-    .wip-screen {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 40px 24px;
-      gap: 16px;
-    }
-    .wip-icon { font-size: 64px; }
-    .wip-title { font-size: 22px; font-weight: 700; }
-    .wip-sub { font-size: 15px; color: var(--text2); line-height: 1.6; max-width: 280px; }
+    /* WIP */
+    .wip-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 32px; text-align: center; }
+    .wip-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,180,0,0.1); border: 1px solid rgba(255,180,0,0.2); border-radius: 20px; padding: 5px 12px; font-size: 11px; font-weight: 600; color: #ffb400; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 18px; }
+    .wip-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px; }
+    .wip-sub { font-size: 13px; color: var(--muted); line-height: 1.6; font-weight: 300; max-width: 260px; }
 
-    /* ========== LOADING ========== */
-    .loader {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-    }
-    .spinner {
-      width: 28px; height: 28px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
+    /* LOADING */
+    .loading-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+    .spinner { width: 28px; height: 28px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .loading-text { font-size: 12px; color: var(--muted); font-weight: 300; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* ========== TOAST ========== */
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: #222;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 24px;
-      font-size: 14px;
-      font-weight: 500;
-      z-index: 999;
-      transition: transform 0.3s;
-      white-space: nowrap;
-      border: 1px solid var(--border);
-    }
+    /* TOAST */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--card); border: 1px solid var(--border2); color: var(--text); padding: 10px 18px; border-radius: 24px; font-size: 13px; font-weight: 500; z-index: 999; transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; }
     .toast.show { transform: translateX(-50%) translateY(0); }
-    .toast.success { border-color: var(--success); }
-    .toast.error { border-color: var(--danger); }
+    .toast.success { border-color: rgba(200,240,76,0.3); color: var(--accent); }
+    .toast.error { border-color: rgba(255,77,77,0.3); color: var(--red); }
   </style>
 </head>
 <body>
+<div id="app">
 
-<!-- ===== WIP SCREEN (for non-admins) ===== -->
-<div class="screen active" id="screen-wip">
-  <div class="wip-screen">
-    <div class="wip-icon">🚧</div>
-    <div class="wip-title">В разработке</div>
-    <div class="wip-sub">Этот раздел скоро будет доступен. Следите за обновлениями.</div>
-  </div>
-</div>
-
-<!-- ===== LOADING SCREEN ===== -->
-<div class="screen" id="screen-loading">
-  <div style="flex:1;display:flex;align-items:center;justify-content:center;">
-    <div class="spinner"></div>
-  </div>
-</div>
-
-<!-- ===== DRIVER LIST SCREEN ===== -->
-<div class="screen" id="screen-drivers">
-  <div class="topbar">
-    <div>
-      <div class="topbar-title">Документы водителей</div>
-      <div class="topbar-sub">Prime Fusion</div>
+  <!-- WIP -->
+  <div class="screen active" id="screen-wip">
+    <div class="logo-bar">
+      <div class="logo-mark"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" fill="#0a0a0b"/></svg></div>
+      <div class="logo-name">Prime Fusion</div>
+    </div>
+    <div class="wip-wrap">
+      <div class="wip-pill">⚙ В разработке</div>
+      <div class="wip-title">Скоро будет доступно</div>
+      <div class="wip-sub" id="wip-debug">Этот раздел находится в разработке. Следите за обновлениями.</div>
     </div>
   </div>
-  <div class="search-wrap">
-    <input class="search-input" id="search-input" placeholder="Поиск по имени или номеру авто..." oninput="filterDrivers()" />
-  </div>
-  <div class="driver-list" id="driver-list">
-    <div class="loader"><div class="spinner"></div></div>
-  </div>
-</div>
 
-<!-- ===== DRIVER PROFILE SCREEN ===== -->
-<div class="screen" id="screen-profile">
-  <div class="topbar">
-    <button class="topbar-back" onclick="showDrivers()">←</button>
-    <div>
-      <div class="topbar-title" id="profile-title">Водитель</div>
-      <div class="topbar-sub" id="profile-sub"></div>
+  <!-- LOADING -->
+  <div class="screen" id="screen-loading">
+    <div class="logo-bar">
+      <div class="logo-mark"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" fill="#0a0a0b"/></svg></div>
+      <div class="logo-name">Prime Fusion</div>
+    </div>
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <div class="loading-text">Загрузка...</div>
     </div>
   </div>
-  <div class="profile-header">
-    <div class="profile-name" id="profile-name"></div>
-    <div class="profile-car" id="profile-car"></div>
-    <div class="profile-tags" id="profile-tags"></div>
-  </div>
-  <button class="upload-btn" onclick="showUpload()">
-    <span>+</span> Загрузить документ
-  </button>
-  <div class="photo-grid-wrap">
-    <div class="photo-grid" id="photo-grid"></div>
-  </div>
-</div>
 
-<!-- ===== UPLOAD SCREEN ===== -->
-<div class="screen" id="screen-upload">
-  <div class="topbar">
-    <button class="topbar-back" onclick="showProfile()">←</button>
-    <div>
-      <div class="topbar-title">Загрузить документ</div>
+  <!-- DRIVERS -->
+  <div class="screen" id="screen-drivers">
+    <div class="logo-bar">
+      <div class="logo-mark"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" fill="#0a0a0b"/></svg></div>
+      <div class="logo-name">Prime Fusion</div>
+      <div class="logo-tag">Admin</div>
     </div>
-  </div>
-  <div class="upload-screen-body">
-    <div>
-      <div class="form-label">Фото документа</div>
-      <div class="upload-drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-        <div class="upload-drop-icon">📄</div>
-        <div class="upload-drop-text">Нажмите чтобы выбрать фото</div>
-        <img class="upload-preview" id="upload-preview" />
+    <div class="search-wrap">
+      <div class="search-box">
+        <span class="search-icon">⌕</span>
+        <input class="search-input" id="search-input" placeholder="Поиск по имени или номеру..." oninput="filterDrivers()" />
       </div>
-      <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileSelect(event)" />
     </div>
-    <div>
-      <div class="form-label">Название документа</div>
-      <input class="form-input" id="doc-name" placeholder="Например: TLC License, Passport..." />
+    <div class="scroll-body" id="driver-list"></div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="screen" id="screen-profile">
+    <div class="header">
+      <button class="back-btn" onclick="showDrivers()">←</button>
+      <div class="header-info">
+        <div class="header-title" id="profile-title"></div>
+        <div class="header-sub" id="profile-sub"></div>
+      </div>
+      <div class="logo-badge" id="profile-count"></div>
     </div>
-    <button class="submit-btn" id="submit-btn" onclick="submitUpload()" disabled>Загрузить</button>
+    <div class="profile-chips" style="padding: 10px 20px 0;" id="profile-chips"></div>
+    <button class="upload-btn" onclick="showUpload()">
+      <span style="font-size:17px;line-height:1">+</span> Загрузить документ
+    </button>
+    <div class="divider"></div>
+    <div class="scroll-body">
+      <div class="slabel">Документы</div>
+      <div class="photo-grid" id="photo-grid"></div>
+    </div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="screen" id="screen-upload">
+    <div class="header">
+      <button class="back-btn" onclick="showProfile()">←</button>
+      <div class="header-info">
+        <div class="header-title">Новый документ</div>
+        <div class="header-sub" id="upload-sub"></div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="upload-body">
+      <div>
+        <div class="form-label">Фото документа</div>
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+          <div class="drop-zone-icon">📎</div>
+          <div class="drop-zone-text">Нажмите чтобы выбрать</div>
+          <div class="drop-zone-sub">JPG, PNG · до 10 МБ</div>
+          <img class="upload-preview" id="upload-preview" />
+        </div>
+        <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileSelect(event)" />
+      </div>
+      <div>
+        <div class="form-label">Название документа</div>
+        <input class="form-input" id="doc-name" placeholder="Напр.: TLC License, Passport..." />
+      </div>
+      <button class="submit-btn" id="submit-btn" onclick="submitUpload()" disabled>Загрузить</button>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox">
+    <div class="lb-bar">
+      <button class="lb-btn" onclick="closeLightbox()">✕</button>
+      <div class="lb-title" id="lb-title"></div>
+      <a class="lb-btn" id="lb-download" target="_blank">↓</a>
+    </div>
+    <div class="lb-img-wrap">
+      <button class="lb-nav prev" id="lb-prev" onclick="lightboxNav(-1)">‹</button>
+      <img id="lb-img" src="" alt="" />
+      <button class="lb-nav next" id="lb-next" onclick="lightboxNav(1)">›</button>
+    </div>
+    <div class="lb-counter" id="lb-counter"></div>
   </div>
 </div>
 
-<!-- ===== LIGHTBOX ===== -->
-<div class="lightbox" id="lightbox">
-  <div class="lightbox-topbar">
-    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
-    <div class="lightbox-title" id="lb-title"></div>
-    <a class="lightbox-download" id="lb-download" target="_blank" download>↓</a>
-  </div>
-  <div class="lightbox-img-wrap">
-    <button class="lightbox-nav prev" id="lb-prev" onclick="lightboxNav(-1)">‹</button>
-    <img id="lb-img" src="" alt="" />
-    <button class="lightbox-nav next" id="lb-next" onclick="lightboxNav(1)">›</button>
-  </div>
-  <div class="lightbox-counter" id="lb-counter"></div>
-</div>
-
-<!-- ===== TOAST ===== -->
 <div class="toast" id="toast"></div>
 
 <script>
 const API = 'https://tg-bot-prime-fusion-production.up.railway.app';
 const tg = window.Telegram?.WebApp;
+const state = { drivers:[], filtered:[], currentDriver:null, currentFiles:[], lbIndex:0, selectedFile:null, initData:'' };
 
-let state = {
-  drivers: [],
-  filtered: [],
-  currentDriver: null,
-  currentFiles: [],
-  lbIndex: 0,
-  selectedFile: null,
-  initData: '',
-};
-
-// ========== INIT ==========
 async function init() {
-  if (tg) {
-    tg.ready();
-    tg.expand();
-    state.initData = tg.initData || '';
-  }
-
+  if (tg) { tg.ready(); tg.expand(); state.initData = tg.initData || ''; }
   showScreen('loading');
-
   try {
     const me = await api('/me');
-    if (!me.is_admin) {
-      document.querySelector('.wip-sub').textContent =
-        'ID: '+ me.id + '  is_admin: '+ me.is_admin + '  initData: '+ state.initData.length +'chars';
-      showScreen('wip');
-      return;
-    }
+    if (!me.is_admin) { showScreen('wip'); return; }
     await loadDrivers();
     showScreen('drivers');
-  } catch (e) {
-    document.querySelector('.wip-sub').textContent =
-      'Error: '+ e.message + '  initData: '+ state.initData.length +'chars';
-    showScreen('wip');
-  }
+  } catch(e) { showScreen('wip'); }
 }
 
-// ========== API ==========
-async function api(path, options = {}) {
-  const res = await fetch(API + path, {
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Telegram-Init-Data': state.initData,
-      ...options.headers,
-    },
-    ...options,
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+async function api(path, opts={}) {
+  const r = await fetch(API+path, { headers:{'Content-Type':'application/json','X-Telegram-Init-Data':state.initData,...(opts.headers||{})}, ...opts });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
 }
 
-// ========== SCREENS ==========
-function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + name).classList.add('active');
-}
+function showScreen(n) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById('screen-'+n).classList.add('active'); }
 
-// ========== DRIVERS ==========
 async function loadDrivers() {
   const data = await api('/drivers');
-  state.drivers = data;
-  state.filtered = data;
-  renderDriverList(data);
+  state.drivers=data; state.filtered=data; renderDriverList(data);
 }
 
 function renderDriverList(drivers) {
   const el = document.getElementById('driver-list');
-  if (!drivers.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-text">Нет водителей</div></div>';
-    return;
-  }
-  el.innerHTML = drivers.map(d => `
+  if (!drivers.length) { el.innerHTML=`<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">Нет водителей</div><div class="empty-sub">Добавьте через бота</div></div>`; return; }
+  const n=drivers.length, s=n===1?'ь':n<5?'я':'ей';
+  el.innerHTML=`<div class="slabel">${n} водител${s}</div>`+drivers.map(d=>`
     <div class="driver-card" onclick="openDriver('${d.id}')">
-      <div class="driver-avatar">🚗</div>
-      <div class="driver-info">
-        <div class="driver-name">${d.name}</div>
-        <div class="driver-meta">${d.car_model} · ${d.car_number}</div>
-        <div class="driver-meta">${d.tariff}</div>
+      <div class="d-avatar">🚗</div>
+      <div class="d-info">
+        <div class="d-name">${d.name}</div>
+        <div class="d-plate">${d.car_model} · ${d.car_number} · ${d.tariff}</div>
       </div>
-      <div class="driver-badge">${d.file_count} фото</div>
-    </div>
-  `).join('');
+      <div class="d-chip ${d.file_count===0?'zero':''}">${d.file_count} фото</div>
+    </div>`).join('');
 }
 
 function filterDrivers() {
-  const q = document.getElementById('search-input').value.toLowerCase();
-  state.filtered = state.drivers.filter(d =>
-    d.name.toLowerCase().includes(q) || d.car_number.toLowerCase().includes(q)
-  );
+  const q=document.getElementById('search-input').value.toLowerCase();
+  state.filtered=state.drivers.filter(d=>d.name.toLowerCase().includes(q)||d.car_number.toLowerCase().includes(q));
   renderDriverList(state.filtered);
 }
+function showDrivers() { showScreen('drivers'); }
 
-function showDrivers() {
-  showScreen('drivers');
-}
-
-// ========== PROFILE ==========
-async function openDriver(driverId) {
+async function openDriver(id) {
   showScreen('loading');
   try {
-    const data = await api(`/driver/${driverId}/files`);
-    state.currentDriver = data.driver;
-    state.currentFiles = data.files;
-    renderProfile(data.driver, data.files);
-    showScreen('profile');
-  } catch (e) {
-    toast('Ошибка загрузки', 'error');
-    showScreen('drivers');
-  }
+    const data=await api(`/driver/${id}/files`);
+    state.currentDriver=data.driver; state.currentFiles=data.files;
+    renderProfile(data.driver, data.files); showScreen('profile');
+  } catch(e) { toast('Ошибка загрузки','error'); showScreen('drivers'); }
 }
 
-function renderProfile(driver, files) {
-  document.getElementById('profile-title').textContent = driver.name;
-  document.getElementById('profile-sub').textContent = driver.car_number;
-  document.getElementById('profile-name').textContent = driver.name;
-  document.getElementById('profile-car').textContent = `${driver.car_model} · ${driver.car_number}`;
-  document.getElementById('profile-tags').innerHTML = `
-    <span class="tag">${driver.tariff}</span>
-    <span class="tag">ID: ${driver.id}</span>
-    <span class="tag">${files.length} документов</span>
-  `;
-
-  const grid = document.getElementById('photo-grid');
-  if (!files.length) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📂</div><div class="empty-text">Документов пока нет</div></div>';
-    return;
-  }
-  grid.innerHTML = files.map((f, i) => `
-    <div class="photo-thumb" onclick="openLightbox(${i})">
-      <img src="${f.url}" loading="lazy" alt="${f.name}" />
-      <div class="photo-thumb-name">${f.name}</div>
-    </div>
-  `).join('');
+function renderProfile(d, files) {
+  document.getElementById('profile-title').textContent=d.name;
+  document.getElementById('profile-sub').textContent=d.car_number;
+  document.getElementById('profile-count').textContent=`${files.length} фото`;
+  document.getElementById('upload-sub').textContent=d.name;
+  document.getElementById('profile-chips').innerHTML=
+    `<span class="p-chip">${d.car_model}</span><span class="p-chip">${d.tariff}</span><span class="p-chip hi">${files.length} документов</span>`;
+  const grid=document.getElementById('photo-grid');
+  if (!files.length) { grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📂</div><div class="empty-title">Нет документов</div><div class="empty-sub">Загрузите первый</div></div>`; return; }
+  grid.innerHTML=files.map((f,i)=>`
+    <div class="photo-cell" onclick="openLightbox(${i})">
+      <img src="${f.url}" loading="lazy" alt="${f.name}"/>
+      <div class="photo-label">${f.name}</div>
+    </div>`).join('');
 }
+function showProfile() { showScreen('profile'); }
 
-function showProfile() {
-  showScreen('profile');
-}
-
-// ========== LIGHTBOX ==========
-function openLightbox(index) {
-  state.lbIndex = index;
-  updateLightbox();
-  document.getElementById('lightbox').classList.add('open');
-}
-
+function openLightbox(i) { state.lbIndex=i; updateLightbox(); document.getElementById('lightbox').classList.add('open'); }
 function updateLightbox() {
-  const f = state.currentFiles[state.lbIndex];
-  document.getElementById('lb-img').src = f.url;
-  document.getElementById('lb-title').textContent = f.name;
-  document.getElementById('lb-download').href = f.url;
-  document.getElementById('lb-counter').textContent = `${state.lbIndex + 1} / ${state.currentFiles.length}`;
-  document.getElementById('lb-prev').style.display = state.lbIndex > 0 ? 'flex' : 'none';
-  document.getElementById('lb-next').style.display = state.lbIndex < state.currentFiles.length - 1 ? 'flex' : 'none';
+  const f=state.currentFiles[state.lbIndex];
+  document.getElementById('lb-img').src=f.url;
+  document.getElementById('lb-title').textContent=f.name;
+  document.getElementById('lb-download').href=f.url;
+  document.getElementById('lb-counter').textContent=`${state.lbIndex+1} / ${state.currentFiles.length}`;
+  document.getElementById('lb-prev').style.display=state.lbIndex>0?'flex':'none';
+  document.getElementById('lb-next').style.display=state.lbIndex<state.currentFiles.length-1?'flex':'none';
 }
+function lightboxNav(d) { state.lbIndex=Math.max(0,Math.min(state.currentFiles.length-1,state.lbIndex+d)); updateLightbox(); }
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+let tx=0;
+document.getElementById('lightbox').addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.getElementById('lightbox').addEventListener('touchend',e=>{ if(Math.abs(tx-e.changedTouches[0].clientX)>50) lightboxNav(tx>e.changedTouches[0].clientX?1:-1); });
 
-function lightboxNav(dir) {
-  state.lbIndex = Math.max(0, Math.min(state.currentFiles.length - 1, state.lbIndex + dir));
-  updateLightbox();
-}
-
-function closeLightbox() {
-  document.getElementById('lightbox').classList.remove('open');
-}
-
-// ========== UPLOAD ==========
 function showUpload() {
-  state.selectedFile = null;
-  document.getElementById('file-input').value = '';
-  document.getElementById('doc-name').value = '';
+  state.selectedFile=null;
+  document.getElementById('file-input').value='';
+  document.getElementById('doc-name').value='';
   document.getElementById('upload-preview').classList.remove('visible');
   document.getElementById('drop-zone').classList.remove('has-file');
-  document.getElementById('drop-zone').querySelector('.upload-drop-text').textContent = 'Нажмите чтобы выбрать фото';
-  document.getElementById('submit-btn').disabled = true;
+  document.getElementById('drop-zone').querySelector('.drop-zone-text').textContent='Нажмите чтобы выбрать';
+  document.getElementById('submit-btn').disabled=true;
   showScreen('upload');
 }
-
-function handleFileSelect(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  state.selectedFile = file;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const preview = document.getElementById('upload-preview');
-    preview.src = e.target.result;
-    preview.classList.add('visible');
-    document.getElementById('drop-zone').classList.add('has-file');
-    document.getElementById('drop-zone').querySelector('.upload-drop-text').textContent = file.name;
-    checkSubmitReady();
-  };
-  reader.readAsDataURL(file);
+function handleFileSelect(e) {
+  const file=e.target.files[0]; if(!file) return;
+  state.selectedFile=file;
+  const r=new FileReader();
+  r.onload=ev=>{ const p=document.getElementById('upload-preview'); p.src=ev.target.result; p.classList.add('visible'); document.getElementById('drop-zone').classList.add('has-file'); document.getElementById('drop-zone').querySelector('.drop-zone-text').textContent=file.name; checkReady(); };
+  r.readAsDataURL(file);
 }
-
-function checkSubmitReady() {
-  const hasFile = !!state.selectedFile;
-  const hasName = document.getElementById('doc-name').value.trim().length > 0;
-  document.getElementById('submit-btn').disabled = !(hasFile && hasName);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('doc-name').addEventListener('input', checkSubmitReady);
-});
+function checkReady() { document.getElementById('submit-btn').disabled=!(state.selectedFile&&document.getElementById('doc-name').value.trim().length>0); }
+document.addEventListener('DOMContentLoaded',()=>{ document.getElementById('doc-name').addEventListener('input',checkReady); });
 
 async function submitUpload() {
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = true;
-  btn.textContent = 'Загружаю...';
-
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true; btn.textContent='Загружаю...';
   try {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64 = e.target.result;
-      const name = document.getElementById('doc-name').value.trim();
-
-      await api(`/driver/${state.currentDriver.id}/upload`, {
-        method: 'POST',
-        body: JSON.stringify({ image: base64, name }),
-      });
-
-      toast('Документ загружен', 'success');
-
-      // Reload profile
-      const data = await api(`/driver/${state.currentDriver.id}/files`);
-      state.currentFiles = data.files;
-      renderProfile(data.driver, data.files);
-
-      showScreen('profile');
+    const r=new FileReader();
+    r.onload=async ev=>{
+      const name=document.getElementById('doc-name').value.trim();
+      await api(`/driver/${state.currentDriver.id}/upload`,{method:'POST',body:JSON.stringify({image:ev.target.result,name})});
+      toast('Документ загружен','success');
+      const data=await api(`/driver/${state.currentDriver.id}/files`);
+      state.currentFiles=data.files; renderProfile(data.driver,data.files); showScreen('profile');
     };
-    reader.readAsDataURL(state.selectedFile);
-  } catch (e) {
-    toast('Ошибка загрузки', 'error');
-    btn.disabled = false;
-    btn.textContent = 'Загрузить';
-  }
+    r.readAsDataURL(state.selectedFile);
+  } catch(e) { toast('Ошибка загрузки','error'); btn.disabled=false; btn.textContent='Загрузить'; }
 }
 
-// ========== TOAST ==========
-function toast(msg, type = '') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast show ' + type;
-  setTimeout(() => el.classList.remove('show'), 2500);
-}
-
-// ========== SWIPE LIGHTBOX ==========
-let touchStartX = 0;
-document.getElementById('lightbox').addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
-document.getElementById('lightbox').addEventListener('touchend', e => {
-  const diff = touchStartX - e.changedTouches[0].clientX;
-  if (Math.abs(diff) > 50) lightboxNav(diff > 0 ? 1 : -1);
-});
+function toast(msg,type='') { const el=document.getElementById('toast'); el.textContent=msg; el.className='toast show '+type; setTimeout(()=>el.classList.remove('show'),2500); }
 
 init();
 </script>
