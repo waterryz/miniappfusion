@@ -23,6 +23,10 @@
       --accent-bg: rgba(200,240,76,0.1);
       --red: #ff5757;
       --red-bg: rgba(255,87,87,0.1);
+      --green: #4cf07a;
+      --green-bg: rgba(76,240,122,0.1);
+      --orange: #f0a84c;
+      --orange-bg: rgba(240,168,76,0.1);
       --radius: 16px;
       --radius-sm: 10px;
     }
@@ -31,6 +35,15 @@
     #app { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
     .screen.active { display: flex; }
+
+    /* BOTTOM NAV */
+    .bottom-nav { display: none; flex-shrink: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 8px 0 env(safe-area-inset-bottom, 8px); }
+    .bottom-nav.visible { display: flex; }
+    .nav-items { display: flex; width: 100%; }
+    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; cursor: pointer; transition: opacity 0.15s; border: none; background: none; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+    .nav-item.active { color: var(--accent); }
+    .nav-item:active { opacity: 0.7; }
+    .nav-icon { font-size: 20px; line-height: 1; }
 
     /* LOGO BAR */
     .logo-bar { padding: 18px 20px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
@@ -178,6 +191,58 @@
     .modal-btn.cancel { background: var(--card); color: var(--text); border: 1px solid var(--border2); }
     .modal-btn.confirm { background: var(--red); color: #fff; }
     .modal-btn:active { transform: scale(0.97); opacity: 0.85; }
+
+    /* ===== FLEET ===== */
+    .fleet-header { padding: 16px 20px 12px; flex-shrink: 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .fleet-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+    .fleet-refresh { width: 36px; height: 36px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: var(--text-secondary); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .fleet-refresh:active { background: var(--accent-bg); color: var(--accent); border-color: rgba(200,240,76,0.3); }
+    .fleet-refresh.spinning { animation: spin 0.7s linear infinite; }
+
+    .fleet-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 20px; flex-shrink: 0; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+    .stat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .stat-dot.moving { background: var(--green); box-shadow: 0 0 6px rgba(76,240,122,0.5); }
+    .stat-dot.stopped { background: var(--red); }
+    .stat-info { flex: 1; min-width: 0; }
+    .stat-num { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; line-height: 1; color: var(--text); }
+    .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+
+    .fleet-list { flex: 1; overflow-y: auto; padding: 4px 20px 20px; -webkit-overflow-scrolling: touch; }
+    .fleet-list::-webkit-scrollbar { display: none; }
+
+    .vehicle-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; animation: fadeUp 0.22s ease both; position: relative; overflow: hidden; }
+    .vehicle-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+    .vehicle-card.moving::before { background: var(--green); }
+    .vehicle-card.stopped::before { background: var(--red); }
+
+    .vc-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .vc-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .vehicle-card.moving .vc-icon { background: var(--green-bg); }
+    .vehicle-card.stopped .vc-icon { background: var(--red-bg); }
+    .vc-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.1px; }
+    .vc-id { font-size: 11.5px; color: var(--muted); margin-top: 2px; font-weight: 400; }
+    .vc-badge { margin-left: auto; flex-shrink: 0; border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.03em; }
+    .vc-badge.moving { background: var(--green-bg); color: var(--green); border: 1px solid rgba(76,240,122,0.3); }
+    .vc-badge.stopped { background: var(--red-bg); color: var(--red); border: 1px solid rgba(255,87,87,0.3); }
+
+    .vc-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+    .vc-metric { background: var(--surface); border-radius: 8px; padding: 8px 10px; }
+    .vc-metric-val { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); }
+    .vc-metric-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+
+    .vc-addr { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); line-height: 1.4; display: flex; gap: 6px; align-items: flex-start; }
+    .vc-addr-icon { flex-shrink: 0; margin-top: 1px; }
+    .vc-time { margin-top: 6px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+
+    .fleet-error { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 32px; text-align: center; gap: 14px; }
+    .fleet-error-icon { font-size: 40px; }
+    .fleet-error-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    .fleet-retry-btn { padding: 12px 24px; background: var(--accent); color: #0a0a0b; border: none; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+    .last-update { padding: 0 20px 8px; font-size: 11px; color: var(--muted); flex-shrink: 0; display: flex; align-items: center; gap: 5px; }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 4px rgba(76,240,122,0.6); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
   </style>
 </head>
 <body>
@@ -338,6 +403,40 @@
     </div>
   </div>
 
+  <!-- FLEET -->
+  <div class="screen" id="screen-fleet">
+    <div class="fleet-header">
+      <div class="fleet-title">🚗 Fleet</div>
+      <button class="fleet-refresh" id="fleet-refresh-btn" onclick="loadFleet(true)" title="Обновить">↻</button>
+    </div>
+    <div class="fleet-stats" id="fleet-stats" style="display:none">
+      <div class="stat-card">
+        <div class="stat-dot moving"></div>
+        <div class="stat-info">
+          <div class="stat-num" id="stat-moving">0</div>
+          <div class="stat-lbl">В движении</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-dot stopped"></div>
+        <div class="stat-info">
+          <div class="stat-num" id="stat-stopped">0</div>
+          <div class="stat-lbl">Стоят</div>
+        </div>
+      </div>
+    </div>
+    <div class="last-update" id="last-update" style="display:none">
+      <div class="live-dot"></div>
+      <span id="last-update-text">Обновлено только что</span>
+    </div>
+    <div class="fleet-list" id="fleet-list">
+      <div class="loading-wrap" style="padding: 60px 0;">
+        <div class="spinner"></div>
+        <div class="loading-text">Загрузка данных GPS...</div>
+      </div>
+    </div>
+  </div>
+
   <!-- LIGHTBOX -->
   <div class="lightbox" id="lightbox">
     <div class="lb-bar">
@@ -352,6 +451,20 @@
       <button class="lb-nav next" id="lb-next" onclick="lightboxNav(1)">›</button>
     </div>
     <div class="lb-counter" id="lb-counter"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottom-nav">
+  <div class="nav-items">
+    <button class="nav-item active" id="nav-drivers" onclick="switchTab('drivers')">
+      <span class="nav-icon">👥</span>
+      <span>Водители</span>
+    </button>
+    <button class="nav-item" id="nav-fleet" onclick="switchTab('fleet')">
+      <span class="nav-icon">🗺</span>
+      <span>Fleet</span>
+    </button>
   </div>
 </div>
 
@@ -379,6 +492,8 @@ const state = {
   currentDriver: null, currentFiles: [],
   lbIndex: 0, selectedFile: null,
   initData: '', pendingAction: null,
+  fleetData: [], fleetInterval: null,
+  currentTab: 'drivers',
 };
 
 // ===== INIT =====
@@ -390,6 +505,7 @@ async function init() {
     if (!me.is_admin) { showScreen('wip'); return; }
     await loadDrivers();
     showScreen('drivers');
+    document.getElementById('bottom-nav').classList.add('visible');
   } catch(e) { showScreen('wip'); }
 }
 
@@ -411,6 +527,22 @@ async function api(path, opts={}) {
 function showScreen(n) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-'+n).classList.add('active');
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+  state.currentTab = tab;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('nav-' + tab).classList.add('active');
+
+  if (tab === 'drivers') {
+    stopFleetPolling();
+    showScreen('drivers');
+  } else if (tab === 'fleet') {
+    showScreen('fleet');
+    loadFleet();
+    startFleetPolling();
+  }
 }
 
 // ===== DRIVERS LIST =====
@@ -451,6 +583,9 @@ function filterDrivers() {
 function showDrivers() {
   document.getElementById('search-input').value = '';
   showScreen('drivers');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('nav-drivers').classList.add('active');
+  stopFleetPolling();
 }
 
 // ===== PROFILE =====
@@ -468,32 +603,13 @@ async function openDriver(id) {
 function renderProfile(d, files) {
   document.getElementById('profile-title').textContent = d.name;
   document.getElementById('profile-sub').textContent = d.car_number;
-
   document.getElementById('info-block').innerHTML = `
-    <div class="info-row">
-      <span class="info-key">Имя</span>
-      <span class="info-val">${esc(d.name)}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-key">Авто</span>
-      <span class="info-val">${esc(d.car_model)}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-key">Номер</span>
-      <span class="info-val mono">${esc(d.car_number)}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-key">Тариф</span>
-      <span class="info-val">${esc(d.tariff)}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-key">ID</span>
-      <span class="info-val mono">${esc(d.id)}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-key">Документов</span>
-      <span class="info-val" style="color:var(--accent)">${files.length}</span>
-    </div>
+    <div class="info-row"><span class="info-key">Имя</span><span class="info-val">${esc(d.name)}</span></div>
+    <div class="info-row"><span class="info-key">Авто</span><span class="info-val">${esc(d.car_model)}</span></div>
+    <div class="info-row"><span class="info-key">Номер</span><span class="info-val mono">${esc(d.car_number)}</span></div>
+    <div class="info-row"><span class="info-key">Тариф</span><span class="info-val">${esc(d.tariff)}</span></div>
+    <div class="info-row"><span class="info-key">ID</span><span class="info-val mono">${esc(d.id)}</span></div>
+    <div class="info-row"><span class="info-key">Документов</span><span class="info-val" style="color:var(--accent)">${files.length}</span></div>
   `;
 }
 
@@ -524,8 +640,7 @@ function renderDocs(files) {
 
 // ===== LIGHTBOX =====
 function openLightbox(i) {
-  state.lbIndex = i;
-  updateLightbox();
+  state.lbIndex = i; updateLightbox();
   document.getElementById('lightbox').classList.add('open');
 }
 function updateLightbox() {
@@ -647,54 +762,174 @@ async function submitAddDriver() {
 // ===== DELETE DRIVER =====
 function confirmDeleteDriver() {
   const d = state.currentDriver;
-  openModal(
-    'Удалить водителя?',
-    `Удалить ${d.name} (${d.car_number})? Все документы будут удалены без возможности восстановления.`,
-    deleteDriver
-  );
+  openModal('Удалить водителя?', `Удалить ${d.name} (${d.car_number})? Все документы будут удалены без возможности восстановления.`, deleteDriver);
 }
 
 async function deleteDriver() {
-  closeModal();
-  showScreen('loading');
+  closeModal(); showScreen('loading');
   try {
     await api(`/driver/${state.currentDriver.id}`, { method: 'DELETE' });
     toast('Водитель удалён', 'success');
-    await loadDrivers();
-    showScreen('drivers');
+    await loadDrivers(); showScreen('drivers');
   } catch(e) {
-    toast('Ошибка: ' + e.message, 'error');
-    showScreen('profile');
+    toast('Ошибка: ' + e.message, 'error'); showScreen('profile');
   }
 }
 
 // ===== DELETE FILE =====
 function confirmDeleteFile() {
   const f = state.currentFiles[state.lbIndex];
-  openModal(
-    'Удалить документ?',
-    `Удалить "${f.name}"? Это действие нельзя отменить.`,
-    deleteFile
-  );
+  openModal('Удалить документ?', `Удалить "${f.name}"? Это действие нельзя отменить.`, deleteFile);
 }
 
 async function deleteFile() {
   closeModal();
   const f = state.currentFiles[state.lbIndex];
   try {
-    await api('/file', {
-      method: 'DELETE',
-      body: JSON.stringify({ public_id: f.public_id }),
-    });
+    await api('/file', { method: 'DELETE', body: JSON.stringify({ public_id: f.public_id }) });
     toast('Документ удалён', 'success');
     closeLightbox();
     const data = await api(`/driver/${state.currentDriver.id}`);
     state.currentFiles = data.files;
     renderDocs(data.files);
     document.getElementById('docs-count').textContent = `${data.files.length} фото`;
-  } catch(e) {
-    toast('Ошибка: ' + e.message, 'error');
+  } catch(e) { toast('Ошибка: ' + e.message, 'error'); }
+}
+
+// ===== FLEET =====
+async function loadFleet(manual = false) {
+  if (manual) {
+    const btn = document.getElementById('fleet-refresh-btn');
+    btn.classList.add('spinning');
+    setTimeout(() => btn.classList.remove('spinning'), 800);
   }
+
+  try {
+    const data = await api('/api/fleet');
+
+    // Parse the "d" field — it's a JSON string
+    let vehicles = [];
+    if (data.d) {
+      try {
+        // PlanetGPS returns non-standard JSON, fix it
+        const fixed = data.d
+          .replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":')
+          .replace(/:\s*'([^']*)'/g, ':"$1"');
+        const parsed = JSON.parse(fixed);
+        vehicles = parsed.devices || [];
+      } catch(e) {
+        // fallback: extract with regex
+        console.warn('JSON parse failed, trying fallback', e);
+      }
+    }
+
+    state.fleetData = vehicles;
+    renderFleet(vehicles);
+
+    // Update last update time
+    document.getElementById('fleet-stats').style.display = '';
+    document.getElementById('last-update').style.display = '';
+    document.getElementById('last-update-text').textContent = `Обновлено ${new Date().toLocaleTimeString('ru', {hour:'2-digit',minute:'2-digit'})}`;
+
+  } catch(e) {
+    if (state.fleetData.length === 0) {
+      document.getElementById('fleet-list').innerHTML = `
+        <div class="fleet-error">
+          <div class="fleet-error-icon">📡</div>
+          <div class="empty-title">Нет данных GPS</div>
+          <div class="fleet-error-text">${esc(e.message)}</div>
+          <button class="fleet-retry-btn" onclick="loadFleet(true)">Повторить</button>
+        </div>
+      `;
+    }
+    if (manual) toast('Ошибка обновления', 'error');
+  }
+}
+
+function renderFleet(vehicles) {
+  const list = document.getElementById('fleet-list');
+
+  if (!vehicles.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">🚗</div><div class="empty-title">Нет машин</div><div class="empty-sub">Данные не получены</div></div>`;
+    return;
+  }
+
+  const moving = vehicles.filter(v => v.isStop === 0 || v.status === 'Move');
+  const stopped = vehicles.filter(v => v.isStop === 1 || v.status === 'Stop');
+
+  document.getElementById('stat-moving').textContent = moving.length;
+  document.getElementById('stat-stopped').textContent = stopped.length;
+
+  // Sort: moving first
+  const sorted = [...moving, ...stopped];
+
+  list.innerHTML = sorted.map((v, i) => {
+    const isMoving = v.isStop === 0 || v.status === 'Move';
+    const statusClass = isMoving ? 'moving' : 'stopped';
+    const statusLabel = isMoving ? '▶ В движении' : '■ Стоит';
+    const speed = parseFloat(v.speed || 0).toFixed(0);
+    const dist = parseFloat(v.distance || 0);
+    const distStr = dist > 1000 ? (dist / 1000).toFixed(1) + 'k mi' : Math.round(dist) + ' mi';
+    const course = getCourseArrow(parseInt(v.course || 0));
+
+    // Format time
+    let timeStr = '';
+    if (v.deviceUtcDate) {
+      try {
+        const d = new Date(v.deviceUtcDate.replace(' ', 'T') + 'Z');
+        timeStr = d.toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'}) + ' UTC';
+      } catch(e) { timeStr = v.deviceUtcDate; }
+    }
+
+    return `
+      <div class="vehicle-card ${statusClass}" style="animation-delay:${i * 40}ms">
+        <div class="vc-top">
+          <div class="vc-icon">${isMoving ? '🚕' : '🅿️'}</div>
+          <div style="flex:1;min-width:0">
+            <div class="vc-name">${esc(v.name)}</div>
+            <div class="vc-id">SN: ${esc(v.sn)}</div>
+          </div>
+          <div class="vc-badge ${statusClass}">${statusLabel}</div>
+        </div>
+        <div class="vc-grid">
+          <div class="vc-metric">
+            <div class="vc-metric-val">${speed} <span style="font-size:10px;color:var(--muted)">km/h</span></div>
+            <div class="vc-metric-lbl">Скорость</div>
+          </div>
+          <div class="vc-metric">
+            <div class="vc-metric-val">${course}</div>
+            <div class="vc-metric-lbl">Курс</div>
+          </div>
+          <div class="vc-metric">
+            <div class="vc-metric-val" style="font-size:12px">${distStr}</div>
+            <div class="vc-metric-lbl">Пробег</div>
+          </div>
+        </div>
+        ${v.latitude && v.longitude ? `
+        <div class="vc-addr">
+          <span class="vc-addr-icon">📍</span>
+          <span>${parseFloat(v.latitude).toFixed(5)}, ${parseFloat(v.longitude).toFixed(5)}</span>
+        </div>` : ''}
+        ${timeStr ? `<div class="vc-time">🕐 ${timeStr}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function getCourseArrow(course) {
+  const dirs = ['↑ N', '↗ NE', '→ E', '↘ SE', '↓ S', '↙ SW', '← W', '↖ NW'];
+  return dirs[Math.round(course / 45) % 8];
+}
+
+function startFleetPolling() {
+  stopFleetPolling();
+  state.fleetInterval = setInterval(() => {
+    if (state.currentTab === 'fleet') loadFleet();
+  }, 6000);
+}
+
+function stopFleetPolling() {
+  if (state.fleetInterval) { clearInterval(state.fleetInterval); state.fleetInterval = null; }
 }
 
 // ===== MODAL =====
@@ -705,9 +940,7 @@ function openModal(title, text, onConfirm) {
   document.getElementById('modal').classList.add('open');
 }
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
-document.getElementById('modal').addEventListener('click', e => {
-  if (e.target.id === 'modal') closeModal();
-});
+document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 
 // ===== UTILS =====
 function esc(s) {
@@ -716,8 +949,7 @@ function esc(s) {
 
 function toast(msg, type='') {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast show ' + type;
+  el.textContent = msg; el.className = 'toast show ' + type;
   setTimeout(() => el.classList.remove('show'), 2500);
 }
 
