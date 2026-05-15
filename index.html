@@ -6,7 +6,15 @@
   <title>Prime Fusion</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    .fleet-inner-tabs { display:flex; gap:6px; padding:10px 20px; flex-shrink:0; border-bottom:1px solid var(--border); }
+    .fleet-inner-btn { flex:1; padding:8px 0; border:1px solid var(--border); background:var(--card); border-radius:var(--radius-sm); color:var(--muted); font-family:'Syne',sans-serif; font-size:12px; font-weight:700; cursor:pointer; transition:all 0.15s; }
+    .fleet-inner-btn.active { background:var(--accent-bg); border-color:rgba(200,240,76,0.35); color:var(--accent); }
+    .leaflet-container { background:#1a1a1f; }
+    .fleet-marker-label { background:var(--card); border:1px solid var(--border2); color:var(--text); padding:3px 8px; border-radius:8px; font-size:11px; font-weight:600; font-family:'Syne',sans-serif; white-space:nowrap; }
+  </style>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -416,31 +424,69 @@
       <button class="tab-btn" id="tab-drivers-2" onclick="switchTab('drivers')">👥 Водители</button>
       <button class="tab-btn active" id="tab-fleet-2" onclick="switchTab('fleet')">🗺 Fleet</button>
     </div>
-    <div class="fleet-stats" id="fleet-stats" style="display:none">
-      <div class="stat-card">
-        <div class="stat-dot moving"></div>
-        <div class="stat-info">
-          <div class="stat-num" id="stat-moving">0</div>
-          <div class="stat-lbl">В движении</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-dot stopped"></div>
-        <div class="stat-info">
-          <div class="stat-num" id="stat-stopped">0</div>
-          <div class="stat-lbl">Стоят</div>
-        </div>
-      </div>
+    <!-- FLEET INNER TABS -->
+    <div class="fleet-inner-tabs" id="fleet-inner-tabs" style="display:none">
+      <button class="fleet-inner-btn active" id="ftab-map" onclick="switchFleetTab('map')">🗺 Карта</button>
+      <button class="fleet-inner-btn" id="ftab-list" onclick="switchFleetTab('list')">📋 Список</button>
+      <button class="fleet-inner-btn" id="ftab-report" onclick="switchFleetTab('report')">📊 Отчёт</button>
     </div>
     <div class="last-update" id="last-update" style="display:none">
       <div class="live-dot"></div>
       <span id="last-update-text">Обновлено только что</span>
     </div>
-    <div class="fleet-list" id="fleet-list">
-      <div class="loading-wrap" style="padding: 60px 0;">
-        <div class="spinner"></div>
-        <div class="loading-text">Загрузка данных GPS...</div>
+
+    <!-- MAP VIEW -->
+    <div id="fleet-view-map" style="flex:1;display:none;position:relative;">
+      <div id="leaflet-map" style="width:100%;height:100%;"></div>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div id="fleet-view-list" style="flex:1;display:none;overflow:hidden;flex-direction:column;">
+      <div class="fleet-stats" id="fleet-stats">
+        <div class="stat-card">
+          <div class="stat-dot moving"></div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-moving">0</div>
+            <div class="stat-lbl">В движении</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-dot stopped"></div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-stopped">0</div>
+            <div class="stat-lbl">Стоят</div>
+          </div>
+        </div>
       </div>
+      <div class="fleet-list" id="fleet-list">
+        <div class="loading-wrap" style="padding: 60px 0;">
+          <div class="spinner"></div>
+          <div class="loading-text">Загрузка данных GPS...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORT VIEW -->
+    <div id="fleet-view-report" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
+      <div style="padding:14px 20px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;">
+        <input type="date" id="report-date-from" class="form-input" style="flex:1;padding:10px 12px;font-size:13px;" />
+        <span style="color:var(--muted);font-size:13px;">—</span>
+        <input type="date" id="report-date-to" class="form-input" style="flex:1;padding:10px 12px;font-size:13px;" />
+        <button class="icon-btn" onclick="loadReport()" style="width:38px;height:38px;font-size:14px;">↗</button>
+      </div>
+      <div class="fleet-list" id="report-list">
+        <div class="empty" style="padding:40px 20px;">
+          <div class="empty-icon">📊</div>
+          <div class="empty-title">Выберите период</div>
+          <div class="empty-sub">Укажите даты и нажмите ↗</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOADING -->
+    <div id="fleet-loading" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+      <div class="spinner"></div>
+      <div class="loading-text">Загрузка данных GPS...</div>
     </div>
   </div>
 
@@ -538,6 +584,8 @@ function switchTab(tab) {
   } else if (tab === 'fleet') {
     ['tab-fleet','tab-fleet-2'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('active'); });
     showScreen('fleet');
+    _currentFleetTab = 'map';
+    initMap();
     loadFleet();
     startFleetPolling();
   }
@@ -795,6 +843,75 @@ async function deleteFile() {
 }
 
 // ===== FLEET =====
+let _leafletMap = null;
+let _leafletMarkers = [];
+let _currentFleetTab = 'map';
+
+function switchFleetTab(tab) {
+  _currentFleetTab = tab;
+  ['map','list','report'].forEach(t => {
+    document.getElementById('ftab-'+t).classList.toggle('active', t === tab);
+    const v = document.getElementById('fleet-view-'+t);
+    if (v) v.style.display = t === tab ? (t === 'map' ? 'block' : 'flex') : 'none';
+  });
+  if (tab === 'map' && _leafletMap) {
+    setTimeout(() => _leafletMap.invalidateSize(), 100);
+    renderMap(state.fleetData);
+  }
+  if (tab === 'list') renderFleet(state.fleetData);
+}
+
+function initMap() {
+  if (_leafletMap) return;
+  _leafletMap = L.map('leaflet-map', {
+    center: [40.73, -73.99],
+    zoom: 11,
+    zoomControl: true,
+  });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19,
+  }).addTo(_leafletMap);
+}
+
+function renderMap(vehicles) {
+  if (!_leafletMap) return;
+  _leafletMarkers.forEach(m => m.remove());
+  _leafletMarkers = [];
+
+  vehicles.forEach(v => {
+    const lat = parseFloat(v.latitude);
+    const lng = parseFloat(v.longitude);
+    if (!lat || !lng) return;
+
+    const isMoving = v.isStop === 0 || v.status === 'Move';
+    const color = isMoving ? '#4cf07a' : '#ff5757';
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:32px;height:32px;background:${color};border:2px solid rgba(255,255,255,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.5)">${isMoving ? '🚕' : '🅿️'}</div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
+
+    const marker = L.marker([lat, lng], { icon }).addTo(_leafletMap);
+    const speed = parseFloat(v.speed || 0).toFixed(0);
+    marker.bindPopup(`
+      <div style="font-family:'DM Sans',sans-serif;min-width:160px;">
+        <div style="font-weight:700;font-size:14px;margin-bottom:6px;">${v.name || v.sn}</div>
+        <div style="color:${color};font-size:12px;font-weight:600;margin-bottom:4px;">${isMoving ? '▶ В движении' : '■ Стоит'}</div>
+        <div style="font-size:12px;color:#888;">${speed} km/h</div>
+        <div style="font-size:11px;color:#888;margin-top:4px;">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+      </div>
+    `);
+    _leafletMarkers.push(marker);
+  });
+
+  if (_leafletMarkers.length > 0) {
+    const group = L.featureGroup(_leafletMarkers);
+    _leafletMap.fitBounds(group.getBounds().pad(0.15));
+  }
+}
+
 async function loadFleet(manual = false) {
   if (manual) {
     const btn = document.getElementById('fleet-refresh-btn');
@@ -805,47 +922,58 @@ async function loadFleet(manual = false) {
   try {
     const data = await api('/api/fleet', {}, FLEET_API);
 
-    // Parse the "d" field — it's a JSON string
     let vehicles = [];
     if (data.d) {
       try {
-        // PlanetGPS returns non-standard JSON, fix it
         const fixed = data.d
           .replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":')
           .replace(/:\s*'([^']*)'/g, ':"$1"');
         const parsed = JSON.parse(fixed);
         vehicles = parsed.devices || [];
       } catch(e) {
-        // fallback: extract with regex
-        console.warn('JSON parse failed, trying fallback', e);
+        console.warn('JSON parse failed', e);
       }
     }
 
     state.fleetData = vehicles;
-    renderFleet(vehicles);
 
-    // Update last update time
-    document.getElementById('fleet-stats').style.display = '';
+    // Show UI
+    document.getElementById('fleet-loading').style.display = 'none';
+    document.getElementById('fleet-inner-tabs').style.display = '';
     document.getElementById('last-update').style.display = '';
     document.getElementById('last-update-text').textContent = `Обновлено ${new Date().toLocaleTimeString('ru', {hour:'2-digit',minute:'2-digit'})}`;
 
-  } catch(e) {
-    if (state.fleetData.length === 0) {
-      document.getElementById('fleet-list').innerHTML = `
-        <div class="fleet-error">
-          <div class="fleet-error-icon">📡</div>
-          <div class="empty-title">Нет данных GPS</div>
-          <div class="fleet-error-text">${esc(e.message)}</div>
-          <button class="fleet-retry-btn" onclick="loadFleet(true)">Повторить</button>
-        </div>
-      `;
+    // Update stats
+    const moving = vehicles.filter(v => v.isStop === 0 || v.status === 'Move').length;
+    const stopped = vehicles.filter(v => v.isStop === 1 || v.status === 'Stop').length;
+    document.getElementById('stat-moving').textContent = moving;
+    document.getElementById('stat-stopped').textContent = stopped;
+
+    // Render current tab
+    switchFleetTab(_currentFleetTab);
+
+    // Init map on first load
+    if (_currentFleetTab === 'map') {
+      initMap();
+      setTimeout(() => { _leafletMap.invalidateSize(); renderMap(vehicles); }, 200);
     }
+
+  } catch(e) {
+    document.getElementById('fleet-loading').innerHTML = `
+      <div class="fleet-error">
+        <div class="fleet-error-icon">📡</div>
+        <div class="empty-title">Нет данных GPS</div>
+        <div class="fleet-error-text">${esc(e.message)}</div>
+        <button class="fleet-retry-btn" onclick="loadFleet(true)">Повторить</button>
+      </div>
+    `;
     if (manual) toast('Ошибка обновления', 'error');
   }
 }
 
 function renderFleet(vehicles) {
   const list = document.getElementById('fleet-list');
+  if (!list) return;
 
   if (!vehicles.length) {
     list.innerHTML = `<div class="empty"><div class="empty-icon">🚗</div><div class="empty-title">Нет машин</div><div class="empty-sub">Данные не получены</div></div>`;
@@ -854,11 +982,6 @@ function renderFleet(vehicles) {
 
   const moving = vehicles.filter(v => v.isStop === 0 || v.status === 'Move');
   const stopped = vehicles.filter(v => v.isStop === 1 || v.status === 'Stop');
-
-  document.getElementById('stat-moving').textContent = moving.length;
-  document.getElementById('stat-stopped').textContent = stopped.length;
-
-  // Sort: moving first
   const sorted = [...moving, ...stopped];
 
   list.innerHTML = sorted.map((v, i) => {
@@ -869,8 +992,6 @@ function renderFleet(vehicles) {
     const dist = parseFloat(v.distance || 0);
     const distStr = dist > 1000 ? (dist / 1000).toFixed(1) + 'k mi' : Math.round(dist) + ' mi';
     const course = getCourseArrow(parseInt(v.course || 0));
-
-    // Format time
     let timeStr = '';
     if (v.deviceUtcDate) {
       try {
@@ -878,40 +999,57 @@ function renderFleet(vehicles) {
         timeStr = d.toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'}) + ' UTC';
       } catch(e) { timeStr = v.deviceUtcDate; }
     }
-
     return `
-      <div class="vehicle-card ${statusClass}" style="animation-delay:${i * 40}ms">
+      <div class="vehicle-card ${statusClass}" style="animation-delay:${i*40}ms">
         <div class="vc-top">
           <div class="vc-icon">${isMoving ? '🚕' : '🅿️'}</div>
           <div style="flex:1;min-width:0">
-            <div class="vc-name">${esc(v.name)}</div>
+            <div class="vc-name">${esc(v.name || v.sn)}</div>
             <div class="vc-id">SN: ${esc(v.sn)}</div>
           </div>
           <div class="vc-badge ${statusClass}">${statusLabel}</div>
         </div>
         <div class="vc-grid">
-          <div class="vc-metric">
-            <div class="vc-metric-val">${speed} <span style="font-size:10px;color:var(--muted)">km/h</span></div>
-            <div class="vc-metric-lbl">Скорость</div>
-          </div>
-          <div class="vc-metric">
-            <div class="vc-metric-val">${course}</div>
-            <div class="vc-metric-lbl">Курс</div>
-          </div>
-          <div class="vc-metric">
-            <div class="vc-metric-val" style="font-size:12px">${distStr}</div>
-            <div class="vc-metric-lbl">Пробег</div>
-          </div>
+          <div class="vc-metric"><div class="vc-metric-val">${speed} <span style="font-size:10px;color:var(--muted)">km/h</span></div><div class="vc-metric-lbl">Скорость</div></div>
+          <div class="vc-metric"><div class="vc-metric-val">${course}</div><div class="vc-metric-lbl">Курс</div></div>
+          <div class="vc-metric"><div class="vc-metric-val" style="font-size:12px">${distStr}</div><div class="vc-metric-lbl">Пробег</div></div>
         </div>
-        ${v.latitude && v.longitude ? `
-        <div class="vc-addr">
-          <span class="vc-addr-icon">📍</span>
-          <span>${parseFloat(v.latitude).toFixed(5)}, ${parseFloat(v.longitude).toFixed(5)}</span>
-        </div>` : ''}
+        ${v.latitude && v.longitude ? `<div class="vc-addr"><span class="vc-addr-icon">📍</span><span>${parseFloat(v.latitude).toFixed(5)}, ${parseFloat(v.longitude).toFixed(5)}</span></div>` : ''}
         ${timeStr ? `<div class="vc-time">🕐 ${timeStr}</div>` : ''}
       </div>
     `;
   }).join('');
+}
+
+async function loadReport() {
+  const from = document.getElementById('report-date-from').value;
+  const to = document.getElementById('report-date-to').value;
+  if (!from || !to) { toast('Выберите период', 'error'); return; }
+
+  const list = document.getElementById('report-list');
+  list.innerHTML = `<div class="loading-wrap" style="padding:40px 0;"><div class="spinner"></div><div class="loading-text">Загрузка...</div></div>`;
+
+  try {
+    const data = await api(`/api/fleet/report?from=${from}&to=${to}`, {}, FLEET_API);
+    if (!data.devices || !data.devices.length) {
+      list.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Нет данных</div></div>`;
+      return;
+    }
+    list.innerHTML = `<div class="slabel" style="padding:14px 0 8px">Пробег за период</div>` +
+      data.devices.map(d => `
+        <div class="vehicle-card stopped" style="margin-bottom:8px">
+          <div class="vc-top">
+            <div class="vc-icon" style="background:var(--accent-bg)">🚗</div>
+            <div style="flex:1;min-width:0">
+              <div class="vc-name">${esc(d.name)}</div>
+            </div>
+            <div class="vc-badge moving">${d.mileage}</div>
+          </div>
+        </div>
+      `).join('');
+  } catch(e) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Ошибка</div><div class="empty-sub">${esc(e.message)}</div></div>`;
+  }
 }
 
 function getCourseArrow(course) {
