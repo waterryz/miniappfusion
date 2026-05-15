@@ -6,138 +6,97 @@
   <title>Prime Fusion</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0a0a0b;
-      --surface: #111114;
-      --card: #16161a;
-      --card-hover: #1c1c22;
-      --border: rgba(255,255,255,0.08);
-      --border2: rgba(255,255,255,0.16);
-      --text: #ffffff;
-      --text-secondary: #b8b8c2;
-      --muted: #8a8a96;
-      --accent: #c8f04c;
-      --accent-bg: rgba(200,240,76,0.1);
-      --red: #ff5757;
-      --red-bg: rgba(255,87,87,0.1);
-      --green: #4cf07a;
-      --green-bg: rgba(76,240,122,0.1);
-      --orange: #f0a84c;
-      --orange-bg: rgba(240,168,76,0.1);
-      --radius: 16px;
-      --radius-sm: 10px;
+      --bg: #0a0a0b; --surface: #111114; --card: #16161a; --card-hover: #1c1c22;
+      --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.16);
+      --text: #ffffff; --text-secondary: #b8b8c2; --muted: #8a8a96;
+      --accent: #c8f04c; --accent-bg: rgba(200,240,76,0.1);
+      --red: #ff5757; --red-bg: rgba(255,87,87,0.1);
+      --green: #4cf07a; --green-bg: rgba(76,240,122,0.1);
+      --radius: 16px; --radius-sm: 10px;
     }
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; overflow: hidden; }
-
     #app { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
     .screen.active { display: flex; }
-
-    /* TAB BAR */
     .tab-bar { display: none; flex-shrink: 0; padding: 0 20px 12px; gap: 8px; }
     .tab-bar.visible { display: flex; }
-    .tab-btn { flex: 1; padding: 10px 0; border: 1px solid var(--border); background: var(--card); border-radius: var(--radius-sm); color: var(--muted); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .tab-btn { flex: 1; padding: 10px 0; border: 1px solid var(--border); background: var(--card); border-radius: var(--radius-sm); color: var(--muted); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .tab-btn.active { background: var(--accent-bg); border-color: rgba(200,240,76,0.35); color: var(--accent); }
-    .tab-btn:active { transform: scale(0.97); }
-
-    /* LOGO BAR */
+    .fi-tabs { display: flex; gap: 6px; padding: 8px 20px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
+    .fi-btn { flex: 1; padding: 8px 0; border: 1px solid var(--border); background: var(--card); border-radius: var(--radius-sm); color: var(--muted); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .fi-btn.active { background: var(--accent-bg); border-color: rgba(200,240,76,0.35); color: var(--accent); }
+    #leaflet-map { width: 100%; height: 100%; }
+    .leaflet-container { background: #1a1a1f; }
     .logo-bar { padding: 18px 20px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .logo-mark { width: 36px; height: 36px; background: transparent; border-radius: 0; display: flex; align-items: center; justify-content: center; }
-    .logo-mark img { width: 36px; height: 36px; object-fit: contain; border-radius: 0; }
+    .logo-mark { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+    .logo-mark img { width: 36px; height: 36px; object-fit: contain; }
     .logo-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
     .logo-tag { margin-left: auto; font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
     .logo-badge { margin-left: auto; background: var(--accent-bg); border: 1px solid rgba(200,240,76,0.25); color: var(--accent); border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 600; }
-
-    /* HEADER */
     .header { padding: 14px 20px 4px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
     .back-btn { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--accent); background: var(--accent-bg); color: var(--accent); font-size: 20px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
     .back-btn:active { background: var(--accent); color: #0a0a0b; transform: scale(0.92); }
     .header-info { flex: 1; min-width: 0; }
-    .header-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
-    .header-sub { font-size: 13px; color: var(--text-secondary); margin-top: 2px; font-weight: 400; }
-
-    /* SEARCH */
+    .header-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .header-sub { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
     .search-wrap { padding: 12px 20px 8px; flex-shrink: 0; display: flex; gap: 8px; align-items: center; }
-    .search-box { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 12px; transition: border-color 0.2s; }
+    .search-box { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 12px; }
     .search-box:focus-within { border-color: var(--border2); }
     .search-icon { color: var(--muted); font-size: 15px; }
     .search-input { flex: 1; background: none; border: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 11px 0; outline: none; }
     .search-input::placeholder { color: var(--muted); }
-    .icon-btn { width: 42px; height: 42px; border-radius: var(--radius-sm); background: var(--accent); color: #0a0a0b; border: none; font-size: 24px; font-weight: 400; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s, transform 0.1s; }
+    .icon-btn { width: 42px; height: 42px; border-radius: var(--radius-sm); background: var(--accent); color: #0a0a0b; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .icon-btn:active { opacity: 0.85; transform: scale(0.95); }
-
-    /* SCROLL */
     .scroll-body { flex: 1; overflow-y: auto; padding: 6px 20px 28px; -webkit-overflow-scrolling: touch; }
     .scroll-body::-webkit-scrollbar { display: none; }
-
     .slabel { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 14px 0 10px; }
-
-    /* DRIVER CARD */
     .driver-card { display: flex; align-items: center; gap: 13px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s, transform 0.1s, background 0.15s; position: relative; overflow: hidden; animation: fadeUp 0.22s ease both; }
     .driver-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); opacity: 0; transition: opacity 0.15s; }
     .driver-card:active { transform: scale(0.985); background: var(--card-hover); border-color: var(--border2); }
     .driver-card:active::before { opacity: 1; }
-    .driver-card:nth-child(2) { animation-delay: 40ms; }
-    .driver-card:nth-child(3) { animation-delay: 80ms; }
-    .driver-card:nth-child(4) { animation-delay: 120ms; }
-    .driver-card:nth-child(5) { animation-delay: 160ms; }
-
     .d-avatar { width: 44px; height: 44px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; }
     .d-info { flex: 1; min-width: 0; }
-    .d-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.1px; color: var(--text); }
-    .d-plate { font-size: 12.5px; color: var(--text-secondary); margin-top: 3px; font-weight: 400; letter-spacing: 0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .d-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .d-plate { font-size: 12.5px; color: var(--text-secondary); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .d-chip { flex-shrink: 0; background: var(--accent-bg); border: 1px solid rgba(200,240,76,0.25); color: var(--accent); border-radius: 20px; padding: 5px 11px; font-size: 12px; font-weight: 700; min-width: 32px; text-align: center; }
     .d-chip.zero { background: transparent; border-color: var(--border2); color: var(--muted); }
-
-    /* PROFILE CARD (info block) */
     .info-block { margin: 14px 20px 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; flex-shrink: 0; }
     .info-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); gap: 12px; }
     .info-row:last-child { border-bottom: none; }
     .info-key { font-size: 11.5px; color: var(--muted); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; flex-shrink: 0; }
-    .info-val { font-size: 15px; color: var(--text); font-weight: 600; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .info-val.mono { font-family: 'DM Sans', monospace; letter-spacing: 0.02em; }
-
-    /* PROFILE ACTIONS */
-    .action-btn { width: 100%; padding: 15px; border: none; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 14.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.02em; }
+    .info-val { font-size: 15px; font-weight: 600; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .info-val.mono { font-family: 'DM Sans', monospace; }
+    .action-btn { width: 100%; padding: 15px; border: none; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 14.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.15s, transform 0.1s; }
     .action-btn.primary { background: var(--accent); color: #0a0a0b; }
-    .action-btn.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border2); }
     .action-btn.danger { background: transparent; color: var(--red); border: 1px solid rgba(255,87,87,0.4); }
     .action-btn:active { transform: scale(0.98); opacity: 0.85; }
-
     .actions-wrap { padding: 14px 20px 0; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
-
     .divider { height: 1px; background: var(--border); margin: 14px 20px 0; flex-shrink: 0; }
-
-    /* PHOTO GRID */
     .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
     .photo-cell { aspect-ratio: 1; background: var(--card); border-radius: 8px; overflow: hidden; cursor: pointer; position: relative; }
     .photo-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .photo-cell:active img { opacity: 0.8; }
-    .photo-label { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85)); padding: 16px 6px 6px; font-size: 10px; color: rgba(255,255,255,0.95); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
-
-    /* EMPTY */
+    .photo-label { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85)); padding: 16px 6px 6px; font-size: 10px; color: rgba(255,255,255,0.95); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .empty { text-align: center; padding: 48px 20px; }
     .empty-icon { width: 56px; height: 56px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 14px; }
-    .empty-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
-    .empty-sub { font-size: 13px; color: var(--text-secondary); font-weight: 400; }
-
-    /* LIGHTBOX */
+    .empty-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .empty-sub { font-size: 13px; color: var(--text-secondary); }
     .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 100; display: none; flex-direction: column; }
     .lightbox.open { display: flex; }
     .lb-bar { padding: 12px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .lb-btn { width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; flex-shrink: 0; }
     .lb-btn.danger { background: rgba(255,87,87,0.18); border-color: rgba(255,87,87,0.4); color: var(--red); }
-    .lb-title { flex: 1; font-size: 13px; color: rgba(255,255,255,0.7); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 400; }
+    .lb-title { flex: 1; font-size: 13px; color: rgba(255,255,255,0.7); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lb-img-wrap { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
     .lb-img-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; }
     .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.5); color: #fff; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .lb-nav.prev { left: 8px; } .lb-nav.next { right: 8px; }
     .lb-counter { text-align: center; padding: 10px; font-size: 12px; color: rgba(255,255,255,0.5); flex-shrink: 0; }
-
-    /* FORMS */
     .form-body { flex: 1; overflow-y: auto; padding: 18px 20px 32px; display: flex; flex-direction: column; gap: 14px; }
     .form-group { display: flex; flex-direction: column; gap: 8px; }
     .form-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); }
@@ -152,92 +111,66 @@
     .form-input:focus, .form-select:focus { border-color: var(--border2); }
     .form-input::placeholder { color: var(--muted); font-weight: 400; }
     .form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8a96' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
-    .submit-btn { width: 100%; padding: 15px; background: var(--accent); color: #0a0a0b; border: none; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.02em; }
+    .submit-btn { width: 100%; padding: 15px; background: var(--accent); color: #0a0a0b; border: none; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: opacity 0.15s, transform 0.1s; }
     .submit-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .submit-btn:not(:disabled):active { opacity: 0.85; transform: scale(0.98); }
-
-    /* WIP */
     .wip-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 32px; text-align: center; }
     .wip-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,180,0,0.12); border: 1px solid rgba(255,180,0,0.25); border-radius: 20px; padding: 6px 13px; font-size: 11px; font-weight: 600; color: #ffb400; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 18px; }
     .wip-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px; }
-    .wip-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.6; font-weight: 400; max-width: 280px; }
-
-    /* LOADING */
+    .wip-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.6; max-width: 280px; }
     .loading-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
     .spinner { width: 30px; height: 30px; border: 2.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
-    .loading-text { font-size: 13px; color: var(--text-secondary); font-weight: 400; }
+    .loading-text { font-size: 13px; color: var(--text-secondary); }
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* TOAST */
     .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--card); border: 1px solid var(--border2); color: var(--text); padding: 11px 18px; border-radius: 24px; font-size: 13.5px; font-weight: 500; z-index: 999; transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; }
     .toast.show { transform: translateX(-50%) translateY(0); }
     .toast.success { border-color: rgba(200,240,76,0.4); color: var(--accent); }
     .toast.error { border-color: rgba(255,87,87,0.4); color: var(--red); }
-
-    /* MODAL (confirm) */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: none; align-items: flex-end; justify-content: center; animation: fadeIn 0.2s ease; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
     .modal-overlay.open { display: flex; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slideUp { from { transform: translateY(40px); } to { transform: translateY(0); } }
     .modal { width: 100%; max-width: 420px; background: var(--surface); border-top: 1px solid var(--border2); border-radius: 20px 20px 0 0; padding: 24px 20px 28px; animation: slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes slideUp { from { transform: translateY(40px); } to { transform: translateY(0); } }
     .modal-icon { width: 54px; height: 54px; background: var(--red-bg); border: 1px solid rgba(255,87,87,0.25); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 14px; }
-    .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 8px; letter-spacing: -0.2px; color: var(--text); }
-    .modal-text { font-size: 14px; color: var(--text-secondary); text-align: center; line-height: 1.55; margin-bottom: 18px; font-weight: 400; }
+    .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+    .modal-text { font-size: 14px; color: var(--text-secondary); text-align: center; line-height: 1.55; margin-bottom: 18px; }
     .modal-actions { display: flex; gap: 8px; }
-    .modal-btn { flex: 1; padding: 13px; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; border: none; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.02em; }
+    .modal-btn { flex: 1; padding: 13px; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; border: none; }
     .modal-btn.cancel { background: var(--card); color: var(--text); border: 1px solid var(--border2); }
     .modal-btn.confirm { background: var(--red); color: #fff; }
     .modal-btn:active { transform: scale(0.97); opacity: 0.85; }
-
-    /* ===== FLEET ===== */
-    .fleet-header { padding: 16px 20px 12px; flex-shrink: 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    .fleet-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
     .fleet-refresh { width: 36px; height: 36px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: var(--text-secondary); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-    .fleet-refresh:active { background: var(--accent-bg); color: var(--accent); border-color: rgba(200,240,76,0.3); }
+    .fleet-refresh:active { background: var(--accent-bg); color: var(--accent); }
     .fleet-refresh.spinning { animation: spin 0.7s linear infinite; }
-
     .fleet-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 20px; flex-shrink: 0; }
     .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
     .stat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .stat-dot.moving { background: var(--green); box-shadow: 0 0 6px rgba(76,240,122,0.5); }
     .stat-dot.stopped { background: var(--red); }
-    .stat-info { flex: 1; min-width: 0; }
-    .stat-num { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; line-height: 1; color: var(--text); }
-    .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
-
+    .stat-num { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; line-height: 1; }
+    .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 500; text-transform: uppercase; }
     .fleet-list { flex: 1; overflow-y: auto; padding: 4px 20px 20px; -webkit-overflow-scrolling: touch; }
     .fleet-list::-webkit-scrollbar { display: none; }
-
     .vehicle-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; animation: fadeUp 0.22s ease both; position: relative; overflow: hidden; }
     .vehicle-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
     .vehicle-card.moving::before { background: var(--green); }
     .vehicle-card.stopped::before { background: var(--red); }
-
     .vc-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
     .vc-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
     .vehicle-card.moving .vc-icon { background: var(--green-bg); }
     .vehicle-card.stopped .vc-icon { background: var(--red-bg); }
-    .vc-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.1px; }
-    .vc-id { font-size: 11.5px; color: var(--muted); margin-top: 2px; font-weight: 400; }
-    .vc-badge { margin-left: auto; flex-shrink: 0; border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.03em; }
+    .vc-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+    .vc-id { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+    .vc-badge { margin-left: auto; flex-shrink: 0; border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 700; }
     .vc-badge.moving { background: var(--green-bg); color: var(--green); border: 1px solid rgba(76,240,122,0.3); }
     .vc-badge.stopped { background: var(--red-bg); color: var(--red); border: 1px solid rgba(255,87,87,0.3); }
-
     .vc-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
     .vc-metric { background: var(--surface); border-radius: 8px; padding: 8px 10px; }
-    .vc-metric-val { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); }
-    .vc-metric-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
-
-    .vc-addr { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); line-height: 1.4; display: flex; gap: 6px; align-items: flex-start; }
-    .vc-addr-icon { flex-shrink: 0; margin-top: 1px; }
+    .vc-metric-val { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+    .vc-metric-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; font-weight: 500; text-transform: uppercase; }
+    .vc-addr { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); display: flex; gap: 6px; }
     .vc-time { margin-top: 6px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
-
-    .fleet-error { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 32px; text-align: center; gap: 14px; }
-    .fleet-error-icon { font-size: 40px; }
-    .fleet-error-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
     .fleet-retry-btn { padding: 12px 24px; background: var(--accent); color: #0a0a0b; border: none; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
-
     .last-update { padding: 0 20px 8px; font-size: 11px; color: var(--muted); flex-shrink: 0; display: flex; align-items: center; gap: 5px; }
     .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 4px rgba(76,240,122,0.6); animation: pulse 2s ease-in-out infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
@@ -245,8 +178,6 @@
 </head>
 <body>
 <div id="app">
-
-  <!-- WIP -->
   <div class="screen active" id="screen-wip">
     <div class="logo-bar">
       <div class="logo-mark"><img src="https://res.cloudinary.com/dimqgnupo/image/upload/v1776772340/photo_2026-01-28_21-59-27_dnx6gl.jpg" alt="Prime Fusion" /></div>
@@ -258,27 +189,20 @@
       <div class="wip-sub">Этот раздел находится в разработке. Следите за обновлениями.</div>
     </div>
   </div>
-
-  <!-- LOADING -->
   <div class="screen" id="screen-loading">
     <div class="logo-bar">
       <div class="logo-mark"><img src="https://res.cloudinary.com/dimqgnupo/image/upload/v1776772340/photo_2026-01-28_21-59-27_dnx6gl.jpg" alt="Prime Fusion" /></div>
       <div class="logo-name">Prime Fusion</div>
     </div>
-    <div class="loading-wrap">
-      <div class="spinner"></div>
-      <div class="loading-text">Загрузка...</div>
-    </div>
+    <div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Загрузка...</div></div>
   </div>
-
-  <!-- DRIVERS LIST -->
   <div class="screen" id="screen-drivers">
     <div class="logo-bar">
       <div class="logo-mark"><img src="https://res.cloudinary.com/dimqgnupo/image/upload/v1776772340/photo_2026-01-28_21-59-27_dnx6gl.jpg" alt="Prime Fusion" /></div>
       <div class="logo-name">Prime Fusion</div>
       <div class="logo-tag">Admin</div>
     </div>
-    <div class="tab-bar visible" id="tab-bar-drivers">
+    <div class="tab-bar visible">
       <button class="tab-btn active" id="tab-drivers" onclick="switchTab('drivers')">👥 Водители</button>
       <button class="tab-btn" id="tab-fleet" onclick="switchTab('fleet')">🗺 Fleet</button>
     </div>
@@ -287,12 +211,10 @@
         <span class="search-icon">⌕</span>
         <input class="search-input" id="search-input" placeholder="Поиск по имени или номеру..." oninput="filterDrivers()" />
       </div>
-      <button class="icon-btn" onclick="showAddDriver()" title="Добавить">+</button>
+      <button class="icon-btn" onclick="showAddDriver()">+</button>
     </div>
     <div class="scroll-body" id="driver-list"></div>
   </div>
-
-  <!-- DRIVER PROFILE -->
   <div class="screen" id="screen-profile">
     <div class="header">
       <button class="back-btn" onclick="showDrivers()">←</button>
@@ -303,17 +225,11 @@
     </div>
     <div class="info-block" id="info-block"></div>
     <div class="actions-wrap">
-      <button class="action-btn primary" onclick="showDocuments()">
-        📁 Документы водителя
-      </button>
-      <button class="action-btn danger" onclick="confirmDeleteDriver()">
-        🗑 Удалить водителя
-      </button>
+      <button class="action-btn primary" onclick="showDocuments()">📁 Документы водителя</button>
+      <button class="action-btn danger" onclick="confirmDeleteDriver()">🗑 Удалить водителя</button>
     </div>
     <div style="flex:1"></div>
   </div>
-
-  <!-- DOCUMENTS -->
   <div class="screen" id="screen-docs">
     <div class="header">
       <button class="back-btn" onclick="showProfile()">←</button>
@@ -324,9 +240,7 @@
       <div class="logo-badge" id="docs-count"></div>
     </div>
     <div class="actions-wrap">
-      <button class="action-btn primary" onclick="showUpload()">
-        <span style="font-size:18px;line-height:1">+</span> Загрузить документ
-      </button>
+      <button class="action-btn primary" onclick="showUpload()"><span style="font-size:18px;line-height:1">+</span> Загрузить документ</button>
     </div>
     <div class="divider"></div>
     <div class="scroll-body">
@@ -334,8 +248,6 @@
       <div class="photo-grid" id="photo-grid"></div>
     </div>
   </div>
-
-  <!-- UPLOAD -->
   <div class="screen" id="screen-upload">
     <div class="header">
       <button class="back-btn" onclick="showDocuments()">←</button>
@@ -363,8 +275,6 @@
       <button class="submit-btn" id="upload-btn" onclick="submitUpload()" disabled>Загрузить</button>
     </div>
   </div>
-
-  <!-- ADD DRIVER -->
   <div class="screen" id="screen-add">
     <div class="header">
       <button class="back-btn" onclick="showDrivers()">←</button>
@@ -410,41 +320,42 @@
     <div class="logo-bar">
       <div class="logo-mark"><img src="https://res.cloudinary.com/dimqgnupo/image/upload/v1776772340/photo_2026-01-28_21-59-27_dnx6gl.jpg" alt="Prime Fusion" /></div>
       <div class="logo-name">Prime Fusion</div>
-      <button class="fleet-refresh" id="fleet-refresh-btn" onclick="loadFleet(true)" title="Обновить" style="margin-left:auto">↻</button>
+      <button class="fleet-refresh" id="fleet-refresh-btn" onclick="loadFleet(true)" style="margin-left:auto">↻</button>
     </div>
     <div class="tab-bar visible">
       <button class="tab-btn" id="tab-drivers-2" onclick="switchTab('drivers')">👥 Водители</button>
       <button class="tab-btn active" id="tab-fleet-2" onclick="switchTab('fleet')">🗺 Fleet</button>
     </div>
-    <div class="fleet-stats" id="fleet-stats" style="display:none">
-      <div class="stat-card">
-        <div class="stat-dot moving"></div>
-        <div class="stat-info">
-          <div class="stat-num" id="stat-moving">0</div>
-          <div class="stat-lbl">В движении</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-dot stopped"></div>
-        <div class="stat-info">
-          <div class="stat-num" id="stat-stopped">0</div>
-          <div class="stat-lbl">Стоят</div>
-        </div>
-      </div>
+    <div class="fi-tabs" id="fi-tabs" style="display:none">
+      <button class="fi-btn active" id="fi-map" onclick="switchFleetTab('map')">🗺 Карта</button>
+      <button class="fi-btn" id="fi-list" onclick="switchFleetTab('list')">📋 Список</button>
     </div>
     <div class="last-update" id="last-update" style="display:none">
       <div class="live-dot"></div>
       <span id="last-update-text">Обновлено только что</span>
     </div>
-    <div class="fleet-list" id="fleet-list">
-      <div class="loading-wrap" style="padding: 60px 0;">
-        <div class="spinner"></div>
-        <div class="loading-text">Загрузка данных GPS...</div>
+    <div id="fleet-view-map" style="flex:1;display:none;position:relative;">
+      <div id="leaflet-map" style="width:100%;height:100%;"></div>
+    </div>
+    <div id="fleet-view-list" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="fleet-stats">
+        <div class="stat-card">
+          <div class="stat-dot moving"></div>
+          <div><div class="stat-num" id="stat-moving">0</div><div class="stat-lbl">В движении</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-dot stopped"></div>
+          <div><div class="stat-num" id="stat-stopped">0</div><div class="stat-lbl">Стоят</div></div>
+        </div>
       </div>
+      <div class="fleet-list" id="fleet-list"></div>
+    </div>
+    <div id="fleet-loading" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+      <div class="spinner"></div>
+      <div class="loading-text">Загрузка данных GPS...</div>
     </div>
   </div>
 
-  <!-- LIGHTBOX -->
   <div class="lightbox" id="lightbox">
     <div class="lb-bar">
       <button class="lb-btn" onclick="closeLightbox()">✕</button>
@@ -461,7 +372,6 @@
   </div>
 </div>
 
-<!-- MODAL -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div class="modal-icon">⚠</div>
@@ -473,8 +383,6 @@
     </div>
   </div>
 </div>
-
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -489,8 +397,10 @@ const state = {
   fleetData: [], fleetInterval: null,
   currentTab: 'drivers',
 };
+let _fleetTab = 'map';
+let _map = null;
+let _mapMarkers = [];
 
-// ===== INIT =====
 async function init() {
   if (tg) { tg.ready(); tg.expand(); state.initData = tg.initData || ''; }
   showScreen('loading');
@@ -502,7 +412,6 @@ async function init() {
   } catch(e) { showScreen('wip'); }
 }
 
-// ===== API =====
 async function api(path, opts={}, base=API) {
   const r = await fetch(base+path, {
     headers: {'Content-Type':'application/json', 'X-Telegram-Init-Data':state.initData, ...(opts.headers||{})},
@@ -516,65 +425,79 @@ async function api(path, opts={}, base=API) {
   return r.json();
 }
 
-// ===== SCREENS =====
 function showScreen(n) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-'+n).classList.add('active');
 }
 
-// ===== TABS =====
 function switchTab(tab) {
   state.currentTab = tab;
-
-  // Update all tab buttons
-  ['tab-drivers','tab-fleet','tab-drivers-2','tab-fleet-2'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
+  ['tab-drivers','tab-fleet','tab-drivers-2','tab-fleet-2'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('active'); });
   if (tab === 'drivers') {
     ['tab-drivers','tab-drivers-2'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('active'); });
-    stopFleetPolling();
-    showScreen('drivers');
-  } else if (tab === 'fleet') {
+    stopFleetPolling(); showScreen('drivers');
+  } else {
     ['tab-fleet','tab-fleet-2'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('active'); });
-    showScreen('fleet');
-    loadFleet();
-    startFleetPolling();
+    showScreen('fleet'); loadFleet(); startFleetPolling();
   }
 }
 
-// ===== DRIVERS LIST =====
+function switchFleetTab(tab) {
+  _fleetTab = tab;
+  ['map','list'].forEach(t => document.getElementById('fi-'+t).classList.toggle('active', t === tab));
+  document.getElementById('fleet-view-map').style.display = tab === 'map' ? 'block' : 'none';
+  const lv = document.getElementById('fleet-view-list');
+  lv.style.display = tab === 'list' ? 'flex' : 'none';
+  if (tab === 'map') { if (!_map) initMap(); setTimeout(() => { _map.invalidateSize(); renderMap(state.fleetData); }, 100); }
+  if (tab === 'list') renderFleet(state.fleetData);
+}
+
+function initMap() {
+  if (_map) return;
+  _map = L.map('leaflet-map', { center: [40.73, -73.99], zoom: 11 });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(_map);
+}
+
+function renderMap(vehicles) {
+  if (!_map) return;
+  _mapMarkers.forEach(m => m.remove()); _mapMarkers = [];
+  vehicles.forEach(v => {
+    const lat = parseFloat(v.latitude), lng = parseFloat(v.longitude);
+    if (!lat || !lng) return;
+    const isMoving = v.isStop === 0 || v.status === 'Move';
+    const color = isMoving ? '#4cf07a' : '#ff5757';
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:34px;height:34px;background:${color};border:2px solid rgba(255,255,255,0.4);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.5)">${isMoving ? '🚕' : '🅿️'}</div>`,
+      iconSize: [34,34], iconAnchor: [17,17],
+    });
+    const m = L.marker([lat,lng], {icon}).addTo(_map);
+    m.bindPopup(`<b>${v.name||v.sn}</b><br>${isMoving?'▶ В движении':'■ Стоит'}<br>${parseFloat(v.speed||0).toFixed(0)} km/h`);
+    _mapMarkers.push(m);
+  });
+  if (_mapMarkers.length > 0) _map.fitBounds(L.featureGroup(_mapMarkers).getBounds().pad(0.15));
+}
+
 async function loadDrivers() {
   const data = await api('/drivers');
-  state.drivers = data; state.filtered = data;
-  renderDriverList(data);
+  state.drivers = data; state.filtered = data; renderDriverList(data);
 }
 
 function renderDriverList(drivers) {
   const el = document.getElementById('driver-list');
-  if (!drivers.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">Нет водителей</div><div class="empty-sub">Нажмите + чтобы добавить</div></div>`;
-    return;
-  }
-  const n = drivers.length;
-  const s = n === 1 ? 'ь' : n < 5 ? 'я' : 'ей';
+  if (!drivers.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">Нет водителей</div><div class="empty-sub">Нажмите + чтобы добавить</div></div>`; return; }
+  const n = drivers.length, s = n===1?'ь':n<5?'я':'ей';
   el.innerHTML = `<div class="slabel">${n} водител${s}</div>` + drivers.map(d => `
     <div class="driver-card" onclick="openDriver('${d.id}')">
       <div class="d-avatar">🚗</div>
-      <div class="d-info">
-        <div class="d-name">${esc(d.name)}</div>
-        <div class="d-plate">${esc(d.car_number)}</div>
-      </div>
-      <div class="d-chip ${d.file_count === 0 ? 'zero' : ''}">${d.file_count}</div>
-    </div>
-  `).join('');
+      <div class="d-info"><div class="d-name">${esc(d.name)}</div><div class="d-plate">${esc(d.car_number)}</div></div>
+      <div class="d-chip ${d.file_count===0?'zero':''}">${d.file_count}</div>
+    </div>`).join('');
 }
 
 function filterDrivers() {
   const q = document.getElementById('search-input').value.toLowerCase();
-  state.filtered = state.drivers.filter(d =>
-    d.name.toLowerCase().includes(q) || d.car_number.toLowerCase().includes(q)
-  );
+  state.filtered = state.drivers.filter(d => d.name.toLowerCase().includes(q) || d.car_number.toLowerCase().includes(q));
   renderDriverList(state.filtered);
 }
 
@@ -586,16 +509,13 @@ function showDrivers() {
   stopFleetPolling();
 }
 
-// ===== PROFILE =====
 async function openDriver(id) {
   showScreen('loading');
   try {
     const data = await api(`/driver/${id}`);
-    state.currentDriver = data.driver;
-    state.currentFiles = data.files;
-    renderProfile(data.driver, data.files);
-    showScreen('profile');
-  } catch(e) { toast('Ошибка загрузки', 'error'); showScreen('drivers'); }
+    state.currentDriver = data.driver; state.currentFiles = data.files;
+    renderProfile(data.driver, data.files); showScreen('profile');
+  } catch(e) { toast('Ошибка загрузки','error'); showScreen('drivers'); }
 }
 
 function renderProfile(d, files) {
@@ -607,349 +527,216 @@ function renderProfile(d, files) {
     <div class="info-row"><span class="info-key">Номер</span><span class="info-val mono">${esc(d.car_number)}</span></div>
     <div class="info-row"><span class="info-key">Тариф</span><span class="info-val">${esc(d.tariff)}</span></div>
     <div class="info-row"><span class="info-key">ID</span><span class="info-val mono">${esc(d.id)}</span></div>
-    <div class="info-row"><span class="info-key">Документов</span><span class="info-val" style="color:var(--accent)">${files.length}</span></div>
-  `;
+    <div class="info-row"><span class="info-key">Документов</span><span class="info-val" style="color:var(--accent)">${files.length}</span></div>`;
 }
-
 function showProfile() { showScreen('profile'); }
 
-// ===== DOCUMENTS =====
 function showDocuments() {
-  const d = state.currentDriver;
-  document.getElementById('docs-sub').textContent = d.name;
+  document.getElementById('docs-sub').textContent = state.currentDriver.name;
   document.getElementById('docs-count').textContent = `${state.currentFiles.length} фото`;
-  renderDocs(state.currentFiles);
-  showScreen('docs');
+  renderDocs(state.currentFiles); showScreen('docs');
 }
 
 function renderDocs(files) {
   const grid = document.getElementById('photo-grid');
-  if (!files.length) {
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📂</div><div class="empty-title">Нет документов</div><div class="empty-sub">Загрузите первый</div></div>`;
-    return;
-  }
-  grid.innerHTML = files.map((f, i) => `
-    <div class="photo-cell" onclick="openLightbox(${i})">
-      <img src="${f.url}" loading="lazy" alt="${esc(f.name)}"/>
-      <div class="photo-label">${esc(f.name)}</div>
-    </div>
-  `).join('');
+  if (!files.length) { grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📂</div><div class="empty-title">Нет документов</div><div class="empty-sub">Загрузите первый</div></div>`; return; }
+  grid.innerHTML = files.map((f,i) => `<div class="photo-cell" onclick="openLightbox(${i})"><img src="${f.url}" loading="lazy" alt="${esc(f.name)}"/><div class="photo-label">${esc(f.name)}</div></div>`).join('');
 }
 
-// ===== LIGHTBOX =====
-function openLightbox(i) {
-  state.lbIndex = i; updateLightbox();
-  document.getElementById('lightbox').classList.add('open');
-}
+function openLightbox(i) { state.lbIndex=i; updateLightbox(); document.getElementById('lightbox').classList.add('open'); }
 function updateLightbox() {
   const f = state.currentFiles[state.lbIndex];
   document.getElementById('lb-img').src = f.url;
   document.getElementById('lb-title').textContent = f.name;
   document.getElementById('lb-download').href = f.url;
-  document.getElementById('lb-counter').textContent = `${state.lbIndex + 1} / ${state.currentFiles.length}`;
-  document.getElementById('lb-prev').style.display = state.lbIndex > 0 ? 'flex' : 'none';
-  document.getElementById('lb-next').style.display = state.lbIndex < state.currentFiles.length - 1 ? 'flex' : 'none';
+  document.getElementById('lb-counter').textContent = `${state.lbIndex+1} / ${state.currentFiles.length}`;
+  document.getElementById('lb-prev').style.display = state.lbIndex>0?'flex':'none';
+  document.getElementById('lb-next').style.display = state.lbIndex<state.currentFiles.length-1?'flex':'none';
 }
-function lightboxNav(d) {
-  state.lbIndex = Math.max(0, Math.min(state.currentFiles.length - 1, state.lbIndex + d));
-  updateLightbox();
-}
+function lightboxNav(d) { state.lbIndex=Math.max(0,Math.min(state.currentFiles.length-1,state.lbIndex+d)); updateLightbox(); }
 function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
-let tx = 0;
-document.getElementById('lightbox').addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
-document.getElementById('lightbox').addEventListener('touchend', e => {
-  if (Math.abs(tx - e.changedTouches[0].clientX) > 50) lightboxNav(tx > e.changedTouches[0].clientX ? 1 : -1);
-});
+let tx=0;
+document.getElementById('lightbox').addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.getElementById('lightbox').addEventListener('touchend',e=>{if(Math.abs(tx-e.changedTouches[0].clientX)>50)lightboxNav(tx>e.changedTouches[0].clientX?1:-1);});
 
-// ===== UPLOAD =====
 function showUpload() {
-  state.selectedFile = null;
-  document.getElementById('file-input').value = '';
-  document.getElementById('doc-name').value = '';
+  state.selectedFile=null;
+  document.getElementById('file-input').value='';
+  document.getElementById('doc-name').value='';
   document.getElementById('upload-preview').classList.remove('visible');
   document.getElementById('drop-zone').classList.remove('has-file');
-  document.getElementById('drop-zone').querySelector('.drop-zone-text').textContent = 'Нажмите чтобы выбрать';
-  document.getElementById('upload-btn').disabled = true;
-  document.getElementById('upload-btn').textContent = 'Загрузить';
-  document.getElementById('upload-sub').textContent = state.currentDriver.name;
+  document.getElementById('drop-zone').querySelector('.drop-zone-text').textContent='Нажмите чтобы выбрать';
+  document.getElementById('upload-btn').disabled=true;
+  document.getElementById('upload-btn').textContent='Загрузить';
+  document.getElementById('upload-sub').textContent=state.currentDriver.name;
   showScreen('upload');
 }
-
 function handleFileSelect(e) {
-  const file = e.target.files[0]; if (!file) return;
-  state.selectedFile = file;
-  const r = new FileReader();
-  r.onload = ev => {
-    const p = document.getElementById('upload-preview');
-    p.src = ev.target.result; p.classList.add('visible');
+  const file=e.target.files[0]; if(!file) return;
+  state.selectedFile=file;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const p=document.getElementById('upload-preview');
+    p.src=ev.target.result; p.classList.add('visible');
     document.getElementById('drop-zone').classList.add('has-file');
-    document.getElementById('drop-zone').querySelector('.drop-zone-text').textContent = file.name;
+    document.getElementById('drop-zone').querySelector('.drop-zone-text').textContent=file.name;
     checkUploadReady();
   };
   r.readAsDataURL(file);
 }
-
-function checkUploadReady() {
-  document.getElementById('upload-btn').disabled =
-    !(state.selectedFile && document.getElementById('doc-name').value.trim().length > 0);
-}
-
+function checkUploadReady() { document.getElementById('upload-btn').disabled=!(state.selectedFile&&document.getElementById('doc-name').value.trim().length>0); }
 async function submitUpload() {
-  const btn = document.getElementById('upload-btn');
-  btn.disabled = true; btn.textContent = 'Загружаю...';
+  const btn=document.getElementById('upload-btn');
+  btn.disabled=true; btn.textContent='Загружаю...';
   try {
-    const r = new FileReader();
-    r.onload = async ev => {
-      const name = document.getElementById('doc-name').value.trim();
-      await api(`/driver/${state.currentDriver.id}/upload`, {
-        method: 'POST',
-        body: JSON.stringify({ image: ev.target.result, name }),
-      });
-      toast('Документ загружен', 'success');
-      const data = await api(`/driver/${state.currentDriver.id}`);
-      state.currentFiles = data.files;
-      renderDocs(data.files);
-      document.getElementById('docs-count').textContent = `${data.files.length} фото`;
+    const r=new FileReader();
+    r.onload=async ev=>{
+      const name=document.getElementById('doc-name').value.trim();
+      await api(`/driver/${state.currentDriver.id}/upload`,{method:'POST',body:JSON.stringify({image:ev.target.result,name})});
+      toast('Документ загружен','success');
+      const data=await api(`/driver/${state.currentDriver.id}`);
+      state.currentFiles=data.files; renderDocs(data.files);
+      document.getElementById('docs-count').textContent=`${data.files.length} фото`;
       showScreen('docs');
     };
     r.readAsDataURL(state.selectedFile);
-  } catch(e) {
-    toast('Ошибка: ' + e.message, 'error');
-    btn.disabled = false; btn.textContent = 'Загрузить';
-  }
+  } catch(e) { toast('Ошибка: '+e.message,'error'); btn.disabled=false; btn.textContent='Загрузить'; }
 }
 
-// ===== ADD DRIVER =====
 function showAddDriver() {
-  ['add-id', 'add-name', 'add-model', 'add-number'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('add-tariff').value = '';
-  document.getElementById('add-btn').disabled = true;
-  document.getElementById('add-btn').textContent = 'Добавить водителя';
+  ['add-id','add-name','add-model','add-number'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('add-tariff').value='';
+  document.getElementById('add-btn').disabled=true;
+  document.getElementById('add-btn').textContent='Добавить водителя';
   showScreen('add');
 }
-
 function checkAddReady() {
-  const ok = ['add-id', 'add-name', 'add-model', 'add-number', 'add-tariff']
-    .every(id => document.getElementById(id).value.trim().length > 0);
-  document.getElementById('add-btn').disabled = !ok;
+  document.getElementById('add-btn').disabled=!['add-id','add-name','add-model','add-number','add-tariff'].every(id=>document.getElementById(id).value.trim().length>0);
 }
-
 async function submitAddDriver() {
-  const btn = document.getElementById('add-btn');
-  btn.disabled = true; btn.textContent = 'Добавляю...';
+  const btn=document.getElementById('add-btn'); btn.disabled=true; btn.textContent='Добавляю...';
   try {
-    await api('/drivers', {
-      method: 'POST',
-      body: JSON.stringify({
-        id: document.getElementById('add-id').value.trim(),
-        name: document.getElementById('add-name').value.trim(),
-        car_model: document.getElementById('add-model').value.trim(),
-        car_number: document.getElementById('add-number').value.trim(),
-        tariff: document.getElementById('add-tariff').value.trim(),
-      }),
-    });
-    toast('Водитель добавлен', 'success');
-    await loadDrivers();
-    showScreen('drivers');
-  } catch(e) {
-    toast('Ошибка: ' + e.message, 'error');
-    btn.disabled = false; btn.textContent = 'Добавить водителя';
-  }
+    await api('/drivers',{method:'POST',body:JSON.stringify({
+      id:document.getElementById('add-id').value.trim(),
+      name:document.getElementById('add-name').value.trim(),
+      car_model:document.getElementById('add-model').value.trim(),
+      car_number:document.getElementById('add-number').value.trim(),
+      tariff:document.getElementById('add-tariff').value.trim(),
+    })});
+    toast('Водитель добавлен','success'); await loadDrivers(); showScreen('drivers');
+  } catch(e) { toast('Ошибка: '+e.message,'error'); btn.disabled=false; btn.textContent='Добавить водителя'; }
 }
 
-// ===== DELETE DRIVER =====
 function confirmDeleteDriver() {
-  const d = state.currentDriver;
-  openModal('Удалить водителя?', `Удалить ${d.name} (${d.car_number})? Все документы будут удалены без возможности восстановления.`, deleteDriver);
+  const d=state.currentDriver;
+  openModal('Удалить водителя?',`Удалить ${d.name} (${d.car_number})? Все документы будут удалены.`,deleteDriver);
 }
-
 async function deleteDriver() {
   closeModal(); showScreen('loading');
-  try {
-    await api(`/driver/${state.currentDriver.id}`, { method: 'DELETE' });
-    toast('Водитель удалён', 'success');
-    await loadDrivers(); showScreen('drivers');
-  } catch(e) {
-    toast('Ошибка: ' + e.message, 'error'); showScreen('profile');
-  }
+  try { await api(`/driver/${state.currentDriver.id}`,{method:'DELETE'}); toast('Водитель удалён','success'); await loadDrivers(); showScreen('drivers'); }
+  catch(e) { toast('Ошибка: '+e.message,'error'); showScreen('profile'); }
 }
 
-// ===== DELETE FILE =====
 function confirmDeleteFile() {
-  const f = state.currentFiles[state.lbIndex];
-  openModal('Удалить документ?', `Удалить "${f.name}"? Это действие нельзя отменить.`, deleteFile);
+  const f=state.currentFiles[state.lbIndex];
+  openModal('Удалить документ?',`Удалить "${f.name}"?`,deleteFile);
 }
-
 async function deleteFile() {
   closeModal();
-  const f = state.currentFiles[state.lbIndex];
+  const f=state.currentFiles[state.lbIndex];
   try {
-    await api('/file', { method: 'DELETE', body: JSON.stringify({ public_id: f.public_id }) });
-    toast('Документ удалён', 'success');
-    closeLightbox();
-    const data = await api(`/driver/${state.currentDriver.id}`);
-    state.currentFiles = data.files;
-    renderDocs(data.files);
-    document.getElementById('docs-count').textContent = `${data.files.length} фото`;
-  } catch(e) { toast('Ошибка: ' + e.message, 'error'); }
+    await api('/file',{method:'DELETE',body:JSON.stringify({public_id:f.public_id})});
+    toast('Документ удалён','success'); closeLightbox();
+    const data=await api(`/driver/${state.currentDriver.id}`);
+    state.currentFiles=data.files; renderDocs(data.files);
+    document.getElementById('docs-count').textContent=`${data.files.length} фото`;
+  } catch(e) { toast('Ошибка: '+e.message,'error'); }
 }
 
-// ===== FLEET =====
-async function loadFleet(manual = false) {
+async function loadFleet(manual=false) {
   if (manual) {
-    const btn = document.getElementById('fleet-refresh-btn');
-    btn.classList.add('spinning');
-    setTimeout(() => btn.classList.remove('spinning'), 800);
+    const btn=document.getElementById('fleet-refresh-btn');
+    btn.classList.add('spinning'); setTimeout(()=>btn.classList.remove('spinning'),800);
   }
-
   try {
-    const data = await api('/api/fleet', {}, FLEET_API);
-
-    // Parse the "d" field — it's a JSON string
-    let vehicles = [];
+    const data=await api('/api/fleet',{},FLEET_API);
+    let vehicles=[];
     if (data.d) {
       try {
-        // PlanetGPS returns non-standard JSON, fix it
-        const fixed = data.d
-          .replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":')
-          .replace(/:\s*'([^']*)'/g, ':"$1"');
-        const parsed = JSON.parse(fixed);
-        vehicles = parsed.devices || [];
-      } catch(e) {
-        // fallback: extract with regex
-        console.warn('JSON parse failed, trying fallback', e);
-      }
+        const fixed=data.d.replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g,'$1"$2":').replace(/:\s*'([^']*)'/g,':"$1"');
+        vehicles=JSON.parse(fixed).devices||[];
+      } catch(e) { console.warn('parse failed',e); }
     }
-
-    state.fleetData = vehicles;
-    renderFleet(vehicles);
-
-    // Update last update time
-    document.getElementById('fleet-stats').style.display = '';
-    document.getElementById('last-update').style.display = '';
-    document.getElementById('last-update-text').textContent = `Обновлено ${new Date().toLocaleTimeString('ru', {hour:'2-digit',minute:'2-digit'})}`;
-
+    state.fleetData=vehicles;
+    document.getElementById('fleet-loading').style.display='none';
+    document.getElementById('fi-tabs').style.display='';
+    document.getElementById('last-update').style.display='';
+    document.getElementById('last-update-text').textContent=`Обновлено ${new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})}`;
+    const mv=vehicles.filter(v=>v.isStop===0||v.status==='Move').length;
+    const st=vehicles.filter(v=>v.isStop===1||v.status==='Stop').length;
+    document.getElementById('stat-moving').textContent=mv;
+    document.getElementById('stat-stopped').textContent=st;
+    if (_fleetTab==='map') {
+      document.getElementById('fleet-view-map').style.display='block';
+      document.getElementById('fleet-view-list').style.display='none';
+      if (!_map) initMap();
+      setTimeout(()=>{_map.invalidateSize(); renderMap(vehicles);},200);
+    } else {
+      document.getElementById('fleet-view-map').style.display='none';
+      document.getElementById('fleet-view-list').style.display='flex';
+      renderFleet(vehicles);
+    }
   } catch(e) {
-    if (state.fleetData.length === 0) {
-      document.getElementById('fleet-list').innerHTML = `
-        <div class="fleet-error">
-          <div class="fleet-error-icon">📡</div>
-          <div class="empty-title">Нет данных GPS</div>
-          <div class="fleet-error-text">${esc(e.message)}</div>
-          <button class="fleet-retry-btn" onclick="loadFleet(true)">Повторить</button>
-        </div>
-      `;
-    }
-    if (manual) toast('Ошибка обновления', 'error');
+    document.getElementById('fleet-loading').innerHTML=`<div style="text-align:center;padding:40px 20px;display:flex;flex-direction:column;align-items:center;gap:14px"><div style="font-size:40px">📡</div><div class="empty-title">Нет данных GPS</div><div style="font-size:14px;color:var(--text-secondary)">${esc(e.message)}</div><button class="fleet-retry-btn" onclick="loadFleet(true)">Повторить</button></div>`;
+    if (manual) toast('Ошибка обновления','error');
   }
 }
 
 function renderFleet(vehicles) {
-  const list = document.getElementById('fleet-list');
-
-  if (!vehicles.length) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">🚗</div><div class="empty-title">Нет машин</div><div class="empty-sub">Данные не получены</div></div>`;
-    return;
-  }
-
-  const moving = vehicles.filter(v => v.isStop === 0 || v.status === 'Move');
-  const stopped = vehicles.filter(v => v.isStop === 1 || v.status === 'Stop');
-
-  document.getElementById('stat-moving').textContent = moving.length;
-  document.getElementById('stat-stopped').textContent = stopped.length;
-
-  // Sort: moving first
-  const sorted = [...moving, ...stopped];
-
-  list.innerHTML = sorted.map((v, i) => {
-    const isMoving = v.isStop === 0 || v.status === 'Move';
-    const statusClass = isMoving ? 'moving' : 'stopped';
-    const statusLabel = isMoving ? '▶ В движении' : '■ Стоит';
-    const speed = parseFloat(v.speed || 0).toFixed(0);
-    const dist = parseFloat(v.distance || 0);
-    const distStr = dist > 1000 ? (dist / 1000).toFixed(1) + 'k mi' : Math.round(dist) + ' mi';
-    const course = getCourseArrow(parseInt(v.course || 0));
-
-    // Format time
-    let timeStr = '';
-    if (v.deviceUtcDate) {
-      try {
-        const d = new Date(v.deviceUtcDate.replace(' ', 'T') + 'Z');
-        timeStr = d.toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'}) + ' UTC';
-      } catch(e) { timeStr = v.deviceUtcDate; }
-    }
-
-    return `
-      <div class="vehicle-card ${statusClass}" style="animation-delay:${i * 40}ms">
-        <div class="vc-top">
-          <div class="vc-icon">${isMoving ? '🚕' : '🅿️'}</div>
-          <div style="flex:1;min-width:0">
-            <div class="vc-name">${esc(v.name)}</div>
-            <div class="vc-id">SN: ${esc(v.sn)}</div>
-          </div>
-          <div class="vc-badge ${statusClass}">${statusLabel}</div>
-        </div>
-        <div class="vc-grid">
-          <div class="vc-metric">
-            <div class="vc-metric-val">${speed} <span style="font-size:10px;color:var(--muted)">km/h</span></div>
-            <div class="vc-metric-lbl">Скорость</div>
-          </div>
-          <div class="vc-metric">
-            <div class="vc-metric-val">${course}</div>
-            <div class="vc-metric-lbl">Курс</div>
-          </div>
-          <div class="vc-metric">
-            <div class="vc-metric-val" style="font-size:12px">${distStr}</div>
-            <div class="vc-metric-lbl">Пробег</div>
-          </div>
-        </div>
-        ${v.latitude && v.longitude ? `
-        <div class="vc-addr">
-          <span class="vc-addr-icon">📍</span>
-          <span>${parseFloat(v.latitude).toFixed(5)}, ${parseFloat(v.longitude).toFixed(5)}</span>
-        </div>` : ''}
-        ${timeStr ? `<div class="vc-time">🕐 ${timeStr}</div>` : ''}
+  const list=document.getElementById('fleet-list'); if (!list) return;
+  if (!vehicles.length) { list.innerHTML=`<div class="empty"><div class="empty-icon">🚗</div><div class="empty-title">Нет машин</div></div>`; return; }
+  const mv=vehicles.filter(v=>v.isStop===0||v.status==='Move');
+  const st=vehicles.filter(v=>v.isStop===1||v.status==='Stop');
+  list.innerHTML=[...mv,...st].map((v,i)=>{
+    const m=v.isStop===0||v.status==='Move', sc=m?'moving':'stopped';
+    const spd=parseFloat(v.speed||0).toFixed(0);
+    const dist=parseFloat(v.distance||0);
+    const ds=dist>1000?(dist/1000).toFixed(1)+'k mi':Math.round(dist)+' mi';
+    const crs=getCourseArrow(parseInt(v.course||0));
+    let ts='';
+    if(v.deviceUtcDate){try{const d=new Date(v.deviceUtcDate.replace(' ','T')+'Z');ts=d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})+' UTC';}catch(e){}}
+    return `<div class="vehicle-card ${sc}" style="animation-delay:${i*40}ms">
+      <div class="vc-top">
+        <div class="vc-icon">${m?'🚕':'🅿️'}</div>
+        <div style="flex:1;min-width:0"><div class="vc-name">${esc(v.name||v.sn)}</div><div class="vc-id">SN: ${esc(v.sn)}</div></div>
+        <div class="vc-badge ${sc}">${m?'▶ В движении':'■ Стоит'}</div>
       </div>
-    `;
+      <div class="vc-grid">
+        <div class="vc-metric"><div class="vc-metric-val">${spd} <span style="font-size:10px;color:var(--muted)">km/h</span></div><div class="vc-metric-lbl">Скорость</div></div>
+        <div class="vc-metric"><div class="vc-metric-val">${crs}</div><div class="vc-metric-lbl">Курс</div></div>
+        <div class="vc-metric"><div class="vc-metric-val" style="font-size:12px">${ds}</div><div class="vc-metric-lbl">Пробег</div></div>
+      </div>
+      ${v.latitude&&v.longitude?`<div class="vc-addr"><span>📍</span><span>${parseFloat(v.latitude).toFixed(5)}, ${parseFloat(v.longitude).toFixed(5)}</span></div>`:''}
+      ${ts?`<div class="vc-time">🕐 ${ts}</div>`:''}
+    </div>`;
   }).join('');
 }
 
-function getCourseArrow(course) {
-  const dirs = ['↑ N', '↗ NE', '→ E', '↘ SE', '↓ S', '↙ SW', '← W', '↖ NW'];
-  return dirs[Math.round(course / 45) % 8];
-}
+function getCourseArrow(c){const d=['↑ N','↗ NE','→ E','↘ SE','↓ S','↙ SW','← W','↖ NW'];return d[Math.round(c/45)%8];}
+function startFleetPolling(){stopFleetPolling();state.fleetInterval=setInterval(()=>{if(state.currentTab==='fleet')loadFleet();},6000);}
+function stopFleetPolling(){if(state.fleetInterval){clearInterval(state.fleetInterval);state.fleetInterval=null;}}
 
-function startFleetPolling() {
-  stopFleetPolling();
-  state.fleetInterval = setInterval(() => {
-    if (state.currentTab === 'fleet') loadFleet();
-  }, 6000);
-}
-
-function stopFleetPolling() {
-  if (state.fleetInterval) { clearInterval(state.fleetInterval); state.fleetInterval = null; }
-}
-
-// ===== MODAL =====
-function openModal(title, text, onConfirm) {
-  document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-text').textContent = text;
-  document.getElementById('modal-confirm').onclick = onConfirm;
+function openModal(title,text,onConfirm){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-text').textContent=text;
+  document.getElementById('modal-confirm').onclick=onConfirm;
   document.getElementById('modal').classList.add('open');
 }
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
-document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
 
-// ===== UTILS =====
-function esc(s) {
-  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
-}
-
-function toast(msg, type='') {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.className = 'toast show ' + type;
-  setTimeout(() => el.classList.remove('show'), 2500);
-}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);}
+function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+type;setTimeout(()=>el.classList.remove('show'),2500);}
 
 init();
 </script>
