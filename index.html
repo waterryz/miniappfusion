@@ -329,6 +329,7 @@
     <div class="fi-tabs" id="fi-tabs" style="display:none">
       <button class="fi-btn active" id="fi-map" onclick="switchFleetTab('map')">🗺 Карта</button>
       <button class="fi-btn" id="fi-list" onclick="switchFleetTab('list')">📋 Список</button>
+      <button class="fi-btn" id="fi-report" onclick="switchFleetTab('report')">📊 Отчёт</button>
     </div>
     <div class="last-update" id="last-update" style="display:none">
       <div class="live-dot"></div>
@@ -353,6 +354,22 @@
     <div id="fleet-loading" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
       <div class="spinner"></div>
       <div class="loading-text">Загрузка данных GPS...</div>
+    </div>
+    <!-- REPORT VIEW -->
+    <div id="fleet-view-report" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+      <div style="padding:12px 20px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;">
+        <input type="date" id="report-from" class="form-input" style="flex:1;padding:10px 12px;font-size:13px;" />
+        <span style="color:var(--muted);font-size:13px;flex-shrink:0;">—</span>
+        <input type="date" id="report-to" class="form-input" style="flex:1;padding:10px 12px;font-size:13px;" />
+        <button class="icon-btn" onclick="loadReport()" style="width:42px;height:42px;font-size:16px;flex-shrink:0;">↗</button>
+      </div>
+      <div class="fleet-list" id="report-list">
+        <div class="empty" style="padding:40px 20px">
+          <div class="empty-icon">📊</div>
+          <div class="empty-title">Выберите период</div>
+          <div class="empty-sub">Укажите даты и нажмите ↗</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -444,12 +461,22 @@ function switchTab(tab) {
 
 function switchFleetTab(tab) {
   _fleetTab = tab;
-  ['map','list'].forEach(t => document.getElementById('fi-'+t).classList.toggle('active', t === tab));
+  ['map','list','report'].forEach(t => {
+    const el = document.getElementById('fi-'+t); if(el) el.classList.toggle('active', t === tab);
+  });
   document.getElementById('fleet-view-map').style.display = tab === 'map' ? 'block' : 'none';
-  const lv = document.getElementById('fleet-view-list');
-  lv.style.display = tab === 'list' ? 'flex' : 'none';
+  document.getElementById('fleet-view-list').style.display = tab === 'list' ? 'flex' : 'none';
+  document.getElementById('fleet-view-report').style.display = tab === 'report' ? 'flex' : 'none';
   if (tab === 'map') { if (!_map) initMap(); setTimeout(() => { _map.invalidateSize(); renderMap(state.fleetData); }, 100); }
   if (tab === 'list') renderFleet(state.fleetData);
+  if (tab === 'report') {
+    // Set default dates if empty
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const fmt = d => d.toISOString().split('T')[0];
+    if (!document.getElementById('report-from').value) document.getElementById('report-from').value = fmt(firstDay);
+    if (!document.getElementById('report-to').value) document.getElementById('report-to').value = fmt(today);
+  }
 }
 
 function initMap() {
@@ -679,12 +706,18 @@ async function loadFleet(manual=false) {
     if (_fleetTab==='map') {
       document.getElementById('fleet-view-map').style.display='block';
       document.getElementById('fleet-view-list').style.display='none';
+      document.getElementById('fleet-view-report').style.display='none';
       if (!_map) initMap();
       setTimeout(()=>{_map.invalidateSize(); renderMap(vehicles);},200);
-    } else {
+    } else if (_fleetTab==='list') {
       document.getElementById('fleet-view-map').style.display='none';
       document.getElementById('fleet-view-list').style.display='flex';
+      document.getElementById('fleet-view-report').style.display='none';
       renderFleet(vehicles);
+    } else {
+      document.getElementById('fleet-view-map').style.display='none';
+      document.getElementById('fleet-view-list').style.display='none';
+      document.getElementById('fleet-view-report').style.display='flex';
     }
   } catch(e) {
     document.getElementById('fleet-loading').innerHTML=`<div style="text-align:center;padding:40px 20px;display:flex;flex-direction:column;align-items:center;gap:14px"><div style="font-size:40px">📡</div><div class="empty-title">Нет данных GPS</div><div style="font-size:14px;color:var(--text-secondary)">${esc(e.message)}</div><button class="fleet-retry-btn" onclick="loadFleet(true)">Повторить</button></div>`;
@@ -723,6 +756,55 @@ function renderFleet(vehicles) {
 }
 
 function getCourseArrow(c){const d=['↑ N','↗ NE','→ E','↘ SE','↓ S','↙ SW','← W','↖ NW'];return d[Math.round(c/45)%8];}
+
+async function loadReport() {
+  const from = document.getElementById('report-from').value;
+  const to = document.getElementById('report-to').value;
+  if (!from || !to) { toast('Выберите период', 'error'); return; }
+
+  const list = document.getElementById('report-list');
+  list.innerHTML = `<div class="loading-wrap" style="padding:40px 0;"><div class="spinner"></div><div class="loading-text">Загрузка отчёта...</div></div>`;
+
+  try {
+    const fromDt = from + ' 00:00';
+    const toDt = to + ' 23:59';
+    const data = await api(`/api/fleet/report?from=${encodeURIComponent(fromDt)}&to=${encodeURIComponent(toDt)}`, {}, FLEET_API);
+
+    let rows = [];
+    if (data.d) {
+      try {
+        const fixed = data.d.replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g,'$1"$2":').replace(/:\s*'([^']*)'/g,':"$1"');
+        const parsed = JSON.parse(fixed);
+        rows = parsed.reportList || parsed.devices || parsed.list || Object.values(parsed)[0] || [];
+      } catch(e) { console.warn('Report parse failed', e, data.d.slice(0,200)); }
+    }
+
+    if (!rows.length) {
+      list.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Нет данных</div><div class="empty-sub">За выбранный период</div></div>`;
+      return;
+    }
+
+    list.innerHTML = `<div class="slabel" style="padding-top:14px">Пробег ${from} — ${to}</div>` +
+      rows.map((r, i) => {
+        const name = r.targetName || r.name || r.DeviceName || `Устройство ${i+1}`;
+        const mileage = r.mileage || r.Mileage || r.distance || '—';
+        const alarms = r.alarm || r.Alarm || 0;
+        return `
+          <div class="vehicle-card stopped" style="margin-bottom:8px;animation-delay:${i*40}ms">
+            <div class="vc-top">
+              <div class="vc-icon" style="background:var(--accent-bg)">🚗</div>
+              <div style="flex:1;min-width:0">
+                <div class="vc-name">${esc(name)}</div>
+                ${alarms > 0 ? `<div class="vc-id">⚠️ Тревог: ${alarms}</div>` : ''}
+              </div>
+              <div class="vc-badge moving">${esc(String(mileage))}</div>
+            </div>
+          </div>`;
+      }).join('');
+  } catch(e) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Ошибка</div><div class="empty-sub">${esc(e.message)}</div></div>`;
+  }
+}
 function startFleetPolling(){stopFleetPolling();state.fleetInterval=setInterval(()=>{if(state.currentTab==='fleet')loadFleet();},6000);}
 function stopFleetPolling(){if(state.fleetInterval){clearInterval(state.fleetInterval);state.fleetInterval=null;}}
 
