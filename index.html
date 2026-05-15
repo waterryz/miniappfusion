@@ -362,6 +362,7 @@
         <span style="color:var(--muted);font-size:13px;flex-shrink:0;">—</span>
         <input type="date" id="report-to" class="form-input" style="flex:1;padding:10px 12px;font-size:13px;" />
         <button class="icon-btn" onclick="loadReport()" style="width:42px;height:42px;font-size:16px;flex-shrink:0;">↗</button>
+        <button class="icon-btn" id="excel-btn" onclick="downloadExcel()" style="width:42px;height:42px;font-size:16px;flex-shrink:0;background:var(--card);color:var(--accent);border:1px solid rgba(200,240,76,0.35);" title="Скачать Excel">📥</button>
       </div>
       <div class="fleet-list" id="report-list">
         <div class="empty" style="padding:40px 20px">
@@ -756,6 +757,36 @@ function renderFleet(vehicles) {
 }
 
 function getCourseArrow(c){const d=['↑ N','↗ NE','→ E','↘ SE','↓ S','↙ SW','← W','↖ NW'];return d[Math.round(c/45)%8];}
+
+async function downloadExcel() {
+  const from = document.getElementById('report-from').value;
+  const to = document.getElementById('report-to').value;
+  if (!from || !to) { toast('Выберите период', 'error'); return; }
+
+  const btn = document.getElementById('excel-btn');
+  btn.textContent = '⏳'; btn.disabled = true;
+
+  try {
+    const fromDt = from + ' 00:00';
+    const toDt = to + ' 23:59';
+    const url = `${FLEET_API}/api/fleet/report/excel?from=${encodeURIComponent(fromDt)}&to=${encodeURIComponent(toDt)}`;
+    const r = await fetch(url, {
+      headers: { 'X-Telegram-Init-Data': state.initData }
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `report_${from}_${to}.xls`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('Файл скачан', 'success');
+  } catch(e) {
+    toast('Ошибка: ' + e.message, 'error');
+  } finally {
+    btn.textContent = '📥'; btn.disabled = false;
+  }
+}
 
 async function loadReport() {
   const from = document.getElementById('report-from').value;
