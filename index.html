@@ -36,14 +36,12 @@
     .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
     .screen.active { display: flex; }
 
-    /* BOTTOM NAV */
-    .bottom-nav { display: none; flex-shrink: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 8px 0 env(safe-area-inset-bottom, 8px); }
-    .bottom-nav.visible { display: flex; }
-    .nav-items { display: flex; width: 100%; }
-    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; cursor: pointer; transition: opacity 0.15s; border: none; background: none; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
-    .nav-item.active { color: var(--accent); }
-    .nav-item:active { opacity: 0.7; }
-    .nav-icon { font-size: 20px; line-height: 1; }
+    /* TAB BAR */
+    .tab-bar { display: none; flex-shrink: 0; padding: 0 20px 12px; gap: 8px; }
+    .tab-bar.visible { display: flex; }
+    .tab-btn { flex: 1; padding: 10px 0; border: 1px solid var(--border); background: var(--card); border-radius: var(--radius-sm); color: var(--muted); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .tab-btn.active { background: var(--accent-bg); border-color: rgba(200,240,76,0.35); color: var(--accent); }
+    .tab-btn:active { transform: scale(0.97); }
 
     /* LOGO BAR */
     .logo-bar { padding: 18px 20px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
@@ -280,6 +278,10 @@
       <div class="logo-name">Prime Fusion</div>
       <div class="logo-tag">Admin</div>
     </div>
+    <div class="tab-bar visible" id="tab-bar-drivers">
+      <button class="tab-btn active" id="tab-drivers" onclick="switchTab('drivers')">👥 Водители</button>
+      <button class="tab-btn" id="tab-fleet" onclick="switchTab('fleet')">🗺 Fleet</button>
+    </div>
     <div class="search-wrap">
       <div class="search-box">
         <span class="search-icon">⌕</span>
@@ -405,9 +407,14 @@
 
   <!-- FLEET -->
   <div class="screen" id="screen-fleet">
-    <div class="fleet-header">
-      <div class="fleet-title">🚗 Fleet</div>
-      <button class="fleet-refresh" id="fleet-refresh-btn" onclick="loadFleet(true)" title="Обновить">↻</button>
+    <div class="logo-bar">
+      <div class="logo-mark"><img src="https://res.cloudinary.com/dimqgnupo/image/upload/v1776772340/photo_2026-01-28_21-59-27_dnx6gl.jpg" alt="Prime Fusion" /></div>
+      <div class="logo-name">Prime Fusion</div>
+      <button class="fleet-refresh" id="fleet-refresh-btn" onclick="loadFleet(true)" title="Обновить" style="margin-left:auto">↻</button>
+    </div>
+    <div class="tab-bar visible">
+      <button class="tab-btn" id="tab-drivers-2" onclick="switchTab('drivers')">👥 Водители</button>
+      <button class="tab-btn active" id="tab-fleet-2" onclick="switchTab('fleet')">🗺 Fleet</button>
     </div>
     <div class="fleet-stats" id="fleet-stats" style="display:none">
       <div class="stat-card">
@@ -454,20 +461,6 @@
   </div>
 </div>
 
-<!-- BOTTOM NAV -->
-<div class="bottom-nav" id="bottom-nav">
-  <div class="nav-items">
-    <button class="nav-item active" id="nav-drivers" onclick="switchTab('drivers')">
-      <span class="nav-icon">👥</span>
-      <span>Водители</span>
-    </button>
-    <button class="nav-item" id="nav-fleet" onclick="switchTab('fleet')">
-      <span class="nav-icon">🗺</span>
-      <span>Fleet</span>
-    </button>
-  </div>
-</div>
-
 <!-- MODAL -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
@@ -505,7 +498,6 @@ async function init() {
     if (!me.is_admin) { showScreen('wip'); return; }
     await loadDrivers();
     showScreen('drivers');
-    document.getElementById('bottom-nav').classList.add('visible');
   } catch(e) { showScreen('wip'); }
 }
 
@@ -532,13 +524,18 @@ function showScreen(n) {
 // ===== TABS =====
 function switchTab(tab) {
   state.currentTab = tab;
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  document.getElementById('nav-' + tab).classList.add('active');
 
+  // Update all tab buttons
+  ['tab-drivers','tab-fleet','tab-drivers-2','tab-fleet-2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
   if (tab === 'drivers') {
+    ['tab-drivers','tab-drivers-2'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('active'); });
     stopFleetPolling();
     showScreen('drivers');
   } else if (tab === 'fleet') {
+    ['tab-fleet','tab-fleet-2'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('active'); });
     showScreen('fleet');
     loadFleet();
     startFleetPolling();
@@ -583,8 +580,8 @@ function filterDrivers() {
 function showDrivers() {
   document.getElementById('search-input').value = '';
   showScreen('drivers');
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  document.getElementById('nav-drivers').classList.add('active');
+  ['tab-drivers','tab-fleet','tab-drivers-2','tab-fleet-2'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('active'); });
+  ['tab-drivers','tab-drivers-2'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('active'); });
   stopFleetPolling();
 }
 
