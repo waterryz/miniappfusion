@@ -174,10 +174,33 @@
     .last-update { padding: 0 20px 8px; font-size: 11px; color: var(--muted); flex-shrink: 0; display: flex; align-items: center; gap: 5px; }
     .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 4px rgba(76,240,122,0.6); animation: pulse 2s ease-in-out infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* ── DRIVER SELF-VIEW ── */
+    .dv-hero { margin: 16px 20px 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+    .dv-avatar { width: 52px; height: 52px; border-radius: 14px; background: var(--accent-bg); border: 1.5px solid rgba(200,240,76,0.3); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .dv-hero-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+    .dv-hero-plate { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
+    .mileage-card { margin: 12px 20px 0; background: linear-gradient(135deg, rgba(200,240,76,0.12) 0%, rgba(200,240,76,0.04) 100%); border: 1.5px solid rgba(200,240,76,0.3); border-radius: var(--radius); padding: 18px 20px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+    .mileage-icon { font-size: 28px; flex-shrink: 0; }
+    .mileage-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--accent); line-height: 1; }
+    .mileage-lbl { font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: 500; }
+    .mileage-loading { display: flex; align-items: center; gap: 8px; }
+    .mileage-loading .spinner { width: 20px; height: 20px; border-width: 2px; }
+    .mileage-loading span { font-size: 13px; color: var(--muted); }
+    .dv-scroll { flex: 1; overflow-y: auto; padding: 6px 20px 28px; -webkit-overflow-scrolling: touch; }
+    .dv-scroll::-webkit-scrollbar { display: none; }
+
+    /* GPS device field hint */
+    .form-hint { font-size: 11.5px; color: var(--muted); margin-top: -4px; line-height: 1.5; }
+
+    /* GPS badge on driver card */
+    .gps-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-left: 2px; }
   </style>
 </head>
 <body>
 <div id="app">
+
+  <!-- WIP (fallback) -->
   <div class="screen active" id="screen-wip">
     <div class="logo-bar">
       <div class="logo-mark"><img src="https://res.cloudinary.com/dimqgnupo/image/upload/v1776772340/photo_2026-01-28_21-59-27_dnx6gl.jpg" alt="Prime Fusion" /></div>
@@ -189,6 +212,8 @@
       <div class="wip-sub">Этот раздел находится в разработке. Следите за обновлениями.</div>
     </div>
   </div>
+
+  <!-- LOADING -->
   <div class="screen" id="screen-loading">
     <div class="logo-bar">
       <div class="logo-mark"><img src="https://res.cloudinary.com/dimqgnupo/image/upload/v1776772340/photo_2026-01-28_21-59-27_dnx6gl.jpg" alt="Prime Fusion" /></div>
@@ -196,6 +221,69 @@
     </div>
     <div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Загрузка...</div></div>
   </div>
+
+  <!-- ══════════════════════════════════════════
+       DRIVER SELF-VIEW (role: driver)
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-driver-home">
+    <div class="logo-bar">
+      <div class="logo-mark"><img src="https://res.cloudinary.com/dimqgnupo/image/upload/v1776772340/photo_2026-01-28_21-59-27_dnx6gl.jpg" alt="Prime Fusion" /></div>
+      <div class="logo-name">Prime Fusion</div>
+      <div class="logo-tag">Driver</div>
+    </div>
+
+    <!-- hero -->
+    <div class="dv-hero" id="dv-hero">
+      <div class="dv-avatar">🚗</div>
+      <div>
+        <div class="dv-hero-name" id="dv-name">—</div>
+        <div class="dv-hero-plate" id="dv-plate">—</div>
+      </div>
+    </div>
+
+    <!-- mileage card -->
+    <div class="mileage-card" id="mileage-card">
+      <div class="mileage-icon">🛣</div>
+      <div>
+        <div class="mileage-loading" id="mileage-loading"><div class="spinner"></div><span>Загрузка пробега...</span></div>
+        <div id="mileage-value" style="display:none">
+          <div class="mileage-val" id="mileage-num">—</div>
+          <div class="mileage-lbl" id="mileage-month">Пробег за месяц</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- car + tariff info -->
+    <div class="info-block" id="dv-info-block"></div>
+
+    <!-- docs section -->
+    <div class="divider"></div>
+    <div class="dv-scroll">
+      <div class="slabel">Мои документы</div>
+      <div class="photo-grid" id="dv-photo-grid"></div>
+    </div>
+  </div>
+
+  <!-- DRIVER LIGHTBOX (read-only, no delete) -->
+  <div class="lightbox" id="dv-lightbox">
+    <div class="lb-bar">
+      <button class="lb-btn" onclick="closeDvLightbox()">✕</button>
+      <div class="lb-title" id="dv-lb-title"></div>
+      <a class="lb-btn" id="dv-lb-download" target="_blank">↓</a>
+    </div>
+    <div class="lb-img-wrap">
+      <button class="lb-nav prev" id="dv-lb-prev" onclick="dvLightboxNav(-1)">‹</button>
+      <img id="dv-lb-img" src="" alt="" />
+      <button class="lb-nav next" id="dv-lb-next" onclick="dvLightboxNav(1)">›</button>
+    </div>
+    <div class="lb-counter" id="dv-lb-counter"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       ADMIN SCREENS
+  ══════════════════════════════════════════ -->
+
+  <!-- DRIVERS LIST -->
   <div class="screen" id="screen-drivers">
     <div class="logo-bar">
       <div class="logo-mark"><img src="https://res.cloudinary.com/dimqgnupo/image/upload/v1776772340/photo_2026-01-28_21-59-27_dnx6gl.jpg" alt="Prime Fusion" /></div>
@@ -215,6 +303,8 @@
     </div>
     <div class="scroll-body" id="driver-list"></div>
   </div>
+
+  <!-- DRIVER PROFILE (admin) -->
   <div class="screen" id="screen-profile">
     <div class="header">
       <button class="back-btn" onclick="showDrivers()">←</button>
@@ -224,12 +314,22 @@
       </div>
     </div>
     <div class="info-block" id="info-block"></div>
+
+    <!-- GPS device ID inline editor -->
+    <div style="margin:10px 20px 0;display:flex;gap:8px;align-items:center;">
+      <input class="form-input" id="gps-device-input" type="text" inputmode="numeric"
+             placeholder="PlanetGPS Device ID" style="flex:1;padding:11px 14px;font-size:14px;" />
+      <button class="icon-btn" id="gps-save-btn" onclick="saveGpsDevice()" style="width:42px;height:42px;font-size:16px;" title="Сохранить">✓</button>
+    </div>
+
     <div class="actions-wrap">
       <button class="action-btn primary" onclick="showDocuments()">📁 Документы водителя</button>
       <button class="action-btn danger" onclick="confirmDeleteDriver()">🗑 Удалить водителя</button>
     </div>
     <div style="flex:1"></div>
   </div>
+
+  <!-- DOCUMENTS (admin) -->
   <div class="screen" id="screen-docs">
     <div class="header">
       <button class="back-btn" onclick="showProfile()">←</button>
@@ -248,6 +348,8 @@
       <div class="photo-grid" id="photo-grid"></div>
     </div>
   </div>
+
+  <!-- UPLOAD (admin) -->
   <div class="screen" id="screen-upload">
     <div class="header">
       <button class="back-btn" onclick="showDocuments()">←</button>
@@ -275,6 +377,8 @@
       <button class="submit-btn" id="upload-btn" onclick="submitUpload()" disabled>Загрузить</button>
     </div>
   </div>
+
+  <!-- ADD DRIVER (admin) -->
   <div class="screen" id="screen-add">
     <div class="header">
       <button class="back-btn" onclick="showDrivers()">←</button>
@@ -311,6 +415,11 @@
           <option value="Double Shift ($1000/нед · безлимит)">Double Shift — $1000/нед · безлимит</option>
         </select>
       </div>
+      <div class="form-group">
+        <div class="form-label">PlanetGPS Device ID <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(необязательно)</span></div>
+        <input class="form-input" id="add-gps-id" type="text" inputmode="numeric" placeholder="Напр.: 123456" />
+        <div class="form-hint">Device ID из PlanetGPS — нужен для автоматического учёта пробега</div>
+      </div>
       <button class="submit-btn" id="add-btn" onclick="submitAddDriver()" disabled>Добавить водителя</button>
     </div>
   </div>
@@ -340,14 +449,8 @@
     </div>
     <div id="fleet-view-list" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
       <div class="fleet-stats">
-        <div class="stat-card">
-          <div class="stat-dot moving"></div>
-          <div><div class="stat-num" id="stat-moving">0</div><div class="stat-lbl">В движении</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-dot stopped"></div>
-          <div><div class="stat-num" id="stat-stopped">0</div><div class="stat-lbl">Стоят</div></div>
-        </div>
+        <div class="stat-card"><div class="stat-dot moving"></div><div><div class="stat-num" id="stat-moving">0</div><div class="stat-lbl">В движении</div></div></div>
+        <div class="stat-card"><div class="stat-dot stopped"></div><div><div class="stat-num" id="stat-stopped">0</div><div class="stat-lbl">Стоят</div></div></div>
       </div>
       <div class="fleet-list" id="fleet-list"></div>
     </div>
@@ -355,7 +458,6 @@
       <div class="spinner"></div>
       <div class="loading-text">Загрузка данных GPS...</div>
     </div>
-    <!-- REPORT VIEW -->
     <div id="fleet-view-report" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
       <div style="padding:12px 20px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;">
         <input type="date" id="report-from" class="form-input" style="flex:1;padding:10px 12px;font-size:13px;" />
@@ -365,15 +467,12 @@
         <button class="icon-btn" id="excel-btn" onclick="downloadExcel()" style="width:42px;height:42px;font-size:16px;flex-shrink:0;background:var(--card);color:var(--accent);border:1px solid rgba(200,240,76,0.35);" title="Скачать Excel">📥</button>
       </div>
       <div class="fleet-list" id="report-list">
-        <div class="empty" style="padding:40px 20px">
-          <div class="empty-icon">📊</div>
-          <div class="empty-title">Выберите период</div>
-          <div class="empty-sub">Укажите даты и нажмите ↗</div>
-        </div>
+        <div class="empty" style="padding:40px 20px"><div class="empty-icon">📊</div><div class="empty-title">Выберите период</div><div class="empty-sub">Укажите даты и нажмите ↗</div></div>
       </div>
     </div>
   </div>
 
+  <!-- ADMIN LIGHTBOX -->
   <div class="lightbox" id="lightbox">
     <div class="lb-bar">
       <button class="lb-btn" onclick="closeLightbox()">✕</button>
@@ -414,22 +513,107 @@ const state = {
   initData: '', pendingAction: null,
   fleetData: [], fleetInterval: null,
   currentTab: 'drivers',
+  // driver self-view
+  dvFiles: [], dvLbIndex: 0,
 };
 let _fleetTab = 'map';
 let _map = null;
 let _mapMarkers = [];
 
+// ── INIT ──────────────────────────────────────────────────────────
 async function init() {
   if (tg) { tg.ready(); tg.expand(); state.initData = tg.initData || ''; }
   showScreen('loading');
   try {
     const me = await api('/me');
-    if (!me.is_admin) { showScreen('wip'); return; }
-    await loadDrivers();
-    showScreen('drivers');
+    if (me.is_admin) {
+      await loadDrivers();
+      showScreen('drivers');
+    } else {
+      // Try driver self-view
+      await loadDriverHome();
+    }
   } catch(e) { showScreen('wip'); }
 }
 
+// ── DRIVER HOME ───────────────────────────────────────────────────
+async function loadDriverHome() {
+  try {
+    const data = await api('/driver/me');
+    const d = data.driver;
+    const files = data.files || [];
+    const mil = data.mileage || {};
+
+    state.dvFiles = files;
+
+    // Hero
+    document.getElementById('dv-name').textContent = d.name;
+    document.getElementById('dv-plate').textContent = d.car_number;
+
+    // Info block
+    document.getElementById('dv-info-block').innerHTML = `
+      <div class="info-row"><span class="info-key">Авто</span><span class="info-val">${esc(d.car_model)}</span></div>
+      <div class="info-row"><span class="info-key">Номер</span><span class="info-val mono">${esc(d.car_number)}</span></div>
+      <div class="info-row"><span class="info-key">Тариф</span><span class="info-val">${esc(d.tariff)}</span></div>`;
+
+    // Mileage
+    document.getElementById('mileage-loading').style.display = 'none';
+    const mvEl = document.getElementById('mileage-value');
+    mvEl.style.display = 'block';
+    if (mil.has_gps && mil.value !== null && mil.value !== undefined) {
+      document.getElementById('mileage-num').textContent = mil.value;
+      document.getElementById('mileage-month').textContent = `Пробег за ${mil.month}`;
+    } else if (!mil.has_gps) {
+      document.getElementById('mileage-num').textContent = '—';
+      document.getElementById('mileage-month').textContent = 'GPS не подключён';
+    } else {
+      document.getElementById('mileage-num').textContent = '—';
+      document.getElementById('mileage-month').textContent = 'Нет данных';
+    }
+
+    // Documents
+    renderDvDocs(files);
+    showScreen('driver-home');
+  } catch(e) {
+    // Not registered — show WIP
+    showScreen('wip');
+  }
+}
+
+function renderDvDocs(files) {
+  const grid = document.getElementById('dv-photo-grid');
+  if (!files.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📂</div><div class="empty-title">Нет документов</div><div class="empty-sub">Документы добавит администратор</div></div>`;
+    return;
+  }
+  grid.innerHTML = files.map((f,i) => `
+    <div class="photo-cell" onclick="openDvLightbox(${i})">
+      <img src="${f.url}" loading="lazy" alt="${esc(f.name)}"/>
+      <div class="photo-label">${esc(f.name)}</div>
+    </div>`).join('');
+}
+
+function openDvLightbox(i) {
+  state.dvLbIndex = i; updateDvLightbox();
+  document.getElementById('dv-lightbox').classList.add('open');
+}
+function updateDvLightbox() {
+  const f = state.dvFiles[state.dvLbIndex];
+  document.getElementById('dv-lb-img').src = f.url;
+  document.getElementById('dv-lb-title').textContent = f.name;
+  document.getElementById('dv-lb-download').href = f.url;
+  document.getElementById('dv-lb-counter').textContent = `${state.dvLbIndex+1} / ${state.dvFiles.length}`;
+  document.getElementById('dv-lb-prev').style.display = state.dvLbIndex > 0 ? 'flex' : 'none';
+  document.getElementById('dv-lb-next').style.display = state.dvLbIndex < state.dvFiles.length-1 ? 'flex' : 'none';
+}
+function dvLightboxNav(d) { state.dvLbIndex = Math.max(0, Math.min(state.dvFiles.length-1, state.dvLbIndex+d)); updateDvLightbox(); }
+function closeDvLightbox() { document.getElementById('dv-lightbox').classList.remove('open'); }
+
+let _dvTx = 0;
+document.getElementById('dv-lightbox').addEventListener('touchstart', e => { _dvTx = e.touches[0].clientX; });
+document.getElementById('dv-lightbox').addEventListener('touchend', e => { if(Math.abs(_dvTx - e.changedTouches[0].clientX) > 50) dvLightboxNav(_dvTx > e.changedTouches[0].clientX ? 1 : -1); });
+
+// ── ADMIN ─────────────────────────────────────────────────────────
 async function api(path, opts={}, base=API) {
   const r = await fetch(base+path, {
     headers: {'Content-Type':'application/json', 'X-Telegram-Init-Data':state.initData, ...(opts.headers||{})},
@@ -462,18 +646,14 @@ function switchTab(tab) {
 
 function switchFleetTab(tab) {
   _fleetTab = tab;
-  ['map','list','report'].forEach(t => {
-    const el = document.getElementById('fi-'+t); if(el) el.classList.toggle('active', t === tab);
-  });
+  ['map','list','report'].forEach(t => { const el = document.getElementById('fi-'+t); if(el) el.classList.toggle('active', t === tab); });
   document.getElementById('fleet-view-map').style.display = tab === 'map' ? 'block' : 'none';
   document.getElementById('fleet-view-list').style.display = tab === 'list' ? 'flex' : 'none';
   document.getElementById('fleet-view-report').style.display = tab === 'report' ? 'flex' : 'none';
   if (tab === 'map') { if (!_map) initMap(); setTimeout(() => { _map.invalidateSize(); renderMap(state.fleetData); }, 100); }
   if (tab === 'list') renderFleet(state.fleetData);
   if (tab === 'report') {
-    // Set default dates if empty
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const today = new Date(), firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     const fmt = d => d.toISOString().split('T')[0];
     if (!document.getElementById('report-from').value) document.getElementById('report-from').value = fmt(firstDay);
     if (!document.getElementById('report-to').value) document.getElementById('report-to').value = fmt(today);
@@ -518,7 +698,13 @@ function renderDriverList(drivers) {
   el.innerHTML = `<div class="slabel">${n} водител${s}</div>` + drivers.map(d => `
     <div class="driver-card" onclick="openDriver('${d.id}')">
       <div class="d-avatar">🚗</div>
-      <div class="d-info"><div class="d-name">${esc(d.name)}</div><div class="d-plate">${esc(d.car_number)}</div></div>
+      <div class="d-info">
+        <div class="d-name" style="display:flex;align-items:center;gap:6px">
+          ${esc(d.name)}
+          ${d.planet_gps_device_id ? '<div class="gps-dot" title="GPS подключён"></div>' : ''}
+        </div>
+        <div class="d-plate">${esc(d.car_number)}</div>
+      </div>
       <div class="d-chip ${d.file_count===0?'zero':''}">${d.file_count}</div>
     </div>`).join('');
 }
@@ -556,8 +742,32 @@ function renderProfile(d, files) {
     <div class="info-row"><span class="info-key">Тариф</span><span class="info-val">${esc(d.tariff)}</span></div>
     <div class="info-row"><span class="info-key">ID</span><span class="info-val mono">${esc(d.id)}</span></div>
     <div class="info-row"><span class="info-key">Документов</span><span class="info-val" style="color:var(--accent)">${files.length}</span></div>`;
+  // Populate GPS input
+  document.getElementById('gps-device-input').value = d.planet_gps_device_id || '';
 }
+
 function showProfile() { showScreen('profile'); }
+
+async function saveGpsDevice() {
+  const val = document.getElementById('gps-device-input').value.trim();
+  const btn = document.getElementById('gps-save-btn');
+  btn.textContent = '…'; btn.disabled = true;
+  try {
+    await api(`/driver/${state.currentDriver.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ planet_gps_device_id: val })
+    });
+    state.currentDriver.planet_gps_device_id = val;
+    toast('GPS Device ID сохранён', 'success');
+    // update local list too
+    const drv = state.drivers.find(d => d.id === state.currentDriver.id);
+    if (drv) drv.planet_gps_device_id = val;
+  } catch(e) {
+    toast('Ошибка: ' + e.message, 'error');
+  } finally {
+    btn.textContent = '✓'; btn.disabled = false;
+  }
+}
 
 function showDocuments() {
   document.getElementById('docs-sub').textContent = state.currentDriver.name;
@@ -632,7 +842,7 @@ async function submitUpload() {
 }
 
 function showAddDriver() {
-  ['add-id','add-name','add-model','add-number'].forEach(id=>document.getElementById(id).value='');
+  ['add-id','add-name','add-model','add-number','add-gps-id'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('add-tariff').value='';
   document.getElementById('add-btn').disabled=true;
   document.getElementById('add-btn').textContent='Добавить водителя';
@@ -645,11 +855,12 @@ async function submitAddDriver() {
   const btn=document.getElementById('add-btn'); btn.disabled=true; btn.textContent='Добавляю...';
   try {
     await api('/drivers',{method:'POST',body:JSON.stringify({
-      id:document.getElementById('add-id').value.trim(),
-      name:document.getElementById('add-name').value.trim(),
-      car_model:document.getElementById('add-model').value.trim(),
-      car_number:document.getElementById('add-number').value.trim(),
-      tariff:document.getElementById('add-tariff').value.trim(),
+      id: document.getElementById('add-id').value.trim(),
+      name: document.getElementById('add-name').value.trim(),
+      car_model: document.getElementById('add-model').value.trim(),
+      car_number: document.getElementById('add-number').value.trim(),
+      tariff: document.getElementById('add-tariff').value.trim(),
+      planet_gps_device_id: document.getElementById('add-gps-id').value.trim(),
     })});
     toast('Водитель добавлен','success'); await loadDrivers(); showScreen('drivers');
   } catch(e) { toast('Ошибка: '+e.message,'error'); btn.disabled=false; btn.textContent='Добавить водителя'; }
@@ -759,83 +970,52 @@ function renderFleet(vehicles) {
 function getCourseArrow(c){const d=['↑ N','↗ NE','→ E','↘ SE','↓ S','↙ SW','← W','↖ NW'];return d[Math.round(c/45)%8];}
 
 async function downloadExcel() {
-  const from = document.getElementById('report-from').value;
-  const to = document.getElementById('report-to').value;
-  if (!from || !to) { toast('Выберите период', 'error'); return; }
-
-  const btn = document.getElementById('excel-btn');
-  btn.textContent = '⏳'; btn.disabled = true;
-
+  const from=document.getElementById('report-from').value, to=document.getElementById('report-to').value;
+  if (!from||!to){toast('Выберите период','error');return;}
+  const btn=document.getElementById('excel-btn'); btn.textContent='⏳'; btn.disabled=true;
   try {
-    const fromDt = from + ' 00:00';
-    const toDt = to + ' 23:59';
-    const url = `${FLEET_API}/api/fleet/report/excel?from=${encodeURIComponent(fromDt)}&to=${encodeURIComponent(toDt)}`;
-    const r = await fetch(url, {
-      headers: { 'X-Telegram-Init-Data': state.initData }
-    });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const blob = await r.blob();
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `report_${from}_${to}.xls`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    toast('Файл скачан', 'success');
-  } catch(e) {
-    toast('Ошибка: ' + e.message, 'error');
-  } finally {
-    btn.textContent = '📥'; btn.disabled = false;
-  }
+    const url=`${FLEET_API}/api/fleet/report/excel?from=${encodeURIComponent(from+' 00:00')}&to=${encodeURIComponent(to+' 23:59')}`;
+    const r=await fetch(url,{headers:{'X-Telegram-Init-Data':state.initData}});
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const blob=await r.blob(), a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=`report_${from}_${to}.xls`; a.click(); URL.revokeObjectURL(a.href);
+    toast('Файл скачан','success');
+  } catch(e){toast('Ошибка: '+e.message,'error');}
+  finally{btn.textContent='📥';btn.disabled=false;}
 }
 
 async function loadReport() {
-  const from = document.getElementById('report-from').value;
-  const to = document.getElementById('report-to').value;
-  if (!from || !to) { toast('Выберите период', 'error'); return; }
-
-  const list = document.getElementById('report-list');
-  list.innerHTML = `<div class="loading-wrap" style="padding:40px 0;"><div class="spinner"></div><div class="loading-text">Загрузка отчёта...</div></div>`;
-
+  const from=document.getElementById('report-from').value, to=document.getElementById('report-to').value;
+  if (!from||!to){toast('Выберите период','error');return;}
+  const list=document.getElementById('report-list');
+  list.innerHTML=`<div class="loading-wrap" style="padding:40px 0;"><div class="spinner"></div><div class="loading-text">Загрузка отчёта...</div></div>`;
   try {
-    const fromDt = from + ' 00:00';
-    const toDt = to + ' 23:59';
-    const data = await api(`/api/fleet/report?from=${encodeURIComponent(fromDt)}&to=${encodeURIComponent(toDt)}`, {}, FLEET_API);
-
-    let rows = [];
-    if (data.d) {
-      try {
-        const fixed = data.d.replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g,'$1"$2":').replace(/:\s*'([^']*)'/g,':"$1"');
-        const parsed = JSON.parse(fixed);
-        rows = parsed.reportList || parsed.devices || parsed.list || Object.values(parsed)[0] || [];
-      } catch(e) { console.warn('Report parse failed', e, data.d.slice(0,200)); }
+    const data=await api(`/api/fleet/report?from=${encodeURIComponent(from+' 00:00')}&to=${encodeURIComponent(to+' 23:59')}`,{},FLEET_API);
+    let rows=[];
+    if(data.d){
+      try{
+        const fixed=data.d.replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g,'$1"$2":').replace(/:\s*'([^']*)'/g,':"$1"');
+        const parsed=JSON.parse(fixed);
+        rows=parsed.reportList||parsed.devices||parsed.list||Object.values(parsed)[0]||[];
+      }catch(e){console.warn('Report parse failed',e);}
     }
-
-    if (!rows.length) {
-      list.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Нет данных</div><div class="empty-sub">За выбранный период</div></div>`;
-      return;
-    }
-
-    list.innerHTML = `<div class="slabel" style="padding-top:14px">Пробег ${from} — ${to}</div>` +
-      rows.map((r, i) => {
-        const name = r.targetName || r.name || r.DeviceName || `Устройство ${i+1}`;
-        const mileage = r.mileage || r.Mileage || r.distance || '—';
-        const alarms = r.alarm || r.Alarm || 0;
-        return `
-          <div class="vehicle-card stopped" style="margin-bottom:8px;animation-delay:${i*40}ms">
-            <div class="vc-top">
-              <div class="vc-icon" style="background:var(--accent-bg)">🚗</div>
-              <div style="flex:1;min-width:0">
-                <div class="vc-name">${esc(name)}</div>
-                ${alarms > 0 ? `<div class="vc-id">⚠️ Тревог: ${alarms}</div>` : ''}
-              </div>
-              <div class="vc-badge moving">${esc(String(mileage))}</div>
-            </div>
-          </div>`;
+    if(!rows.length){list.innerHTML=`<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Нет данных</div><div class="empty-sub">За выбранный период</div></div>`;return;}
+    list.innerHTML=`<div class="slabel" style="padding-top:14px">Пробег ${from} — ${to}</div>`+
+      rows.map((r,i)=>{
+        const name=r.targetName||r.name||r.DeviceName||`Устройство ${i+1}`;
+        const mileage=r.mileage||r.Mileage||r.distance||'—';
+        const alarms=r.alarm||r.Alarm||0;
+        return `<div class="vehicle-card stopped" style="margin-bottom:8px;animation-delay:${i*40}ms">
+          <div class="vc-top">
+            <div class="vc-icon" style="background:var(--accent-bg)">🚗</div>
+            <div style="flex:1;min-width:0"><div class="vc-name">${esc(name)}</div>${alarms>0?`<div class="vc-id">⚠️ Тревог: ${alarms}</div>`:''}</div>
+            <div class="vc-badge moving">${esc(String(mileage))}</div>
+          </div>
+        </div>`;
       }).join('');
-  } catch(e) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Ошибка</div><div class="empty-sub">${esc(e.message)}</div></div>`;
-  }
+  }catch(e){list.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Ошибка</div><div class="empty-sub">${esc(e.message)}</div></div>`;}
 }
+
 function startFleetPolling(){stopFleetPolling();state.fleetInterval=setInterval(()=>{if(state.currentTab==='fleet')loadFleet();},6000);}
 function stopFleetPolling(){if(state.fleetInterval){clearInterval(state.fleetInterval);state.fleetInterval=null;}}
 
