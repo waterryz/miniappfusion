@@ -317,9 +317,11 @@
 
     <!-- GPS device ID inline editor -->
     <div style="margin:10px 20px 0;display:flex;gap:8px;align-items:center;">
-      <input class="form-input" id="gps-device-input" type="text" inputmode="numeric"
-             placeholder="PlanetGPS Device ID" style="flex:1;padding:11px 14px;font-size:14px;" />
+      <select class="form-select" id="gps-device-input" style="flex:1;padding:11px 14px;font-size:14px;">
+        <option value="">⏳ Загрузка машин...</option>
+      </select>
       <button class="icon-btn" id="gps-save-btn" onclick="saveGpsDevice()" style="width:42px;height:42px;font-size:16px;" title="Сохранить">✓</button>
+      <button class="icon-btn" onclick="unlinkGpsDevice()" style="width:42px;height:42px;font-size:16px;background:var(--red-bg);color:var(--red);border:1px solid rgba(255,87,87,0.4);" title="Отвязать">✕</button>
     </div>
 
     <div class="actions-wrap">
@@ -765,7 +767,25 @@ async function loadFleetForSelect(currentDeviceId) {
   }
 }
 
-function showProfile() { showScreen('profile'); }
+async function unlinkGpsDevice() {
+  const btn = document.getElementById('gps-save-btn');
+  btn.disabled = true;
+  try {
+    await api(`/driver/${state.currentDriver.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ planet_gps_device_id: '' })
+    });
+    state.currentDriver.planet_gps_device_id = '';
+    const drv = state.drivers.find(d => d.id === state.currentDriver.id);
+    if (drv) drv.planet_gps_device_id = '';
+    await loadFleetForSelect('');
+    toast('Машина отвязана', 'success');
+  } catch(e) {
+    toast('Ошибка: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
 
 async function saveGpsDevice() {
   const val = document.getElementById('gps-device-input').value.trim();
