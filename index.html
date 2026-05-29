@@ -563,7 +563,7 @@ async function loadDriverHome() {
     const mvEl = document.getElementById('mileage-value');
     mvEl.style.display = 'block';
     if (mil.has_gps && mil.value !== null && mil.value !== undefined) {
-      document.getElementById('mileage-num').textContent = mil.value;
+      document.getElementById('mileage-num').textContent = mil.value + ' mi';
       document.getElementById('mileage-month').textContent = `Пробег за ${mil.month}`;
     } else if (!mil.has_gps) {
       document.getElementById('mileage-num').textContent = '—';
