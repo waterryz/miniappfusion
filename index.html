@@ -316,11 +316,9 @@
     <div class="info-block" id="info-block"></div>
 
     <!-- GPS device ID inline editor -->
-    <!-- GPS device ID inline editor -->
     <div style="margin:10px 20px 0;display:flex;gap:8px;align-items:center;">
-      <select class="form-select" id="gps-device-input" style="flex:1;padding:11px 14px;font-size:14px;">
-        <option value="">⏳ Загрузка машин...</option>
-      </select>
+      <input class="form-input" id="gps-device-input" type="text" inputmode="numeric"
+             placeholder="PlanetGPS Device ID" style="flex:1;padding:11px 14px;font-size:14px;" />
       <button class="icon-btn" id="gps-save-btn" onclick="saveGpsDevice()" style="width:42px;height:42px;font-size:16px;" title="Сохранить">✓</button>
     </div>
 
@@ -730,11 +728,11 @@ async function openDriver(id) {
   try {
     const data = await api(`/driver/${id}`);
     state.currentDriver = data.driver; state.currentFiles = data.files;
-    renderProfile(data.driver, data.files); showScreen('profile');
+    await renderProfile(data.driver, data.files); showScreen('profile');
   } catch(e) { toast('Ошибка загрузки','error'); showScreen('drivers'); }
 }
 
-function renderProfile(d, files) {
+async function renderProfile(d, files) {
   document.getElementById('profile-title').textContent = d.name;
   document.getElementById('profile-sub').textContent = d.car_number;
   document.getElementById('info-block').innerHTML = `
@@ -744,8 +742,27 @@ function renderProfile(d, files) {
     <div class="info-row"><span class="info-key">Тариф</span><span class="info-val">${esc(d.tariff)}</span></div>
     <div class="info-row"><span class="info-key">ID</span><span class="info-val mono">${esc(d.id)}</span></div>
     <div class="info-row"><span class="info-key">Документов</span><span class="info-val" style="color:var(--accent)">${files.length}</span></div>`;
-  // Populate GPS input
-  document.getElementById('gps-device-input').value = d.planet_gps_device_id || '';
+  await loadFleetForSelect(d.planet_gps_device_id || '');
+}
+
+async function loadFleetForSelect(currentDeviceId) {
+  const sel = document.getElementById('gps-device-input');
+  sel.innerHTML = '<option value="">⏳ Загрузка машин...</option>';
+  try {
+    const data = await api('/api/fleet', {}, FLEET_API);
+    let vehicles = [];
+    if (data.d) {
+      try {
+        const fixed = data.d.replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g,'$1"$2":').replace(/:\s*'([^']*)'/g,':"$1"');
+        vehicles = JSON.parse(fixed).devices || [];
+      } catch(e) {}
+    }
+    sel.innerHTML = '<option value="">— Не привязана —</option>' +
+      vehicles.map(v => `<option value="${v.id}" ${String(v.id) === String(currentDeviceId) ? 'selected' : ''}>${esc(v.name)} (${esc(v.sn)})</option>`).join('');
+  } catch(e) {
+    console.error('Fleet select error:', e);
+    sel.innerHTML = `<option value="${currentDeviceId}">${currentDeviceId || '— Не привязана —'}</option>`;
+  }
 }
 
 function showProfile() { showScreen('profile'); }
