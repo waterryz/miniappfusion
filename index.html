@@ -1167,9 +1167,8 @@ async function loadReport() {
       rows.map((r,i)=>{
         const name=r.targetName||r.name||r.DeviceName||`Устройство ${i+1}`;
         const rawMileage = r.mileage || r.Mileage || r.distance;
-        const iskm = String(r.iskm || '0');
         const mileage = rawMileage !== undefined && rawMileage !== null
-          ? (iskm === '1' ? (parseFloat(rawMileage) * 0.621371).toFixed(2) : parseFloat(rawMileage).toFixed(2))
+          ? (parseFloat(rawMileage) * 0.621371).toFixed(2)
           : '—';
         const alarms=r.alarm||r.Alarm||0;
         return `<div class="vehicle-card stopped" style="margin-bottom:8px;animation-delay:${i*40}ms">
