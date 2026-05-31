@@ -244,12 +244,44 @@
     <!-- mileage card -->
     <div class="mileage-card" id="mileage-card">
       <div class="mileage-icon">🛣</div>
-      <div>
+      <div style="flex:1">
         <div class="mileage-loading" id="mileage-loading"><div class="spinner"></div><span>Загрузка пробега...</span></div>
         <div id="mileage-value" style="display:none">
           <div class="mileage-val" id="mileage-num">—</div>
           <div class="mileage-lbl" id="mileage-month">Пробег за месяц</div>
         </div>
+      </div>
+    </div>
+
+    <!-- plan / overage cards -->
+    <div id="plan-section" style="display:none;margin:8px 20px 0;display:none;gap:8px;flex-direction:column;">
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">План</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-top:4px;" id="plan-val">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">миль/мес</div>
+        </div>
+        <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Остаток</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-top:4px;" id="remaining-val">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">миль</div>
+        </div>
+      </div>
+      <div id="overage-card" style="display:none;background:var(--red-bg);border:1px solid rgba(255,87,87,0.35);border-radius:var(--radius-sm);padding:12px 16px;display:none;align-items:center;gap:12px;">
+        <div style="font-size:22px;">⚠️</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--red);">Перерасход: <span id="overage-miles-val">0</span> mi</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">Доплата: <span style="font-weight:700;color:var(--red);" id="overage-cost-val">$0</span> × $0.25/mi</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DMV card -->
+    <div id="dmv-card" style="display:none;margin:8px 20px 0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;display:none;align-items:center;gap:12px;">
+      <div style="font-size:22px;" id="dmv-icon">🚗</div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;" id="dmv-title">DMV инспекция</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;" id="dmv-sub">—</div>
       </div>
     </div>
 
@@ -323,6 +355,13 @@
       <button class="icon-btn" id="gps-save-btn" onclick="saveGpsDevice()" style="width:42px;height:42px;font-size:16px;" title="Сохранить">✓</button>
       <button class="icon-btn" onclick="unlinkGpsDevice()" style="width:42px;height:42px;font-size:16px;background:var(--red-bg);color:var(--red);border:1px solid rgba(255,87,87,0.4);" title="Отвязать">✕</button>
     </div>
+
+    <!-- DMV inspection date -->
+    <div style="margin:8px 20px 0;display:flex;gap:8px;align-items:center;">
+      <input class="form-input" id="dmv-date-input" type="date" style="flex:1;padding:11px 14px;font-size:14px;" title="Дата последней DMV инспекции" />
+      <button class="icon-btn" onclick="saveDmvDate()" style="width:42px;height:42px;font-size:16px;" title="Сохранить DMV дату">✓</button>
+    </div>
+    <div style="margin:2px 20px 0;font-size:11.5px;color:var(--muted);">Дата последней DMV инспекции</div>
 
     <div class="actions-wrap">
       <button class="action-btn primary" onclick="showDocuments()">📁 Документы водителя</button>
@@ -411,16 +450,22 @@
         <div class="form-label">Тариф</div>
         <select class="form-select" id="add-tariff" onchange="checkAddReady()">
           <option value="">Выберите тариф...</option>
-          <option value="Эконом ($650/нед · 3500 миль/мес)">Эконом — $650/нед · 3500 миль/мес</option>
-          <option value="Стандарт ($700/нед · 4500 миль/мес)">Стандарт — $700/нед · 4500 миль/мес</option>
-          <option value="Интенсив ($750/нед · 5500 миль/мес)">Интенсив — $750/нед · 5500 миль/мес</option>
-          <option value="Double Shift ($1000/нед · безлимит)">Double Shift — $1000/нед · безлимит</option>
+          <option value="Эконом ($650/нед · 2800 миль/мес)">Эконом — $650/нед · 2800 миль/мес</option>
+          <option value="Стандарт ($675/нед · 3800 миль/мес)">Стандарт — $675/нед · 3800 миль/мес</option>
+          <option value="Интенсив ($700/нед · 4800 миль/мес)">Интенсив — $700/нед · 4800 миль/мес</option>
+          <option value="Экстрим ($725/нед · 5800 миль/мес)">Экстрим — $725/нед · 5800 миль/мес</option>
+          <option value="Double Shift ($950/нед · безлимит)">Double Shift — $950/нед · безлимит</option>
         </select>
       </div>
       <div class="form-group">
         <div class="form-label">PlanetGPS Device ID <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(необязательно)</span></div>
         <input class="form-input" id="add-gps-id" type="text" inputmode="numeric" placeholder="Напр.: 123456" />
         <div class="form-hint">Device ID из PlanetGPS — нужен для автоматического учёта пробега</div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Дата последней DMV инспекции <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(необязательно)</span></div>
+        <input class="form-input" id="add-dmv-date" type="date" />
+        <div class="form-hint">Инспекция проходит раз в 4 месяца</div>
       </div>
       <button class="submit-btn" id="add-btn" onclick="submitAddDriver()" disabled>Добавить водителя</button>
     </div>
@@ -545,6 +590,7 @@ async function loadDriverHome() {
     const d = data.driver;
     const files = data.files || [];
     const mil = data.mileage || {};
+    const dmv = data.dmv || {};
 
     state.dvFiles = files;
 
@@ -573,11 +619,69 @@ async function loadDriverHome() {
       document.getElementById('mileage-month').textContent = 'Нет данных';
     }
 
+    // Plan / overage
+    const planSec = document.getElementById('plan-section');
+    if (mil.plan !== null && mil.plan !== undefined && mil.value !== null && mil.value !== undefined) {
+      planSec.style.display = 'flex';
+      document.getElementById('plan-val').textContent = mil.plan.toLocaleString();
+      const used = parseFloat(mil.value) || 0;
+      const remaining = mil.plan - used;
+      const remEl = document.getElementById('remaining-val');
+      if (remaining >= 0) {
+        remEl.textContent = Math.round(remaining).toLocaleString();
+        remEl.style.color = 'var(--green)';
+      } else {
+        remEl.textContent = '0';
+        remEl.style.color = 'var(--red)';
+      }
+      // Overage
+      const overCard = document.getElementById('overage-card');
+      if (mil.overage_miles && mil.overage_miles > 0) {
+        overCard.style.display = 'flex';
+        document.getElementById('overage-miles-val').textContent = mil.overage_miles.toLocaleString();
+        document.getElementById('overage-cost-val').textContent = '$' + mil.overage_cost.toFixed(2);
+      } else {
+        overCard.style.display = 'none';
+      }
+    } else {
+      planSec.style.display = 'none';
+    }
+
+    // DMV
+    const dmvCard = document.getElementById('dmv-card');
+    if (dmv.days_until !== null && dmv.days_until !== undefined) {
+      dmvCard.style.display = 'flex';
+      const days = dmv.days_until;
+      if (days < 0) {
+        document.getElementById('dmv-icon').textContent = '🚨';
+        document.getElementById('dmv-title').textContent = 'DMV инспекция просрочена';
+        document.getElementById('dmv-title').style.color = 'var(--red)';
+        document.getElementById('dmv-sub').textContent = `Просрочена на ${Math.abs(days)} дн.`;
+        dmvCard.style.borderColor = 'rgba(255,87,87,0.35)';
+        dmvCard.style.background = 'var(--red-bg)';
+      } else if (days <= 14) {
+        document.getElementById('dmv-icon').textContent = '⚠️';
+        document.getElementById('dmv-title').textContent = `DMV инспекция через ${days} дн.`;
+        document.getElementById('dmv-title').style.color = '#ffb400';
+        document.getElementById('dmv-sub').textContent = `Последняя: ${dmv.last_date}`;
+        dmvCard.style.borderColor = 'rgba(255,180,0,0.35)';
+        dmvCard.style.background = 'rgba(255,180,0,0.08)';
+      } else {
+        document.getElementById('dmv-icon').textContent = '✅';
+        document.getElementById('dmv-title').textContent = `DMV инспекция через ${days} дн.`;
+        document.getElementById('dmv-title').style.color = 'var(--text)';
+        document.getElementById('dmv-sub').textContent = `Последняя: ${dmv.last_date}`;
+        dmvCard.style.borderColor = 'var(--border)';
+        dmvCard.style.background = 'var(--card)';
+      }
+    } else {
+      dmvCard.style.display = 'none';
+    }
+
     // Documents
     renderDvDocs(files);
     showScreen('driver-home');
   } catch(e) {
-    // Not registered — show WIP
     showScreen('wip');
   }
 }
@@ -744,6 +848,8 @@ async function renderProfile(d, files) {
     <div class="info-row"><span class="info-key">Тариф</span><span class="info-val">${esc(d.tariff)}</span></div>
     <div class="info-row"><span class="info-key">ID</span><span class="info-val mono">${esc(d.id)}</span></div>
     <div class="info-row"><span class="info-key">Документов</span><span class="info-val" style="color:var(--accent)">${files.length}</span></div>`;
+  // DMV date
+  document.getElementById('dmv-date-input').value = d.dmv_inspection_date || '';
   await loadFleetForSelect(d.planet_gps_device_id || '');
 }
 
@@ -807,6 +913,22 @@ async function saveGpsDevice() {
     btn.textContent = '✓'; btn.disabled = false;
   }
 }
+
+async function saveDmvDate() {
+  const val = document.getElementById('dmv-date-input').value.trim();
+  try {
+    await api(`/driver/${state.currentDriver.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ dmv_inspection_date: val })
+    });
+    state.currentDriver.dmv_inspection_date = val;
+    toast('DMV дата сохранена', 'success');
+  } catch(e) {
+    toast('Ошибка: ' + e.message, 'error');
+  }
+}
+
+function showProfile() { showScreen('profile'); }
 
 function showDocuments() {
   document.getElementById('docs-sub').textContent = state.currentDriver.name;
@@ -883,6 +1005,7 @@ async function submitUpload() {
 function showAddDriver() {
   ['add-id','add-name','add-model','add-number','add-gps-id'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('add-tariff').value='';
+  document.getElementById('add-dmv-date').value='';
   document.getElementById('add-btn').disabled=true;
   document.getElementById('add-btn').textContent='Добавить водителя';
   showScreen('add');
@@ -900,6 +1023,7 @@ async function submitAddDriver() {
       car_number: document.getElementById('add-number').value.trim(),
       tariff: document.getElementById('add-tariff').value.trim(),
       planet_gps_device_id: document.getElementById('add-gps-id').value.trim(),
+      dmv_inspection_date: document.getElementById('add-dmv-date').value.trim(),
     })});
     toast('Водитель добавлен','success'); await loadDrivers(); showScreen('drivers');
   } catch(e) { toast('Ошибка: '+e.message,'error'); btn.disabled=false; btn.textContent='Добавить водителя'; }
