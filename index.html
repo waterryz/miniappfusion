@@ -175,20 +175,67 @@
     .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 4px rgba(76,240,122,0.6); animation: pulse 2s ease-in-out infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-    /* ── DRIVER SELF-VIEW ── */
-    .dv-hero { margin: 16px 20px 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
-    .dv-avatar { width: 52px; height: 52px; border-radius: 14px; background: var(--accent-bg); border: 1.5px solid rgba(200,240,76,0.3); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
-    .dv-hero-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
-    .dv-hero-plate { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
-    .mileage-card { margin: 12px 20px 0; background: linear-gradient(135deg, rgba(200,240,76,0.12) 0%, rgba(200,240,76,0.04) 100%); border: 1.5px solid rgba(200,240,76,0.3); border-radius: var(--radius); padding: 18px 20px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
-    .mileage-icon { font-size: 28px; flex-shrink: 0; }
-    .mileage-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--accent); line-height: 1; }
-    .mileage-lbl { font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: 500; }
+    /* ── DRIVER SELF-VIEW (личный кабинет арендатора) ── */
+    .pf-scroll { flex: 1; overflow-y: auto; padding: 12px 16px 24px; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 10px; }
+    .pf-scroll::-webkit-scrollbar { display: none; }
     .mileage-loading { display: flex; align-items: center; gap: 8px; }
     .mileage-loading .spinner { width: 20px; height: 20px; border-width: 2px; }
     .mileage-loading span { font-size: 13px; color: var(--muted); }
-    .dv-scroll { flex: 1; overflow-y: auto; padding: 6px 20px 28px; -webkit-overflow-scrolling: touch; }
-    .dv-scroll::-webkit-scrollbar { display: none; }
+
+    /* hero */
+    .pf-hero { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .pf-hero-top { display: flex; align-items: center; gap: 12px; }
+    .pf-avatar { width: 48px; height: 48px; border-radius: 14px; background: var(--accent-bg); border: 1.5px solid rgba(200,240,76,0.3); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .pf-hero-main { min-width: 0; flex: 1; }
+    .pf-hero-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pf-hero-car { font-size: 13px; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pf-hero-meta { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; font-size: 13px; color: var(--text-secondary); }
+    .pf-tariff-chip { background: var(--accent-bg); border: 1px solid rgba(200,240,76,0.25); color: var(--accent); border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+    .pf-meta-sep { width: 1px; height: 12px; background: var(--border2); }
+    .pf-hero-plate { display: flex; align-items: center; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-family: monospace; font-size: 13px; color: var(--text-secondary); }
+
+    /* generic card */
+    .pf-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+    .pf-card-head { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .pf-ico { font-size: 14px; }
+
+    /* payment */
+    .pf-pay-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+    .pf-pay-date { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; }
+    .pf-pay-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .pf-pay-amount { text-align: right; flex-shrink: 0; }
+    .pf-amount-lbl { font-size: 11px; color: var(--muted); }
+    .pf-amount-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+
+    /* mileage */
+    .pf-miles-big { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; line-height: 1; }
+    .pf-miles-of { font-size: 15px; color: var(--text-secondary); font-weight: 600; }
+    .pf-bar { height: 8px; border-radius: 5px; background: var(--surface); overflow: hidden; margin: 12px 0 6px; }
+    .pf-bar-fill { height: 100%; background: var(--accent); border-radius: 5px; transition: width 0.4s ease; width: 0%; }
+    .pf-miles-pct { text-align: right; font-size: 12px; color: var(--muted); font-weight: 600; min-height: 14px; }
+    .pf-mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+    .pf-mini { background: var(--surface); border-radius: 10px; padding: 10px 8px; text-align: center; }
+    .pf-mini-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .pf-mini-val { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; margin-top: 4px; }
+    .pf-mini-unit { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+    /* service */
+    .pf-svc-row { display: flex; gap: 8px; }
+    .pf-svc-item { flex: 1; min-width: 0; }
+    .pf-svc-val { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pf-oil { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+    .pf-oil strong { color: var(--text); font-family: monospace; }
+
+    /* documents */
+    .pf-doc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .pf-doc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 11px 6px 9px; text-align: center; position: relative; }
+    .pf-doc.up { border-color: rgba(76,240,122,0.3); cursor: pointer; transition: transform 0.1s; }
+    .pf-doc.up:active { transform: scale(0.95); }
+    .pf-doc-ico { font-size: 20px; line-height: 1; }
+    .pf-doc-lbl { font-size: 10px; color: var(--text-secondary); margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pf-doc-status { position: absolute; top: 4px; right: 6px; font-size: 11px; font-weight: 800; }
+    .pf-doc-status.up { color: var(--green); }
+    .pf-doc-status.miss { color: var(--muted); }
 
     /* GPS device field hint */
     .form-hint { font-size: 11.5px; color: var(--muted); margin-top: -4px; line-height: 1.5; }
@@ -232,67 +279,76 @@
       <div class="logo-tag">Driver</div>
     </div>
 
-    <!-- hero -->
-    <div class="dv-hero" id="dv-hero">
-      <div class="dv-avatar">🚗</div>
-      <div>
-        <div class="dv-hero-name" id="dv-name">—</div>
-        <div class="dv-hero-plate" id="dv-plate">—</div>
-      </div>
-    </div>
+    <div class="pf-scroll">
 
-    <!-- mileage card -->
-    <div class="mileage-card" id="mileage-card">
-      <div class="mileage-icon">🛣</div>
-      <div style="flex:1">
-        <div class="mileage-loading" id="mileage-loading"><div class="spinner"></div><span>Загрузка пробега...</span></div>
-        <div id="mileage-value" style="display:none">
-          <div class="mileage-val" id="mileage-num">—</div>
-          <div class="mileage-lbl" id="mileage-month">Пробег за месяц</div>
+      <!-- HERO: арендатор + машина -->
+      <div class="pf-hero">
+        <div class="pf-hero-top">
+          <div class="pf-avatar">👤</div>
+          <div class="pf-hero-main">
+            <div class="pf-hero-name" id="dv-name">—</div>
+            <div class="pf-hero-car" id="dv-car">—</div>
+          </div>
+        </div>
+        <div class="pf-hero-meta">
+          <span class="pf-tariff-chip" id="dv-tariff">—</span>
+          <span class="pf-meta-sep"></span>
+          <span id="dv-price">—</span>
+          <span class="pf-meta-sep"></span>
+          <span id="dv-limit">—</span>
+        </div>
+        <div class="pf-hero-plate"><span>🪪</span><span id="dv-plate">—</span></div>
+      </div>
+
+      <!-- PAYMENT: недельный платёж -->
+      <div class="pf-card">
+        <div class="pf-card-head"><span class="pf-ico">📅</span> Следующий платёж</div>
+        <div class="pf-pay-row">
+          <div style="min-width:0">
+            <div class="pf-pay-date" id="dv-pay-date">—</div>
+            <div class="pf-pay-sub" id="dv-pay-sub">—</div>
+          </div>
+          <div class="pf-pay-amount">
+            <div class="pf-amount-lbl">Сумма</div>
+            <div class="pf-amount-val" id="dv-pay-amount">—</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- plan / overage cards -->
-    <div id="plan-section" style="display:none;margin:8px 20px 0;display:none;gap:8px;flex-direction:column;">
-      <div style="display:flex;gap:8px;">
-        <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;">
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">План</div>
-          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-top:4px;" id="plan-val">—</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">миль/мес</div>
-        </div>
-        <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;">
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Остаток</div>
-          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-top:4px;" id="remaining-val">—</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">миль</div>
-        </div>
-      </div>
-      <div id="overage-card" style="display:none;background:var(--red-bg);border:1px solid rgba(255,87,87,0.35);border-radius:var(--radius-sm);padding:12px 16px;display:none;align-items:center;gap:12px;">
-        <div style="font-size:22px;">⚠️</div>
-        <div>
-          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--red);">Перерасход: <span id="overage-miles-val">0</span> mi</div>
-          <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">Доплата: <span style="font-weight:700;color:var(--red);" id="overage-cost-val">$0</span> × $0.25/mi</div>
+      <!-- MILEAGE: пробег -->
+      <div class="pf-card">
+        <div class="pf-card-head"><span class="pf-ico">🛣</span> Пробег</div>
+        <div class="mileage-loading" id="dv-miles-loading"><div class="spinner"></div><span>Загрузка пробега…</span></div>
+        <div id="dv-miles-body" style="display:none">
+          <div class="pf-miles-big"><span id="dv-miles-done">—</span> <span class="pf-miles-of">/ <span id="dv-miles-limit">—</span> миль</span></div>
+          <div class="pf-bar"><div class="pf-bar-fill" id="dv-miles-bar"></div></div>
+          <div class="pf-miles-pct" id="dv-miles-pct"></div>
+          <div class="pf-mini-grid">
+            <div class="pf-mini"><div class="pf-mini-lbl">Осталось</div><div class="pf-mini-val" id="dv-remaining">—</div><div class="pf-mini-unit">миль</div></div>
+            <div class="pf-mini"><div class="pf-mini-lbl">Перерасход</div><div class="pf-mini-val" id="dv-over-miles">—</div><div class="pf-mini-unit">миль</div></div>
+            <div class="pf-mini"><div class="pf-mini-lbl">Доплата</div><div class="pf-mini-val" id="dv-over-cost">—</div><div class="pf-mini-unit">$0.25/mi</div></div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- DMV card -->
-    <div id="dmv-card" style="display:none;margin:8px 20px 0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;display:none;align-items:center;gap:12px;">
-      <div style="font-size:22px;" id="dmv-icon">🚗</div>
-      <div>
-        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;" id="dmv-title">DMV инспекция</div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;" id="dmv-sub">—</div>
+      <!-- SERVICE + OIL: сервис -->
+      <div class="pf-card">
+        <div class="pf-card-head"><span class="pf-ico">🔧</span> Сервис · каждые 7 000 миль</div>
+        <div class="pf-svc-row">
+          <div class="pf-svc-item"><div class="pf-mini-lbl">Последний</div><div class="pf-svc-val" id="dv-svc-date">—</div></div>
+          <div class="pf-svc-item"><div class="pf-mini-lbl">Пробег</div><div class="pf-svc-val" id="dv-svc-odo">—</div></div>
+          <div class="pf-svc-item"><div class="pf-mini-lbl">До сервиса</div><div class="pf-svc-val" id="dv-svc-left">—</div></div>
+        </div>
+        <div class="pf-bar"><div class="pf-bar-fill" id="dv-svc-bar" style="width:0%"></div></div>
+        <div class="pf-oil"><span class="pf-ico">🛢</span> Масло: <strong id="dv-oil">—</strong></div>
       </div>
-    </div>
 
-    <!-- car + tariff info -->
-    <div class="info-block" id="dv-info-block"></div>
+      <!-- DOCUMENTS: статусы по категориям -->
+      <div class="pf-card">
+        <div class="pf-card-head"><span class="pf-ico">📁</span> Документы</div>
+        <div class="pf-doc-grid" id="dv-doc-grid"></div>
+      </div>
 
-    <!-- docs section -->
-    <div class="divider"></div>
-    <div class="dv-scroll">
-      <div class="slabel">Мои документы</div>
-      <div class="photo-grid" id="dv-photo-grid"></div>
     </div>
   </div>
 
@@ -583,120 +639,139 @@ async function init() {
   } catch(e) { showScreen('wip'); }
 }
 
-// ── DRIVER HOME ───────────────────────────────────────────────────
+// ── DRIVER HOME (личный кабинет арендатора) ───────────────────────
+function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+
+// Разбор строки тарифа, напр. "Эконом ($650/нед · 2800 миль/мес)"
+function parseTariff(t) {
+  const out = { label: '', price: null, miles: null, unlimited: false };
+  if (!t) return out;
+  out.label = (t.split('(')[0] || t).trim();
+  const pm = t.match(/\$\s*(\d[\d\s,]*)/);
+  if (pm) out.price = parseInt(pm[1].replace(/[\s,]/g, ''), 10);
+  if (/безлимит|unlimited/i.test(t)) out.unlimited = true;
+  const mm = t.match(/(\d[\d\s,]*)\s*мил/i);
+  if (mm) out.miles = parseInt(mm[1].replace(/[\s,]/g, ''), 10);
+  return out;
+}
+
+// Категории документов; статус определяется по имени загруженного файла
+const DOC_CATEGORIES = [
+  { label: 'DMV',       icon: '🪪', match: ['dmv'] },
+  { label: 'TLC',       icon: '🚕', match: ['tlc', 'license', 'лиценз'] },
+  { label: 'Insurance', icon: '🛡', match: ['insurance', 'страхов'] },
+  { label: 'Policy',    icon: '📄', match: ['policy', 'полис'] },
+  { label: 'Police',    icon: '🚓', match: ['police', 'полиц'] },
+  { label: 'Receipts',  icon: '🧾', match: ['service', 'receipt', 'ресит', 'сервис', 'чек'] },
+  { label: 'Accident',  icon: '📸', match: ['accident', 'damage', 'авар', 'ущерб', 'дтп'] },
+];
+
+function _num(v) {
+  if (v === null || v === undefined || String(v).trim() === '') return null;
+  const n = parseFloat(String(v).replace(/[\s,]/g, ''));
+  return isNaN(n) ? null : n;
+}
+
 async function loadDriverHome() {
   try {
     const data = await api('/driver/me');
-    const d = data.driver;
+    const d = data.driver || {};
     const files = data.files || [];
     const mil = data.mileage || {};
-    const dmv = data.dmv || {};
-
     state.dvFiles = files;
 
-    // Hero
-    document.getElementById('dv-name').textContent = d.name;
-    document.getElementById('dv-plate').textContent = d.car_number;
+    // ── HERO ──
+    setText('dv-name', d.name || '—');
+    setText('dv-car', d.car_model || '—');
+    setText('dv-plate', d.car_number || '—');
 
-    // Info block
-    document.getElementById('dv-info-block').innerHTML = `
-      <div class="info-row"><span class="info-key">Авто</span><span class="info-val">${esc(d.car_model)}</span></div>
-      <div class="info-row"><span class="info-key">Номер</span><span class="info-val mono">${esc(d.car_number)}</span></div>
-      <div class="info-row"><span class="info-key">Тариф</span><span class="info-val">${esc(d.tariff)}</span></div>`;
+    const t = parseTariff(d.tariff || '');
+    setText('dv-tariff', t.label || '—');
+    setText('dv-price', t.price != null ? '$' + t.price + '/нед' : '—');
 
-    // Mileage
-    document.getElementById('mileage-loading').style.display = 'none';
-    const mvEl = document.getElementById('mileage-value');
-    mvEl.style.display = 'block';
-    if (mil.has_gps && mil.value !== null && mil.value !== undefined) {
-      document.getElementById('mileage-num').textContent = mil.value + ' mi';
-      document.getElementById('mileage-month').textContent = `Пробег за ${mil.month}`;
-    } else if (!mil.has_gps) {
-      document.getElementById('mileage-num').textContent = '—';
-      document.getElementById('mileage-month').textContent = 'GPS не подключён';
-    } else {
-      document.getElementById('mileage-num').textContent = '—';
-      document.getElementById('mileage-month').textContent = 'Нет данных';
-    }
+    // лимит миль: кастомный (из админки) важнее тарифного
+    const customLimit = _num(mil.limit);
+    const limit = customLimit != null ? customLimit : (t.miles != null ? t.miles : null);
+    setText('dv-limit', limit != null ? limit.toLocaleString() + ' mi/мес' : (t.unlimited ? 'Безлимит' : '—'));
 
-    // Plan / overage
-    const planSec = document.getElementById('plan-section');
-    if (mil.plan !== null && mil.plan !== undefined && mil.value !== null && mil.value !== undefined) {
-      planSec.style.display = 'flex';
-      document.getElementById('plan-val').textContent = mil.plan.toLocaleString();
-      const used = parseFloat(mil.value) || 0;
-      const remaining = mil.plan - used;
-      const remEl = document.getElementById('remaining-val');
-      if (remaining >= 0) {
-        remEl.textContent = Math.round(remaining).toLocaleString();
-        remEl.style.color = 'var(--green)';
+    // ── PAYMENT ── (день/дата платежа в системе не хранятся → «—»)
+    setText('dv-pay-amount', t.price != null ? '$' + t.price : '—');
+    setText('dv-pay-date', '—');
+    setText('dv-pay-sub', 'Дата платежа не задана');
+
+    // ── MILEAGE ──
+    document.getElementById('dv-miles-loading').style.display = 'none';
+    document.getElementById('dv-miles-body').style.display = 'block';
+
+    const done = _num(mil.value);
+    setText('dv-miles-done', done != null ? Math.round(done).toLocaleString() : '—');
+
+    const bar = document.getElementById('dv-miles-bar');
+    const remEl = document.getElementById('dv-remaining');
+    const ovmEl = document.getElementById('dv-over-miles');
+    const ovcEl = document.getElementById('dv-over-cost');
+
+    if (limit != null) {
+      setText('dv-miles-limit', limit.toLocaleString());
+      if (done != null) {
+        const pct = limit > 0 ? Math.min(100, Math.round(done / limit * 100)) : 0;
+        bar.style.width = pct + '%';
+        setText('dv-miles-pct', pct + '%');
+        const remaining = limit - done;
+        const over = remaining < 0 ? Math.abs(remaining) : 0;
+        setText('dv-remaining', remaining >= 0 ? Math.round(remaining).toLocaleString() : '0');
+        setText('dv-over-miles', Math.round(over).toLocaleString());
+        setText('dv-over-cost', '$' + (over * 0.25).toFixed(2));
+        remEl.style.color = remaining >= 0 ? 'var(--green)' : 'var(--red)';
+        ovmEl.style.color = over > 0 ? 'var(--red)' : 'var(--text)';
+        ovcEl.style.color = over > 0 ? 'var(--red)' : 'var(--green)';
+        bar.style.background = over > 0 ? 'var(--red)' : 'var(--accent)';
       } else {
-        remEl.textContent = '0';
-        remEl.style.color = 'var(--red)';
-      }
-      // Overage
-      const overCard = document.getElementById('overage-card');
-      if (mil.overage_miles && mil.overage_miles > 0) {
-        overCard.style.display = 'flex';
-        document.getElementById('overage-miles-val').textContent = mil.overage_miles.toLocaleString();
-        document.getElementById('overage-cost-val').textContent = '$' + mil.overage_cost.toFixed(2);
-      } else {
-        overCard.style.display = 'none';
-      }
-    } else {
-      planSec.style.display = 'none';
-    }
-
-    // DMV
-    const dmvCard = document.getElementById('dmv-card');
-    if (dmv.days_until !== null && dmv.days_until !== undefined) {
-      dmvCard.style.display = 'flex';
-      const days = dmv.days_until;
-      if (days < 0) {
-        document.getElementById('dmv-icon').textContent = '🚨';
-        document.getElementById('dmv-title').textContent = 'DMV инспекция просрочена';
-        document.getElementById('dmv-title').style.color = 'var(--red)';
-        document.getElementById('dmv-sub').textContent = `Просрочена на ${Math.abs(days)} дн.`;
-        dmvCard.style.borderColor = 'rgba(255,87,87,0.35)';
-        dmvCard.style.background = 'var(--red-bg)';
-      } else if (days <= 14) {
-        document.getElementById('dmv-icon').textContent = '⚠️';
-        document.getElementById('dmv-title').textContent = `DMV инспекция через ${days} дн.`;
-        document.getElementById('dmv-title').style.color = '#ffb400';
-        document.getElementById('dmv-sub').textContent = `Последняя: ${dmv.last_date}`;
-        dmvCard.style.borderColor = 'rgba(255,180,0,0.35)';
-        dmvCard.style.background = 'rgba(255,180,0,0.08)';
-      } else {
-        document.getElementById('dmv-icon').textContent = '✅';
-        document.getElementById('dmv-title').textContent = `DMV инспекция через ${days} дн.`;
-        document.getElementById('dmv-title').style.color = 'var(--text)';
-        document.getElementById('dmv-sub').textContent = `Последняя: ${dmv.last_date}`;
-        dmvCard.style.borderColor = 'var(--border)';
-        dmvCard.style.background = 'var(--card)';
+        setText('dv-miles-pct', '');
+        setText('dv-remaining', '—'); setText('dv-over-miles', '—'); setText('dv-over-cost', '—');
+        bar.style.width = '0%';
       }
     } else {
-      dmvCard.style.display = 'none';
+      // лимита нет (напр. безлимит) → перерасхода не существует
+      setText('dv-miles-limit', t.unlimited ? '∞' : '—');
+      setText('dv-miles-pct', '');
+      setText('dv-remaining', t.unlimited ? '∞' : '—');
+      setText('dv-over-miles', '0');
+      setText('dv-over-cost', '$0');
+      ovmEl.style.color = 'var(--text)'; ovcEl.style.color = 'var(--green)';
+      bar.style.width = '0%';
     }
 
-    // Documents
+    // ── SERVICE + OIL ── (даты/пробега сервиса и одометра в системе нет → «—»)
+    setText('dv-svc-date', '—');
+    setText('dv-svc-odo', '—');
+    setText('dv-svc-left', '—');
+    document.getElementById('dv-svc-bar').style.width = '0%';
+    setText('dv-oil', '—');
+
+    // ── DOCUMENTS ──
     renderDvDocs(files);
+
     showScreen('driver-home');
-  } catch(e) {
+  } catch (e) {
     showScreen('wip');
   }
 }
 
 function renderDvDocs(files) {
-  const grid = document.getElementById('dv-photo-grid');
-  if (!files.length) {
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📂</div><div class="empty-title">Нет документов</div><div class="empty-sub">Документы добавит администратор</div></div>`;
-    return;
-  }
-  grid.innerHTML = files.map((f,i) => `
-    <div class="photo-cell" onclick="openDvLightbox(${i})">
-      <img src="${f.url}" loading="lazy" alt="${esc(f.name)}"/>
-      <div class="photo-label">${esc(f.name)}</div>
-    </div>`).join('');
+  const grid = document.getElementById('dv-doc-grid');
+  grid.innerHTML = DOC_CATEGORIES.map(cat => {
+    const idx = files.findIndex(f => {
+      const n = (f.name || '').toLowerCase();
+      return cat.match.some(m => n.includes(m));
+    });
+    const uploaded = idx >= 0;
+    return `<div class="pf-doc ${uploaded ? 'up' : 'miss'}" ${uploaded ? `onclick="openDvLightbox(${idx})"` : ''}>
+      <div class="pf-doc-status ${uploaded ? 'up' : 'miss'}">${uploaded ? '✓' : '—'}</div>
+      <div class="pf-doc-ico">${cat.icon}</div>
+      <div class="pf-doc-lbl">${cat.label}</div>
+    </div>`;
+  }).join('');
 }
 
 function openDvLightbox(i) {
