@@ -227,15 +227,12 @@
     .pf-oil strong { color: var(--text); font-family: monospace; }
 
     /* documents */
-    .pf-doc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    .pf-doc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 11px 6px 9px; text-align: center; position: relative; }
-    .pf-doc.up { border-color: rgba(76,240,122,0.3); cursor: pointer; transition: transform 0.1s; }
-    .pf-doc.up:active { transform: scale(0.95); }
-    .pf-doc-ico { font-size: 20px; line-height: 1; }
-    .pf-doc-lbl { font-size: 10px; color: var(--text-secondary); margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pf-doc-status { position: absolute; top: 4px; right: 6px; font-size: 11px; font-weight: 800; }
-    .pf-doc-status.up { color: var(--green); }
-    .pf-doc-status.miss { color: var(--muted); }
+    .pf-upload { width: 100%; margin-top: 10px; border: 1.5px dashed var(--border2); border-radius: 12px; background: var(--surface); padding: 18px; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+    .pf-upload:active { border-color: var(--accent); background: var(--accent-bg); }
+    .pf-upload.busy { opacity: 0.6; pointer-events: none; }
+    .pf-upload-ico { font-size: 24px; line-height: 1; }
+    .pf-upload-text { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent); margin-top: 6px; }
+    .pf-upload-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
 
     /* GPS device field hint */
     .form-hint { font-size: 11.5px; color: var(--muted); margin-top: -4px; line-height: 1.5; }
@@ -351,10 +348,16 @@
         <div class="pf-oil"><span class="pf-ico">🛢</span> Масло: <strong id="dv-oil">—</strong></div>
       </div>
 
-      <!-- DOCUMENTS: статусы по категориям -->
+      <!-- DOCUMENTS: документы водителя + загрузка -->
       <div class="pf-card">
         <div class="pf-card-head"><span class="pf-ico">📁</span> Документы</div>
-        <div class="pf-doc-grid" id="dv-doc-grid"></div>
+        <div class="photo-grid" id="dv-doc-grid"></div>
+        <button class="pf-upload" id="dv-upload-btn" onclick="document.getElementById('dv-file-input').click()">
+          <div class="pf-upload-ico">☁️</div>
+          <div class="pf-upload-text">Загрузить документ</div>
+          <div class="pf-upload-sub">JPG, PNG · до 10 МБ</div>
+        </button>
+        <input type="file" id="dv-file-input" accept="image/*" style="display:none" onchange="dvUpload(event)" />
       </div>
 
     </div>
@@ -663,17 +666,6 @@ function parseTariff(t) {
   return out;
 }
 
-// Категории документов; статус определяется по имени загруженного файла
-const DOC_CATEGORIES = [
-  { label: 'DMV',       icon: '🪪', match: ['dmv'] },
-  { label: 'TLC',       icon: '🚕', match: ['tlc', 'license', 'лиценз'] },
-  { label: 'Insurance', icon: '🛡', match: ['insurance', 'страхов'] },
-  { label: 'Policy',    icon: '📄', match: ['policy', 'полис'] },
-  { label: 'Police',    icon: '🚓', match: ['police', 'полиц'] },
-  { label: 'Receipts',  icon: '🧾', match: ['service', 'receipt', 'ресит', 'сервис', 'чек'] },
-  { label: 'Accident',  icon: '📸', match: ['accident', 'damage', 'авар', 'ущерб', 'дтп'] },
-];
-
 function _num(v) {
   if (v === null || v === undefined || String(v).trim() === '') return null;
   const n = parseFloat(String(v).replace(/[\s,]/g, ''));
@@ -768,18 +760,45 @@ async function loadDriverHome() {
 
 function renderDvDocs(files) {
   const grid = document.getElementById('dv-doc-grid');
-  grid.innerHTML = DOC_CATEGORIES.map(cat => {
-    const idx = files.findIndex(f => {
-      const n = (f.name || '').toLowerCase();
-      return cat.match.some(m => n.includes(m));
-    });
-    const uploaded = idx >= 0;
-    return `<div class="pf-doc ${uploaded ? 'up' : 'miss'}" ${uploaded ? `onclick="openDvLightbox(${idx})"` : ''}>
-      <div class="pf-doc-status ${uploaded ? 'up' : 'miss'}">${uploaded ? '✓' : '—'}</div>
-      <div class="pf-doc-ico">${cat.icon}</div>
-      <div class="pf-doc-lbl">${cat.label}</div>
-    </div>`;
-  }).join('');
+  if (!files.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:22px 12px"><div class="empty-icon">📂</div><div class="empty-title">Нет документов</div><div class="empty-sub">Загрузите первый — кнопкой ниже</div></div>`;
+    return;
+  }
+  grid.innerHTML = files.map((f, i) => `
+    <div class="photo-cell" onclick="openDvLightbox(${i})">
+      <img src="${f.url}" loading="lazy" alt="${esc(f.name)}"/>
+      <div class="photo-label">${esc(f.name)}</div>
+    </div>`).join('');
+}
+
+// Загрузка документа водителем в свою папку (POST /driver/me/upload)
+async function dvUpload(e) {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const btn = document.getElementById('dv-upload-btn');
+  const txt = btn.querySelector('.pf-upload-text');
+  const original = txt.textContent;
+  btn.classList.add('busy');
+  txt.textContent = 'Загрузка…';
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    try {
+      const base = (file.name || 'document').replace(/\.[^.]+$/, '');
+      await api('/driver/me/upload', { method: 'POST', body: JSON.stringify({ image: ev.target.result, name: base }) });
+      toast('Документ загружен', 'success');
+      const data = await api('/driver/me');
+      state.dvFiles = data.files || [];
+      renderDvDocs(state.dvFiles);
+    } catch (err) {
+      toast('Ошибка: ' + err.message, 'error');
+    } finally {
+      txt.textContent = original;
+      btn.classList.remove('busy');
+    }
+  };
+  reader.onerror = () => { toast('Не удалось прочитать файл', 'error'); txt.textContent = original; btn.classList.remove('busy'); };
+  reader.readAsDataURL(file);
 }
 
 function openDvLightbox(i) {
