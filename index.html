@@ -279,9 +279,10 @@
   ══════════════════════════════════════════ -->
   <div class="screen" id="screen-driver-home">
     <div class="logo-bar">
+      <button class="back-btn" id="dv-back" onclick="exitDriverPreview()" style="display:none;width:36px;height:36px;font-size:18px;margin-right:2px;">←</button>
       <div class="logo-mark"><img src="https://res.cloudinary.com/dimqgnupo/image/upload/v1776772340/photo_2026-01-28_21-59-27_dnx6gl.jpg" alt="Prime Fusion" /></div>
       <div class="logo-name">Prime Fusion</div>
-      <div class="logo-tag">Driver</div>
+      <div class="logo-tag" id="dv-role">Driver</div>
     </div>
 
     <div class="pf-scroll">
@@ -412,29 +413,15 @@
         <div class="header-sub" id="profile-sub"></div>
       </div>
     </div>
-    <div class="info-block" id="info-block"></div>
-
-    <!-- GPS device ID inline editor -->
-    <div style="margin:10px 20px 0;display:flex;gap:8px;align-items:center;">
-      <select class="form-select" id="gps-device-input" style="flex:1;padding:11px 14px;font-size:14px;">
-        <option value="">⏳ Загрузка машин...</option>
-      </select>
-      <button class="icon-btn" id="gps-save-btn" onclick="saveGpsDevice()" style="width:42px;height:42px;font-size:16px;" title="Сохранить">✓</button>
-      <button class="icon-btn" onclick="unlinkGpsDevice()" style="width:42px;height:42px;font-size:16px;background:var(--red-bg);color:var(--red);border:1px solid rgba(255,87,87,0.4);" title="Отвязать">✕</button>
+    <div class="scroll-body" style="padding-top:14px">
+      <div class="info-block" id="info-block" style="margin:0"></div>
+      <div class="actions-wrap" style="padding:14px 0 0">
+        <button class="action-btn primary" onclick="openDriverPreview()">👁 Кабинет водителя</button>
+        <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showEditDriver()">✏️ Редактировать данные</button>
+        <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showDocuments()">📁 Документы водителя</button>
+        <button class="action-btn danger" onclick="confirmDeleteDriver()">🗑 Удалить водителя</button>
+      </div>
     </div>
-
-    <!-- DMV inspection date -->
-    <div style="margin:8px 20px 0;display:flex;gap:8px;align-items:center;">
-      <input class="form-input" id="dmv-date-input" type="date" style="flex:1;padding:11px 14px;font-size:14px;" title="Дата последней DMV инспекции" />
-      <button class="icon-btn" onclick="saveDmvDate()" style="width:42px;height:42px;font-size:16px;" title="Сохранить DMV дату">✓</button>
-    </div>
-    <div style="margin:2px 20px 0;font-size:11.5px;color:var(--muted);">Дата последней DMV инспекции</div>
-
-    <div class="actions-wrap">
-      <button class="action-btn primary" onclick="showDocuments()">📁 Документы водителя</button>
-      <button class="action-btn danger" onclick="confirmDeleteDriver()">🗑 Удалить водителя</button>
-    </div>
-    <div style="flex:1"></div>
   </div>
 
   <!-- DOCUMENTS (admin) -->
@@ -509,9 +496,19 @@
         <div class="form-label">Модель авто</div>
         <input class="form-input" id="add-model" type="text" placeholder="Напр.: Toyota Sienna Hybrid (WAV)" oninput="checkAddReady()" />
       </div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Год <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+          <input class="form-input" id="add-year" type="text" inputmode="numeric" placeholder="2025" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Trim <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+          <input class="form-input" id="add-trim" type="text" placeholder="XLE" />
+        </div>
+      </div>
       <div class="form-group">
         <div class="form-label">Номер авто</div>
-        <input class="form-input" id="add-number" type="text" placeholder="Напр.: TLC-4827" oninput="checkAddReady()" />
+        <input class="form-input" id="add-number" type="text" placeholder="Напр.: T142367C" oninput="checkAddReady()" />
       </div>
       <div class="form-group">
         <div class="form-label">Тариф</div>
@@ -525,16 +522,133 @@
         </select>
       </div>
       <div class="form-group">
-        <div class="form-label">PlanetGPS Device ID <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(необязательно)</span></div>
-        <input class="form-input" id="add-gps-id" type="text" inputmode="numeric" placeholder="Напр.: 123456" />
-        <div class="form-hint">Device ID из PlanetGPS — нужен для автоматического учёта пробега</div>
+        <div class="form-label">Лимит миль / мес <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+        <input class="form-input" id="add-limit" type="text" inputmode="numeric" placeholder="Если пусто — берётся из тарифа" />
+        <div class="form-hint">Кастомный лимит миль в месяц. Переопределяет лимит из тарифа.</div>
       </div>
       <div class="form-group">
-        <div class="form-label">Дата последней DMV инспекции <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(необязательно)</span></div>
+        <div class="form-label">Машина в PlanetGPS <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+        <select class="form-select" id="add-gps"><option value="">— Не привязана —</option></select>
+        <div class="form-hint">Нужна для автоматического учёта месячного пробега.</div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">День платежа <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+        <select class="form-select" id="add-payday">
+          <option value="">— Не задан —</option>
+          <option value="1">Понедельник</option><option value="2">Вторник</option>
+          <option value="3">Среда</option><option value="4">Четверг</option>
+          <option value="5">Пятница</option><option value="6">Суббота</option>
+          <option value="0">Воскресенье</option>
+        </select>
+        <div class="form-hint">Дата ближайшего платежа считается автоматически.</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Одометр, mi <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+          <input class="form-input" id="add-odo" type="text" inputmode="numeric" placeholder="47850" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Сервис: пробег <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+          <input class="form-input" id="add-svc-mi" type="text" inputmode="numeric" placeholder="44850" />
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Дата последнего сервиса <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+        <input class="form-input" id="add-svc-date" type="date" />
+        <div class="form-hint">Одометр нужен для марки масла и счётчика «до сервиса» (каждые 7000 миль).</div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Дата последней DMV инспекции <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
         <input class="form-input" id="add-dmv-date" type="date" />
-        <div class="form-hint">Инспекция проходит раз в 4 месяца</div>
+        <div class="form-hint">Инспекция проходит раз в 4 месяца.</div>
       </div>
       <button class="submit-btn" id="add-btn" onclick="submitAddDriver()" disabled>Добавить водителя</button>
+    </div>
+  </div>
+
+  <!-- EDIT DRIVER (admin) -->
+  <div class="screen" id="screen-edit">
+    <div class="header">
+      <button class="back-btn" onclick="showProfile()">←</button>
+      <div class="header-info">
+        <div class="header-title">Редактировать</div>
+        <div class="header-sub" id="edit-sub"></div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="form-body">
+      <div class="form-group">
+        <div class="form-label">Telegram ID · Имя</div>
+        <input class="form-input" id="edit-idname" type="text" disabled style="opacity:0.65" />
+        <div class="form-hint">ID и имя менять нельзя — имя привязано к хранилищу документов.</div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Модель авто</div>
+        <input class="form-input" id="edit-model" type="text" placeholder="Toyota Sienna Hybrid (WAV)" oninput="checkEditReady()" />
+      </div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Год</div>
+          <input class="form-input" id="edit-year" type="text" inputmode="numeric" placeholder="2025" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Trim</div>
+          <input class="form-input" id="edit-trim" type="text" placeholder="XLE" />
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Номер авто</div>
+        <input class="form-input" id="edit-number" type="text" placeholder="T142367C" oninput="checkEditReady()" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Тариф</div>
+        <select class="form-select" id="edit-tariff" onchange="checkEditReady()">
+          <option value="">Выберите тариф...</option>
+          <option value="Эконом ($650/нед · 2800 миль/мес)">Эконом — $650/нед · 2800 миль/мес</option>
+          <option value="Стандарт ($675/нед · 3800 миль/мес)">Стандарт — $675/нед · 3800 миль/мес</option>
+          <option value="Интенсив ($700/нед · 4800 миль/мес)">Интенсив — $700/нед · 4800 миль/мес</option>
+          <option value="Экстрим ($725/нед · 5800 миль/мес)">Экстрим — $725/нед · 5800 миль/мес</option>
+          <option value="Double Shift ($950/нед · безлимит)">Double Shift — $950/нед · безлимит</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Лимит миль / мес</div>
+        <input class="form-input" id="edit-limit" type="text" inputmode="numeric" placeholder="Если пусто — берётся из тарифа" />
+        <div class="form-hint">Кастомный лимит. Переопределяет лимит из тарифа.</div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Машина в PlanetGPS</div>
+        <select class="form-select" id="edit-gps"><option value="">— Не привязана —</option></select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">День платежа</div>
+        <select class="form-select" id="edit-payday">
+          <option value="">— Не задан —</option>
+          <option value="1">Понедельник</option><option value="2">Вторник</option>
+          <option value="3">Среда</option><option value="4">Четверг</option>
+          <option value="5">Пятница</option><option value="6">Суббота</option>
+          <option value="0">Воскресенье</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Одометр, mi</div>
+          <input class="form-input" id="edit-odo" type="text" inputmode="numeric" placeholder="47850" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Сервис: пробег</div>
+          <input class="form-input" id="edit-svc-mi" type="text" inputmode="numeric" placeholder="44850" />
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Дата последнего сервиса</div>
+        <input class="form-input" id="edit-svc-date" type="date" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Дата последней DMV инспекции</div>
+        <input class="form-input" id="edit-dmv-date" type="date" />
+      </div>
+      <button class="submit-btn" id="edit-btn" onclick="submitEditDriver()">Сохранить изменения</button>
     </div>
   </div>
 
@@ -672,90 +786,141 @@ function _num(v) {
   return isNaN(n) ? null : n;
 }
 
+const WD_NAMES = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const SERVICE_INTERVAL = 7000;
+
+function oilType(odo) {
+  if (odo == null) return '—';
+  if (odo < 50000) return '0W-16';
+  if (odo <= 150000) return '0W-20';
+  return '5W-30';
+}
+
+function nextPaymentInfo(weekdayStr) {
+  if (weekdayStr === '' || weekdayStr === null || weekdayStr === undefined) return null;
+  const wd = parseInt(weekdayStr, 10);
+  if (isNaN(wd) || wd < 0 || wd > 6) return null;
+  const today = new Date();
+  const diff = (wd - today.getDay() + 7) % 7;
+  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + diff);
+  return {
+    date: `${WD_NAMES[wd]}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`,
+    sub: diff === 0 ? 'Сегодня' : (diff === 1 ? 'Завтра' : `Осталось ${diff} дн.`),
+  };
+}
+
 async function loadDriverHome() {
   try {
     const data = await api('/driver/me');
-    const d = data.driver || {};
-    const files = data.files || [];
-    const mil = data.mileage || {};
-    state.dvFiles = files;
-
-    // ── HERO ──
-    setText('dv-name', d.name || '—');
-    setText('dv-car', d.car_model || '—');
-    setText('dv-plate', d.car_number || '—');
-
-    const t = parseTariff(d.tariff || '');
-    setText('dv-tariff', t.label || '—');
-    setText('dv-price', t.price != null ? '$' + t.price + '/нед' : '—');
-
-    // лимит миль: кастомный (из админки) важнее тарифного
-    const customLimit = _num(mil.limit);
-    const limit = customLimit != null ? customLimit : (t.miles != null ? t.miles : null);
-    setText('dv-limit', limit != null ? limit.toLocaleString() + ' mi/мес' : (t.unlimited ? 'Безлимит' : '—'));
-
-    // ── PAYMENT ── (день/дата платежа в системе не хранятся → «—»)
-    setText('dv-pay-amount', t.price != null ? '$' + t.price : '—');
-    setText('dv-pay-date', '—');
-    setText('dv-pay-sub', 'Дата платежа не задана');
-
-    // ── MILEAGE ──
-    document.getElementById('dv-miles-loading').style.display = 'none';
-    document.getElementById('dv-miles-body').style.display = 'block';
-
-    const done = _num(mil.value);
-    setText('dv-miles-done', done != null ? Math.round(done).toLocaleString() : '—');
-
-    const bar = document.getElementById('dv-miles-bar');
-    const remEl = document.getElementById('dv-remaining');
-    const ovmEl = document.getElementById('dv-over-miles');
-    const ovcEl = document.getElementById('dv-over-cost');
-
-    if (limit != null) {
-      setText('dv-miles-limit', limit.toLocaleString());
-      if (done != null) {
-        const pct = limit > 0 ? Math.min(100, Math.round(done / limit * 100)) : 0;
-        bar.style.width = pct + '%';
-        setText('dv-miles-pct', pct + '%');
-        const remaining = limit - done;
-        const over = remaining < 0 ? Math.abs(remaining) : 0;
-        setText('dv-remaining', remaining >= 0 ? Math.round(remaining).toLocaleString() : '0');
-        setText('dv-over-miles', Math.round(over).toLocaleString());
-        setText('dv-over-cost', '$' + (over * 0.25).toFixed(2));
-        remEl.style.color = remaining >= 0 ? 'var(--green)' : 'var(--red)';
-        ovmEl.style.color = over > 0 ? 'var(--red)' : 'var(--text)';
-        ovcEl.style.color = over > 0 ? 'var(--red)' : 'var(--green)';
-        bar.style.background = over > 0 ? 'var(--red)' : 'var(--accent)';
-      } else {
-        setText('dv-miles-pct', '');
-        setText('dv-remaining', '—'); setText('dv-over-miles', '—'); setText('dv-over-cost', '—');
-        bar.style.width = '0%';
-      }
-    } else {
-      // лимита нет (напр. безлимит) → перерасхода не существует
-      setText('dv-miles-limit', t.unlimited ? '∞' : '—');
-      setText('dv-miles-pct', '');
-      setText('dv-remaining', t.unlimited ? '∞' : '—');
-      setText('dv-over-miles', '0');
-      setText('dv-over-cost', '$0');
-      ovmEl.style.color = 'var(--text)'; ovcEl.style.color = 'var(--green)';
-      bar.style.width = '0%';
-    }
-
-    // ── SERVICE + OIL ── (даты/пробега сервиса и одометра в системе нет → «—»)
-    setText('dv-svc-date', '—');
-    setText('dv-svc-odo', '—');
-    setText('dv-svc-left', '—');
-    document.getElementById('dv-svc-bar').style.width = '0%';
-    setText('dv-oil', '—');
-
-    // ── DOCUMENTS ──
-    renderDvDocs(files);
-
+    state.dvPreview = false;
+    renderDriverHome(data);
     showScreen('driver-home');
   } catch (e) {
     showScreen('wip');
   }
+}
+
+// Рендер кабинета. Используется и водителем (/driver/me), и админом (просмотр /driver/{id}).
+function renderDriverHome(data) {
+  const d = data.driver || {};
+  const files = data.files || [];
+  const mil = data.mileage || {};
+  state.dvFiles = files;
+
+  // режим просмотра админом: показать «назад», спрятать загрузку
+  const preview = !!state.dvPreview;
+  const back = document.getElementById('dv-back');
+  if (back) back.style.display = preview ? 'flex' : 'none';
+  const role = document.getElementById('dv-role');
+  if (role) role.textContent = preview ? 'Просмотр' : 'Driver';
+  const upBtn = document.getElementById('dv-upload-btn');
+  if (upBtn) upBtn.style.display = preview ? 'none' : '';
+
+  // ── HERO ──
+  const year = String(d.car_year || '').trim();
+  const trim = String(d.car_trim || '').trim();
+  let carLine = (year ? year + ' ' : '') + (d.car_model || '—');
+  if (trim && !(d.car_model || '').toLowerCase().includes(trim.toLowerCase())) carLine += ' ' + trim;
+  setText('dv-name', d.name || '—');
+  setText('dv-car', carLine);
+  setText('dv-plate', d.car_number || '—');
+
+  const t = parseTariff(d.tariff || '');
+  setText('dv-tariff', t.label || '—');
+  setText('dv-price', t.price != null ? '$' + t.price + '/нед' : '—');
+
+  // лимит миль: кастомный (из админки) важнее тарифного
+  const customLimit = _num(mil.limit);
+  const limit = customLimit != null ? customLimit : (t.miles != null ? t.miles : null);
+  setText('dv-limit', limit != null ? limit.toLocaleString() + ' mi/мес' : (t.unlimited ? 'Безлимит' : '—'));
+
+  // ── PAYMENT ──
+  const pay = nextPaymentInfo(d.payment_weekday);
+  setText('dv-pay-amount', t.price != null ? '$' + t.price : '—');
+  setText('dv-pay-date', pay ? pay.date : '—');
+  setText('dv-pay-sub', pay ? pay.sub : 'День платежа не задан');
+
+  // ── MILEAGE ──
+  document.getElementById('dv-miles-loading').style.display = 'none';
+  document.getElementById('dv-miles-body').style.display = 'block';
+  const done = _num(mil.value);
+  setText('dv-miles-done', done != null ? Math.round(done).toLocaleString() : '—');
+  const bar = document.getElementById('dv-miles-bar');
+  const remEl = document.getElementById('dv-remaining');
+  const ovmEl = document.getElementById('dv-over-miles');
+  const ovcEl = document.getElementById('dv-over-cost');
+  if (limit != null) {
+    setText('dv-miles-limit', limit.toLocaleString());
+    if (done != null) {
+      const pct = limit > 0 ? Math.min(100, Math.round(done / limit * 100)) : 0;
+      bar.style.width = pct + '%';
+      setText('dv-miles-pct', pct + '%');
+      const remaining = limit - done;
+      const over = remaining < 0 ? Math.abs(remaining) : 0;
+      setText('dv-remaining', remaining >= 0 ? Math.round(remaining).toLocaleString() : '0');
+      setText('dv-over-miles', Math.round(over).toLocaleString());
+      setText('dv-over-cost', '$' + (over * 0.25).toFixed(2));
+      remEl.style.color = remaining >= 0 ? 'var(--green)' : 'var(--red)';
+      ovmEl.style.color = over > 0 ? 'var(--red)' : 'var(--text)';
+      ovcEl.style.color = over > 0 ? 'var(--red)' : 'var(--green)';
+      bar.style.background = over > 0 ? 'var(--red)' : 'var(--accent)';
+    } else {
+      setText('dv-miles-pct', '');
+      setText('dv-remaining', '—'); setText('dv-over-miles', '—'); setText('dv-over-cost', '—');
+      bar.style.width = '0%';
+    }
+  } else {
+    setText('dv-miles-limit', t.unlimited ? '∞' : '—');
+    setText('dv-miles-pct', '');
+    setText('dv-remaining', t.unlimited ? '∞' : '—');
+    setText('dv-over-miles', '0');
+    setText('dv-over-cost', '$0');
+    ovmEl.style.color = 'var(--text)'; ovcEl.style.color = 'var(--green)';
+    bar.style.width = '0%';
+  }
+
+  // ── SERVICE + OIL ──
+  const odo = _num(d.odometer);
+  const svcMi = _num(d.last_service_mileage);
+  setText('dv-svc-date', d.last_service_date || '—');
+  setText('dv-svc-odo', svcMi != null ? svcMi.toLocaleString() + ' mi' : '—');
+  const svcBar = document.getElementById('dv-svc-bar');
+  if (odo != null && svcMi != null) {
+    const since = odo - svcMi;
+    const left = SERVICE_INTERVAL - since;
+    setText('dv-svc-left', left > 0 ? left.toLocaleString() + ' mi' : 'Пора на сервис');
+    const p = Math.max(0, Math.min(100, Math.round(since / SERVICE_INTERVAL * 100)));
+    svcBar.style.width = p + '%';
+    svcBar.style.background = left > 0 ? 'var(--accent)' : 'var(--red)';
+  } else {
+    setText('dv-svc-left', '—');
+    svcBar.style.width = '0%';
+  }
+  setText('dv-oil', oilType(odo));
+
+  // ── DOCUMENTS ──
+  renderDvDocs(files);
 }
 
 function renderDvDocs(files) {
@@ -936,97 +1101,117 @@ async function openDriver(id) {
   try {
     const data = await api(`/driver/${id}`);
     state.currentDriver = data.driver; state.currentFiles = data.files;
-    await renderProfile(data.driver, data.files); showScreen('profile');
+    state.currentMileage = data.mileage || {};
+    renderProfile(data.driver, data.files); showScreen('profile');
   } catch(e) { toast('Ошибка загрузки','error'); showScreen('drivers'); }
 }
 
-async function renderProfile(d, files) {
+function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function payWeekdayName(wd) { const n = parseInt(wd, 10); return (!isNaN(n) && n >= 0 && n <= 6) ? WD_NAMES[n] : '—'; }
+
+function renderProfile(d, files) {
   document.getElementById('profile-title').textContent = d.name;
   document.getElementById('profile-sub').textContent = d.car_number;
-  document.getElementById('info-block').innerHTML = `
-    <div class="info-row"><span class="info-key">Имя</span><span class="info-val">${esc(d.name)}</span></div>
-    <div class="info-row"><span class="info-key">Авто</span><span class="info-val">${esc(d.car_model)}</span></div>
-    <div class="info-row"><span class="info-key">Номер</span><span class="info-val mono">${esc(d.car_number)}</span></div>
-    <div class="info-row"><span class="info-key">Тариф</span><span class="info-val">${esc(d.tariff)}</span></div>
-    <div class="info-row"><span class="info-key">ID</span><span class="info-val mono">${esc(d.id)}</span></div>
-    <div class="info-row"><span class="info-key">Документов</span><span class="info-val" style="color:var(--accent)">${files.length}</span></div>`;
-  // DMV date
-  document.getElementById('dmv-date-input').value = d.dmv_inspection_date || '';
-  await loadFleetForSelect(d.planet_gps_device_id || '');
+  const t = parseTariff(d.tariff || '');
+  const custom = _num(d.monthly_mileage_limit);
+  const limit = custom != null ? custom : t.miles;
+  const carYear = String(d.car_year || '').trim();
+  const carTrim = String(d.car_trim || '').trim();
+  const odo = _num(d.odometer);
+  const rows = [
+    ['Имя', esc(d.name || '—')],
+    ['Авто', esc((carYear ? carYear + ' ' : '') + (d.car_model || '—') + (carTrim ? ' ' + carTrim : ''))],
+    ['Номер', `<span class="mono">${esc(d.car_number || '—')}</span>`],
+    ['Тариф', esc(d.tariff || '—')],
+    ['Лимит миль/мес', limit != null ? (limit.toLocaleString() + (custom != null ? ' · кастом' : ' · тариф')) : (t.unlimited ? 'Безлимит' : '—')],
+    ['GPS', d.planet_gps_device_id ? '<span style="color:var(--accent)">подключён</span>' : 'нет'],
+    ['День платежа', payWeekdayName(d.payment_weekday)],
+    ['Одометр', odo != null ? (odo.toLocaleString() + ' mi') : '—'],
+    ['DMV', d.dmv_inspection_date || '—'],
+    ['ID', `<span class="mono">${esc(d.id)}</span>`],
+    ['Документов', `<span style="color:var(--accent)">${files.length}</span>`],
+  ];
+  document.getElementById('info-block').innerHTML = rows.map(([k, v]) =>
+    `<div class="info-row"><span class="info-key">${k}</span><span class="info-val">${v}</span></div>`).join('');
 }
 
-async function loadFleetForSelect(currentDeviceId) {
-  const sel = document.getElementById('gps-device-input');
+// Загрузка списка машин PlanetGPS в указанный <select>
+async function loadFleetIntoSelect(selectId, currentId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
   sel.innerHTML = '<option value="">⏳ Загрузка машин...</option>';
   try {
     const data = await api('/api/fleet', {}, FLEET_API);
     let vehicles = [];
     if (data.d) {
       try {
-        const fixed = data.d.replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g,'$1"$2":').replace(/:\s*'([^']*)'/g,':"$1"');
+        const fixed = data.d.replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":').replace(/:\s*'([^']*)'/g, ':"$1"');
         vehicles = JSON.parse(fixed).devices || [];
       } catch(e) {}
     }
     sel.innerHTML = '<option value="">— Не привязана —</option>' +
-      vehicles.map(v => `<option value="${v.id}" ${String(v.id) === String(currentDeviceId) ? 'selected' : ''}>${esc(v.name)} (${esc(v.sn)})</option>`).join('');
+      vehicles.map(v => `<option value="${v.id}" ${String(v.id) === String(currentId || '') ? 'selected' : ''}>${esc(v.name)} (${esc(v.sn)})</option>`).join('');
   } catch(e) {
-    console.error('Fleet select error:', e);
-    sel.innerHTML = `<option value="${currentDeviceId}">${currentDeviceId || '— Не привязана —'}</option>`;
+    sel.innerHTML = `<option value="${esc(String(currentId || ''))}" selected>${currentId ? ('ID ' + esc(String(currentId))) : '— Не привязана —'}</option><option value="">— Не привязана —</option>`;
   }
 }
 
-async function unlinkGpsDevice() {
-  const btn = document.getElementById('gps-save-btn');
-  btn.disabled = true;
+// ── КАБИНЕТ ВОДИТЕЛЯ ИЗ АДМИНКИ (просмотр) ──
+function openDriverPreview() {
+  state.dvPreview = true;
+  renderDriverHome({ driver: state.currentDriver, files: state.currentFiles, mileage: state.currentMileage || {} });
+  showScreen('driver-home');
+}
+function exitDriverPreview() {
+  state.dvPreview = false;
+  showScreen('profile');
+}
+
+// ── РЕДАКТИРОВАНИЕ ВОДИТЕЛЯ ──
+function showEditDriver() {
+  const d = state.currentDriver;
+  document.getElementById('edit-sub').textContent = d.name;
+  document.getElementById('edit-idname').value = `${d.id} · ${d.name}`;
+  document.getElementById('edit-model').value = d.car_model || '';
+  document.getElementById('edit-year').value = d.car_year || '';
+  document.getElementById('edit-trim').value = d.car_trim || '';
+  document.getElementById('edit-number').value = d.car_number || '';
+  document.getElementById('edit-tariff').value = d.tariff || '';
+  document.getElementById('edit-limit').value = d.monthly_mileage_limit || '';
+  document.getElementById('edit-payday').value = (d.payment_weekday === '' || d.payment_weekday == null) ? '' : String(d.payment_weekday);
+  document.getElementById('edit-odo').value = d.odometer || '';
+  document.getElementById('edit-svc-mi').value = d.last_service_mileage || '';
+  document.getElementById('edit-svc-date').value = d.last_service_date || '';
+  document.getElementById('edit-dmv-date').value = d.dmv_inspection_date || '';
+  checkEditReady();
+  showScreen('edit');
+  loadFleetIntoSelect('edit-gps', d.planet_gps_device_id || '');
+}
+function checkEditReady() {
+  document.getElementById('edit-btn').disabled =
+    !(val('edit-model') && val('edit-number') && document.getElementById('edit-tariff').value);
+}
+async function submitEditDriver() {
+  const btn = document.getElementById('edit-btn'); btn.disabled = true; btn.textContent = 'Сохраняю...';
   try {
-    await api(`/driver/${state.currentDriver.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ planet_gps_device_id: '' })
-    });
-    state.currentDriver.planet_gps_device_id = '';
-    const drv = state.drivers.find(d => d.id === state.currentDriver.id);
-    if (drv) drv.planet_gps_device_id = '';
-    await loadFleetForSelect('');
-    toast('Машина отвязана', 'success');
+    const body = {
+      car_model: val('edit-model'), car_year: val('edit-year'), car_trim: val('edit-trim'),
+      car_number: val('edit-number'), tariff: val('edit-tariff'),
+      monthly_mileage_limit: val('edit-limit'), planet_gps_device_id: val('edit-gps'),
+      payment_weekday: val('edit-payday'), odometer: val('edit-odo'),
+      last_service_mileage: val('edit-svc-mi'), last_service_date: val('edit-svc-date'),
+      dmv_inspection_date: val('edit-dmv-date'),
+    };
+    await api(`/driver/${state.currentDriver.id}`, { method: 'PATCH', body: JSON.stringify(body) });
+    toast('Сохранено', 'success');
+    const data = await api(`/driver/${state.currentDriver.id}`);
+    state.currentDriver = data.driver; state.currentFiles = data.files; state.currentMileage = data.mileage || {};
+    renderProfile(data.driver, data.files);
+    showScreen('profile');
   } catch(e) {
     toast('Ошибка: ' + e.message, 'error');
   } finally {
-    btn.disabled = false;
-  }
-}
-
-async function saveGpsDevice() {
-  const val = document.getElementById('gps-device-input').value.trim();
-  const btn = document.getElementById('gps-save-btn');
-  btn.textContent = '…'; btn.disabled = true;
-  try {
-    await api(`/driver/${state.currentDriver.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ planet_gps_device_id: val })
-    });
-    state.currentDriver.planet_gps_device_id = val;
-    toast('GPS Device ID сохранён', 'success');
-    // update local list too
-    const drv = state.drivers.find(d => d.id === state.currentDriver.id);
-    if (drv) drv.planet_gps_device_id = val;
-  } catch(e) {
-    toast('Ошибка: ' + e.message, 'error');
-  } finally {
-    btn.textContent = '✓'; btn.disabled = false;
-  }
-}
-
-async function saveDmvDate() {
-  const val = document.getElementById('dmv-date-input').value.trim();
-  try {
-    await api(`/driver/${state.currentDriver.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ dmv_inspection_date: val })
-    });
-    state.currentDriver.dmv_inspection_date = val;
-    toast('DMV дата сохранена', 'success');
-  } catch(e) {
-    toast('Ошибка: ' + e.message, 'error');
+    btn.disabled = false; btn.textContent = 'Сохранить изменения';
   }
 }
 
@@ -1105,27 +1290,27 @@ async function submitUpload() {
 }
 
 function showAddDriver() {
-  ['add-id','add-name','add-model','add-number','add-gps-id'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('add-tariff').value='';
-  document.getElementById('add-dmv-date').value='';
+  ['add-id','add-name','add-model','add-year','add-trim','add-number','add-limit','add-odo','add-svc-mi'].forEach(id=>document.getElementById(id).value='');
+  ['add-tariff','add-payday','add-svc-date','add-dmv-date'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('add-btn').disabled=true;
   document.getElementById('add-btn').textContent='Добавить водителя';
   showScreen('add');
+  loadFleetIntoSelect('add-gps', '');
 }
 function checkAddReady() {
-  document.getElementById('add-btn').disabled=!['add-id','add-name','add-model','add-number','add-tariff'].every(id=>document.getElementById(id).value.trim().length>0);
+  document.getElementById('add-btn').disabled =
+    !(val('add-id') && val('add-name') && val('add-model') && val('add-number') && document.getElementById('add-tariff').value);
 }
 async function submitAddDriver() {
   const btn=document.getElementById('add-btn'); btn.disabled=true; btn.textContent='Добавляю...';
   try {
     await api('/drivers',{method:'POST',body:JSON.stringify({
-      id: document.getElementById('add-id').value.trim(),
-      name: document.getElementById('add-name').value.trim(),
-      car_model: document.getElementById('add-model').value.trim(),
-      car_number: document.getElementById('add-number').value.trim(),
-      tariff: document.getElementById('add-tariff').value.trim(),
-      planet_gps_device_id: document.getElementById('add-gps-id').value.trim(),
-      dmv_inspection_date: document.getElementById('add-dmv-date').value.trim(),
+      id: val('add-id'), name: val('add-name'), car_model: val('add-model'),
+      car_year: val('add-year'), car_trim: val('add-trim'), car_number: val('add-number'),
+      tariff: val('add-tariff'), monthly_mileage_limit: val('add-limit'),
+      planet_gps_device_id: val('add-gps'), payment_weekday: val('add-payday'),
+      odometer: val('add-odo'), last_service_mileage: val('add-svc-mi'),
+      last_service_date: val('add-svc-date'), dmv_inspection_date: val('add-dmv-date'),
     })});
     toast('Водитель добавлен','success'); await loadDrivers(); showScreen('drivers');
   } catch(e) { toast('Ошибка: '+e.message,'error'); btn.disabled=false; btn.textContent='Добавить водителя'; }
