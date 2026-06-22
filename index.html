@@ -886,10 +886,54 @@ function renderDriverHome(data) {
   setText('dv-pay-date', pay ? pay.date : '—');
   setText('dv-pay-sub', pay ? pay.sub : 'День платежа не задан');
 
-  // ── MILEAGE ──
+  // ── MILEAGE ── (значение берём с fleet-бэкенда — там рабочий GPS)
+  const deviceId = d.planet_gps_device_id || '';
+  const serverDone = _num(mil.value);
+  if (serverDone != null) {
+    renderMiles(serverDone, limit, t);
+  } else if (deviceId) {
+    loadMonthlyMileage(deviceId, limit, t);
+  } else {
+    renderMiles(null, limit, t);
+  }
+
+  // ── SERVICE + OIL ──
+  // Текущего одометра нет (PlanetGPS даёт пробег трекера, а не одометр машины),
+  // поэтому ориентир — пробег на последнем ТО: масло по нему, следующий ТО = +7000.
+  const svcMi = _num(d.last_service_mileage);
+  setText('dv-svc-date', d.last_service_date || '—');
+  setText('dv-svc-odo', svcMi != null ? svcMi.toLocaleString() + ' mi' : '—');
+  setText('dv-svc-next', svcMi != null ? (svcMi + SERVICE_INTERVAL).toLocaleString() + ' mi' : '—');
+  setText('dv-oil', oilType(svcMi));
+
+  // ── DOCUMENTS ──
+  renderDvDocs(files);
+}
+
+function showMilesLoading() {
+  document.getElementById('dv-miles-loading').style.display = '';
+  document.getElementById('dv-miles-body').style.display = 'none';
+}
+
+// Подгрузка месячного пробега с fleet-бэкенда (там рабочий PlanetGPS),
+// с запасным запросом на сервис бота, если fleet недоступен.
+async function loadMonthlyMileage(deviceId, limit, t) {
+  showMilesLoading();
+  const path = '/api/mileage/' + encodeURIComponent(deviceId);
+  try {
+    let r;
+    try { r = await api(path, {}, FLEET_API); }
+    catch (e1) { r = await api(path, {}, API); }
+    renderMiles(_num(r && r.mileage), limit, t);
+  } catch (e) {
+    renderMiles(null, limit, t);
+  }
+}
+
+// Отрисовка карточки пробега: done — пройдено за месяц (миль) или null.
+function renderMiles(done, limit, t) {
   document.getElementById('dv-miles-loading').style.display = 'none';
   document.getElementById('dv-miles-body').style.display = 'block';
-  const done = _num(mil.value);
   setText('dv-miles-done', done != null ? Math.round(done).toLocaleString() : '—');
   const bar = document.getElementById('dv-miles-bar');
   const remEl = document.getElementById('dv-remaining');
@@ -924,18 +968,6 @@ function renderDriverHome(data) {
     ovmEl.style.color = 'var(--text)'; ovcEl.style.color = 'var(--green)';
     bar.style.width = '0%';
   }
-
-  // ── SERVICE + OIL ──
-  // Текущего одометра нет (PlanetGPS даёт пробег трекера, а не одометр машины),
-  // поэтому ориентир — пробег на последнем ТО: масло по нему, следующий ТО = +7000.
-  const svcMi = _num(d.last_service_mileage);
-  setText('dv-svc-date', d.last_service_date || '—');
-  setText('dv-svc-odo', svcMi != null ? svcMi.toLocaleString() + ' mi' : '—');
-  setText('dv-svc-next', svcMi != null ? (svcMi + SERVICE_INTERVAL).toLocaleString() + ' mi' : '—');
-  setText('dv-oil', oilType(svcMi));
-
-  // ── DOCUMENTS ──
-  renderDvDocs(files);
 }
 
 function renderDvDocs(files) {
