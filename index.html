@@ -344,9 +344,8 @@
         <div class="pf-svc-row">
           <div class="pf-svc-item"><div class="pf-mini-lbl">Последний</div><div class="pf-svc-val" id="dv-svc-date">—</div></div>
           <div class="pf-svc-item"><div class="pf-mini-lbl">Пробег</div><div class="pf-svc-val" id="dv-svc-odo">—</div></div>
-          <div class="pf-svc-item"><div class="pf-mini-lbl">До сервиса</div><div class="pf-svc-val" id="dv-svc-left">—</div></div>
+          <div class="pf-svc-item"><div class="pf-mini-lbl">Следующий ТО</div><div class="pf-svc-val" id="dv-svc-next">—</div></div>
         </div>
-        <div class="pf-bar"><div class="pf-bar-fill" id="dv-svc-bar" style="width:0%"></div></div>
         <div class="pf-oil"><span class="pf-ico">🛢</span> Масло: <strong id="dv-oil">—</strong></div>
       </div>
 
@@ -522,11 +521,17 @@
           <option value="Double Shift ($950/нед · безлимит)">Double Shift — $950/нед · безлимит</option>
         </select>
       </div>
-      <div class="form-group">
-        <div class="form-label">Лимит миль / мес <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
-        <input class="form-input" id="add-limit" type="text" inputmode="numeric" placeholder="Если пусто — берётся из тарифа" />
-        <div class="form-hint">Кастомный лимит миль в месяц. Переопределяет лимит из тарифа.</div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Лимит миль / мес <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+          <input class="form-input" id="add-limit" type="text" inputmode="numeric" placeholder="из тарифа" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Цена / нед, $ <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+          <input class="form-input" id="add-price" type="text" inputmode="numeric" placeholder="из тарифа" />
+        </div>
       </div>
+      <div class="form-hint" style="margin:-6px 0 4px">Кастомные лимит и цена переопределяют тариф. Пусто — берётся из тарифа.</div>
       <div class="form-group">
         <div class="form-label">Машина в PlanetGPS <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
         <select class="form-select" id="add-gps"><option value="">— Не привязана —</option></select>
@@ -543,20 +548,14 @@
         </select>
         <div class="form-hint">Дата ближайшего платежа считается автоматически.</div>
       </div>
-      <div style="display:flex;gap:10px">
-        <div class="form-group" style="flex:1">
-          <div class="form-label">Одометр, mi <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
-          <input class="form-input" id="add-odo" type="text" inputmode="numeric" placeholder="47850" />
-        </div>
-        <div class="form-group" style="flex:1">
-          <div class="form-label">Сервис: пробег <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
-          <input class="form-input" id="add-svc-mi" type="text" inputmode="numeric" placeholder="44850" />
-        </div>
+      <div class="form-group">
+        <div class="form-label">Сервис: пробег на последнем ТО, mi <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+        <input class="form-input" id="add-svc-mi" type="text" inputmode="numeric" placeholder="44850" />
       </div>
       <div class="form-group">
         <div class="form-label">Дата последнего сервиса <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
         <input class="form-input" id="add-svc-date" type="date" />
-        <div class="form-hint">Одометр нужен для марки масла и счётчика «до сервиса» (каждые 7000 миль).</div>
+        <div class="form-hint">Пробег на ТО используется для марки масла и расчёта следующего ТО (каждые 7000 миль).</div>
       </div>
       <div class="form-group">
         <div class="form-label">Дата последней DMV инспекции <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
@@ -612,11 +611,17 @@
           <option value="Double Shift ($950/нед · безлимит)">Double Shift — $950/нед · безлимит</option>
         </select>
       </div>
-      <div class="form-group">
-        <div class="form-label">Лимит миль / мес</div>
-        <input class="form-input" id="edit-limit" type="text" inputmode="numeric" placeholder="Если пусто — берётся из тарифа" />
-        <div class="form-hint">Кастомный лимит. Переопределяет лимит из тарифа.</div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Лимит миль / мес</div>
+          <input class="form-input" id="edit-limit" type="text" inputmode="numeric" placeholder="из тарифа" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Цена / нед, $</div>
+          <input class="form-input" id="edit-price" type="text" inputmode="numeric" placeholder="из тарифа" />
+        </div>
       </div>
+      <div class="form-hint" style="margin:-6px 0 4px">Кастомные лимит и цена переопределяют тариф. Пусто — берётся из тарифа.</div>
       <div class="form-group">
         <div class="form-label">Машина в PlanetGPS</div>
         <select class="form-select" id="edit-gps"><option value="">— Не привязана —</option></select>
@@ -631,15 +636,9 @@
           <option value="0">Воскресенье</option>
         </select>
       </div>
-      <div style="display:flex;gap:10px">
-        <div class="form-group" style="flex:1">
-          <div class="form-label">Одометр, mi</div>
-          <input class="form-input" id="edit-odo" type="text" inputmode="numeric" placeholder="47850" />
-        </div>
-        <div class="form-group" style="flex:1">
-          <div class="form-label">Сервис: пробег</div>
-          <input class="form-input" id="edit-svc-mi" type="text" inputmode="numeric" placeholder="44850" />
-        </div>
+      <div class="form-group">
+        <div class="form-label">Сервис: пробег на последнем ТО, mi</div>
+        <input class="form-input" id="edit-svc-mi" type="text" inputmode="numeric" placeholder="44850" />
       </div>
       <div class="form-group">
         <div class="form-label">Дата последнего сервиса</div>
@@ -871,7 +870,10 @@ function renderDriverHome(data) {
 
   const t = parseTariff(d.tariff || '');
   setText('dv-tariff', t.label || '—');
-  setText('dv-price', t.price != null ? '$' + t.price + '/нед' : '—');
+  // цена/нед: кастомная (из админки) важнее тарифной
+  const customPrice = _num(d.weekly_price);
+  const price = customPrice != null ? customPrice : (t.price != null ? t.price : null);
+  setText('dv-price', price != null ? '$' + price + '/нед' : '—');
 
   // лимит миль: кастомный (из админки) важнее тарифного
   const customLimit = _num(mil.limit);
@@ -880,7 +882,7 @@ function renderDriverHome(data) {
 
   // ── PAYMENT ──
   const pay = nextPaymentInfo(d.payment_weekday);
-  setText('dv-pay-amount', t.price != null ? '$' + t.price : '—');
+  setText('dv-pay-amount', price != null ? '$' + price : '—');
   setText('dv-pay-date', pay ? pay.date : '—');
   setText('dv-pay-sub', pay ? pay.sub : 'День платежа не задан');
 
@@ -924,23 +926,13 @@ function renderDriverHome(data) {
   }
 
   // ── SERVICE + OIL ──
-  const odo = _num(d.odometer);
+  // Текущего одометра нет (PlanetGPS даёт пробег трекера, а не одометр машины),
+  // поэтому ориентир — пробег на последнем ТО: масло по нему, следующий ТО = +7000.
   const svcMi = _num(d.last_service_mileage);
   setText('dv-svc-date', d.last_service_date || '—');
   setText('dv-svc-odo', svcMi != null ? svcMi.toLocaleString() + ' mi' : '—');
-  const svcBar = document.getElementById('dv-svc-bar');
-  if (odo != null && svcMi != null) {
-    const since = odo - svcMi;
-    const left = SERVICE_INTERVAL - since;
-    setText('dv-svc-left', left > 0 ? left.toLocaleString() + ' mi' : 'Пора на сервис');
-    const p = Math.max(0, Math.min(100, Math.round(since / SERVICE_INTERVAL * 100)));
-    svcBar.style.width = p + '%';
-    svcBar.style.background = left > 0 ? 'var(--accent)' : 'var(--red)';
-  } else {
-    setText('dv-svc-left', '—');
-    svcBar.style.width = '0%';
-  }
-  setText('dv-oil', oilType(odo));
+  setText('dv-svc-next', svcMi != null ? (svcMi + SERVICE_INTERVAL).toLocaleString() + ' mi' : '—');
+  setText('dv-oil', oilType(svcMi));
 
   // ── DOCUMENTS ──
   renderDvDocs(files);
@@ -1140,16 +1132,19 @@ function renderProfile(d, files) {
   const limit = custom != null ? custom : t.miles;
   const carYear = String(d.car_year || '').trim();
   const carTrim = String(d.car_trim || '').trim();
-  const odo = _num(d.odometer);
+  const svcMi = _num(d.last_service_mileage);
+  const customPrice = _num(d.weekly_price);
+  const price = customPrice != null ? customPrice : t.price;
   const rows = [
     ['Имя', esc(d.name || '—')],
     ['Авто', esc((carYear ? carYear + ' ' : '') + (d.car_model || '—') + (carTrim ? ' ' + carTrim : ''))],
     ['Номер', `<span class="mono">${esc(d.car_number || '—')}</span>`],
     ['Тариф', esc(d.tariff || '—')],
+    ['Цена/нед', price != null ? ('$' + price + (customPrice != null ? ' · кастом' : ' · тариф')) : '—'],
     ['Лимит миль/мес', limit != null ? (limit.toLocaleString() + (custom != null ? ' · кастом' : ' · тариф')) : (t.unlimited ? 'Безлимит' : '—')],
     ['GPS', d.planet_gps_device_id ? '<span style="color:var(--accent)">подключён</span>' : 'нет'],
     ['День платежа', payWeekdayName(d.payment_weekday)],
-    ['Одометр', odo != null ? (odo.toLocaleString() + ' mi') : '—'],
+    ['Сервис (пробег)', svcMi != null ? (svcMi.toLocaleString() + ' mi') : '—'],
     ['DMV', d.dmv_inspection_date || '—'],
     ['ID', `<span class="mono">${esc(d.id)}</span>`],
     ['Документов', `<span style="color:var(--accent)">${files.length}</span>`],
@@ -1201,8 +1196,8 @@ function showEditDriver() {
   document.getElementById('edit-number').value = d.car_number || '';
   document.getElementById('edit-tariff').value = d.tariff || '';
   document.getElementById('edit-limit').value = d.monthly_mileage_limit || '';
+  document.getElementById('edit-price').value = d.weekly_price || '';
   document.getElementById('edit-payday').value = (d.payment_weekday === '' || d.payment_weekday == null) ? '' : String(d.payment_weekday);
-  document.getElementById('edit-odo').value = d.odometer || '';
   document.getElementById('edit-svc-mi').value = d.last_service_mileage || '';
   document.getElementById('edit-svc-date').value = d.last_service_date || '';
   document.getElementById('edit-dmv-date').value = d.dmv_inspection_date || '';
@@ -1211,8 +1206,8 @@ function showEditDriver() {
   loadFleetIntoSelect('edit-gps', d.planet_gps_device_id || '');
 }
 function checkEditReady() {
-  document.getElementById('edit-btn').disabled =
-    !(val('edit-model') && val('edit-number') && document.getElementById('edit-tariff').value);
+  // Изменения существующего водителя можно сохранять при любом заполнении.
+  document.getElementById('edit-btn').disabled = false;
 }
 async function submitEditDriver() {
   const btn = document.getElementById('edit-btn'); btn.disabled = true; btn.textContent = 'Сохраняю...';
@@ -1220,8 +1215,9 @@ async function submitEditDriver() {
     const body = {
       car_model: val('edit-model'), car_year: val('edit-year'), car_trim: val('edit-trim'),
       car_number: val('edit-number'), tariff: val('edit-tariff'),
-      monthly_mileage_limit: val('edit-limit'), planet_gps_device_id: val('edit-gps'),
-      payment_weekday: val('edit-payday'), odometer: val('edit-odo'),
+      monthly_mileage_limit: val('edit-limit'), weekly_price: val('edit-price'),
+      planet_gps_device_id: val('edit-gps'),
+      payment_weekday: val('edit-payday'),
       last_service_mileage: val('edit-svc-mi'), last_service_date: val('edit-svc-date'),
       dmv_inspection_date: val('edit-dmv-date'),
     };
@@ -1313,7 +1309,7 @@ async function submitUpload() {
 }
 
 function showAddDriver() {
-  ['add-id','add-name','add-model','add-year','add-trim','add-number','add-limit','add-odo','add-svc-mi'].forEach(id=>document.getElementById(id).value='');
+  ['add-id','add-name','add-model','add-year','add-trim','add-number','add-limit','add-price','add-svc-mi'].forEach(id=>document.getElementById(id).value='');
   ['add-tariff','add-payday','add-svc-date','add-dmv-date'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('add-btn').disabled=true;
   document.getElementById('add-btn').textContent='Добавить водителя';
@@ -1321,8 +1317,8 @@ function showAddDriver() {
   loadFleetIntoSelect('add-gps', '');
 }
 function checkAddReady() {
-  document.getElementById('add-btn').disabled =
-    !(val('add-id') && val('add-name') && val('add-model') && val('add-number') && document.getElementById('add-tariff').value);
+  // Для нового водителя обязательны только ID и имя; остальное можно дозаполнить позже.
+  document.getElementById('add-btn').disabled = !(val('add-id') && val('add-name'));
 }
 async function submitAddDriver() {
   const btn=document.getElementById('add-btn'); btn.disabled=true; btn.textContent='Добавляю...';
@@ -1330,9 +1326,9 @@ async function submitAddDriver() {
     await api('/drivers',{method:'POST',body:JSON.stringify({
       id: val('add-id'), name: val('add-name'), car_model: val('add-model'),
       car_year: val('add-year'), car_trim: val('add-trim'), car_number: val('add-number'),
-      tariff: val('add-tariff'), monthly_mileage_limit: val('add-limit'),
+      tariff: val('add-tariff'), monthly_mileage_limit: val('add-limit'), weekly_price: val('add-price'),
       planet_gps_device_id: val('add-gps'), payment_weekday: val('add-payday'),
-      odometer: val('add-odo'), last_service_mileage: val('add-svc-mi'),
+      last_service_mileage: val('add-svc-mi'),
       last_service_date: val('add-svc-date'), dmv_inspection_date: val('add-dmv-date'),
     })});
     toast('Водитель добавлен','success'); await loadDrivers(); showScreen('drivers');
