@@ -262,6 +262,7 @@
       <div class="wip-pill">⚙ В разработке</div>
       <div class="wip-title">Скоро будет доступно</div>
       <div class="wip-sub">Этот раздел находится в разработке. Следите за обновлениями.</div>
+      <pre id="wip-debug" style="display:none;margin-top:18px;max-width:320px;width:100%;white-space:pre-wrap;word-break:break-word;font-size:11px;line-height:1.5;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:left;font-family:monospace;"></pre>
     </div>
   </div>
 
@@ -752,16 +753,38 @@ let _mapMarkers = [];
 async function init() {
   if (tg) { tg.ready(); tg.expand(); state.initData = tg.initData || ''; }
   showScreen('loading');
+  const dbg = [];
+  dbg.push('initData: ' + (state.initData ? (state.initData.length + ' симв.') : 'ПУСТО ⚠'));
+  if (tg && tg.platform) dbg.push('platform: ' + tg.platform);
   try {
     const me = await api('/me');
-    if (me.is_admin) {
+    dbg.push('/me → ' + JSON.stringify(me));
+    if (me && me.is_admin) {
       await loadDrivers();
       showScreen('drivers');
-    } else {
-      // Try driver self-view
-      await loadDriverHome();
+      return;
     }
-  } catch(e) { showScreen('wip'); }
+    dbg.push('is_admin=false → открываю кабинет водителя');
+    try {
+      const data = await api('/driver/me');
+      state.dvPreview = false;
+      renderDriverHome(data);
+      showScreen('driver-home');
+      return;
+    } catch (e2) {
+      dbg.push('/driver/me ✕ ' + e2.message);
+      showWip(dbg);
+    }
+  } catch (e) {
+    dbg.push('/me ✕ ' + e.message);
+    showWip(dbg);
+  }
+}
+
+function showWip(lines) {
+  showScreen('wip');
+  const el = document.getElementById('wip-debug');
+  if (el && lines && lines.length) { el.style.display = 'block'; el.textContent = lines.join('\n'); }
 }
 
 // ── DRIVER HOME (личный кабинет арендатора) ───────────────────────
