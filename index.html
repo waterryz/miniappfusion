@@ -230,6 +230,8 @@
     .pf-svc-until { display: flex; align-items: baseline; gap: 8px; }
     .pf-svc-until-num { font-family: var(--num); font-size: 30px; font-weight: 700; letter-spacing: -0.5px; line-height: 1; transition: color .3s ease, font-size .3s ease; }
     .pf-svc-until-unit { font-size: 13px; color: var(--muted); font-weight: 600; }
+    .pf-svc-at { font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
+    .pf-svc-at strong { font-family: var(--num); color: var(--text); font-weight: 700; }
     .pf-svc-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
 
     /* documents */
@@ -353,6 +355,7 @@
             <span class="pf-svc-until-num" id="dv-svc-remain">—</span>
             <span class="pf-svc-until-unit" id="dv-svc-unit">миль до ТО</span>
           </div>
+          <div class="pf-svc-at" id="dv-svc-at"></div>
           <div class="pf-svc-note" id="dv-svc-note"></div>
         </div>
         <div class="pf-oil"><span class="pf-ico">🛢</span> Масло: <strong id="dv-oil">—</strong></div>
@@ -908,9 +911,16 @@ function renderDriverHome(data) {
 
   // ── SERVICE + OIL ──
   // Масло — по пробегу на последнем ТО. «До ТО» = 7000 − (пробег с даты сервиса),
-  // где пробег с даты сервиса берём из GPS (fleet-бэкенд).
+  // где пробег с даты сервиса берём из GPS (fleet-бэкенд). Плюс абсолютный пробег
+  // следующего ТО = пробег на последнем ТО + 7000 (без GPS).
   const svcMi = _num(d.last_service_mileage);
   setText('dv-oil', oilType(svcMi));
+  const atEl = document.getElementById('dv-svc-at');
+  if (atEl) {
+    atEl.innerHTML = svcMi != null
+      ? 'ТО на пробеге <strong>' + (svcMi + SERVICE_INTERVAL).toLocaleString() + ' mi</strong>'
+      : '';
+  }
   loadServiceMileage(deviceId, (d.last_service_date || '').trim());
 
   // ── DOCUMENTS ──
