@@ -226,6 +226,11 @@
     .pf-svc-val { font-family: var(--num); font-size: 14px; font-weight: 600; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pf-oil { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
     .pf-oil strong { color: var(--text); font-family: monospace; }
+    /* service — «до ТО» */
+    .pf-svc-until { display: flex; align-items: baseline; gap: 8px; }
+    .pf-svc-until-num { font-family: var(--num); font-size: 30px; font-weight: 700; letter-spacing: -0.5px; line-height: 1; transition: color .3s ease, font-size .3s ease; }
+    .pf-svc-until-unit { font-size: 13px; color: var(--muted); font-weight: 600; }
+    .pf-svc-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
 
     /* documents */
     .pf-upload { width: 100%; margin-top: 10px; border: 1.5px dashed var(--border2); border-radius: 12px; background: var(--surface); padding: 18px; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
@@ -342,10 +347,13 @@
       <!-- SERVICE + OIL: сервис -->
       <div class="pf-card">
         <div class="pf-card-head"><span class="pf-ico">🔧</span> Сервис · каждые 7 000 миль</div>
-        <div class="pf-svc-row">
-          <div class="pf-svc-item"><div class="pf-mini-lbl">Последний</div><div class="pf-svc-val" id="dv-svc-date">—</div></div>
-          <div class="pf-svc-item"><div class="pf-mini-lbl">Пробег</div><div class="pf-svc-val" id="dv-svc-odo">—</div></div>
-          <div class="pf-svc-item"><div class="pf-mini-lbl">Следующий ТО</div><div class="pf-svc-val" id="dv-svc-next">—</div></div>
+        <div class="mileage-loading" id="dv-svc-loading"><div class="spinner"></div><span>Загрузка пробега…</span></div>
+        <div id="dv-svc-body" style="display:none">
+          <div class="pf-svc-until">
+            <span class="pf-svc-until-num" id="dv-svc-remain">—</span>
+            <span class="pf-svc-until-unit" id="dv-svc-unit">миль до ТО</span>
+          </div>
+          <div class="pf-svc-note" id="dv-svc-note"></div>
         </div>
         <div class="pf-oil"><span class="pf-ico">🛢</span> Масло: <strong id="dv-oil">—</strong></div>
       </div>
@@ -899,13 +907,11 @@ function renderDriverHome(data) {
   }
 
   // ── SERVICE + OIL ──
-  // Текущего одометра нет (PlanetGPS даёт пробег трекера, а не одометр машины),
-  // поэтому ориентир — пробег на последнем ТО: масло по нему, следующий ТО = +7000.
+  // Масло — по пробегу на последнем ТО. «До ТО» = 7000 − (пробег с даты сервиса),
+  // где пробег с даты сервиса берём из GPS (fleet-бэкенд).
   const svcMi = _num(d.last_service_mileage);
-  setText('dv-svc-date', d.last_service_date || '—');
-  setText('dv-svc-odo', svcMi != null ? svcMi.toLocaleString() + ' mi' : '—');
-  setText('dv-svc-next', svcMi != null ? (svcMi + SERVICE_INTERVAL).toLocaleString() + ' mi' : '—');
   setText('dv-oil', oilType(svcMi));
+  loadServiceMileage(deviceId, (d.last_service_date || '').trim());
 
   // ── DOCUMENTS ──
   renderDvDocs(files);
@@ -968,6 +974,77 @@ function renderMiles(done, limit, t) {
     setText('dv-over-cost', '$0');
     ovmEl.style.color = 'var(--text)'; ovcEl.style.color = 'var(--green)';
     bar.style.width = '0%';
+  }
+}
+
+// Загрузка пробега с даты последнего сервиса (GPS) → «сколько миль до ТО».
+async function loadServiceMileage(deviceId, sinceDate) {
+  const loading = document.getElementById('dv-svc-loading');
+  const body = document.getElementById('dv-svc-body');
+  // нет даты сервиса → просим её указать
+  if (!sinceDate) {
+    loading.style.display = 'none';
+    body.style.display = 'block';
+    const numEl = document.getElementById('dv-svc-remain');
+    numEl.textContent = 'Укажите дату сервиса';
+    numEl.style.color = 'var(--muted)';
+    numEl.style.fontSize = '15px';
+    document.getElementById('dv-svc-unit').textContent = '';
+    document.getElementById('dv-svc-note').textContent = '';
+    return;
+  }
+  if (!deviceId) { renderService(null); return; }
+  loading.style.display = 'flex';
+  body.style.display = 'none';
+  try {
+    const path = '/api/service-mileage/' + encodeURIComponent(deviceId) + '?since=' + encodeURIComponent(sinceDate);
+    const r = await api(path, {}, FLEET_API);
+    const driven = _num(r && r.mileage);
+    renderService(driven != null ? (SERVICE_INTERVAL - driven) : null);
+  } catch (e) {
+    renderService(null);
+  }
+}
+
+// Отрисовка «N миль до ТО»: <500 — крупнеет и краснеет; ≤0 — «Пора на ТО».
+function renderService(remaining) {
+  document.getElementById('dv-svc-loading').style.display = 'none';
+  document.getElementById('dv-svc-body').style.display = 'block';
+  const numEl = document.getElementById('dv-svc-remain');
+  const unitEl = document.getElementById('dv-svc-unit');
+  const noteEl = document.getElementById('dv-svc-note');
+
+  if (remaining === null || remaining === undefined || isNaN(remaining)) {
+    numEl.textContent = '—';
+    numEl.style.color = 'var(--muted)';
+    numEl.style.fontSize = '30px';
+    unitEl.textContent = 'миль до ТО';
+    noteEl.textContent = '';
+    return;
+  }
+  if (remaining <= 0) {
+    numEl.textContent = 'Пора на ТО';
+    numEl.style.color = 'var(--red)';
+    numEl.style.fontSize = '26px';
+    unitEl.textContent = '';
+    noteEl.style.color = 'var(--red)';
+    noteEl.textContent = 'Пробег с последнего ТО превысил 7 000 миль';
+    return;
+  }
+  numEl.textContent = Math.round(remaining).toLocaleString();
+  unitEl.textContent = 'миль до ТО';
+  if (remaining < 500) {
+    const t = Math.min(1, Math.max(0, (500 - remaining) / 500)); // 0..1
+    const from = [22, 24, 29], to = [229, 72, 77];
+    const rgb = from.map((c, i) => Math.round(c + (to[i] - c) * t));
+    numEl.style.color = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+    numEl.style.fontSize = (30 + 14 * t) + 'px'; // 30 → 44
+    noteEl.style.color = 'var(--red)';
+    noteEl.textContent = 'Скоро плановое ТО';
+  } else {
+    numEl.style.color = 'var(--green)';
+    numEl.style.fontSize = '30px';
+    noteEl.textContent = '';
   }
 }
 
