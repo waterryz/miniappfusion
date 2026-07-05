@@ -332,7 +332,7 @@
 
       <!-- MILEAGE: пробег -->
       <div class="pf-card">
-        <div class="pf-card-head"><span class="pf-ico">🛣</span> Пробег за текущий месяц</div>
+        <div class="pf-card-head"><span class="pf-ico">🛣</span> Пробег</div>
         <div class="mileage-loading" id="dv-miles-loading"><div class="spinner"></div><span>Загрузка пробега…</span></div>
         <div id="dv-miles-body" style="display:none">
           <div class="pf-miles-big"><span id="dv-miles-done">—</span> <span class="pf-miles-of">/ <span id="dv-miles-limit">—</span> миль</span></div>
@@ -1033,12 +1033,16 @@ function renderService(remaining) {
     return;
   }
   if (remaining <= 0) {
+    const over = Math.round(-remaining) || 0;       // миль сверх интервала (без -0)
+    const fee = over * 0.5;                          // $0.50 за милю перепробега
     numEl.textContent = 'Пора на ТО';
     numEl.style.color = 'var(--red)';
     numEl.style.fontSize = '26px';
     unitEl.textContent = '';
     noteEl.style.color = 'var(--red)';
-    noteEl.textContent = 'Пробег с последнего ТО превысил 7 000 миль';
+    noteEl.innerHTML =
+      'Перепробег: <strong>+' + over.toLocaleString() + ' миль</strong> сверх интервала<br>' +
+      'Доплата за перепробег: <strong>$' + fee.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</strong> ($0.50/mi)';
     return;
   }
   numEl.textContent = Math.round(remaining).toLocaleString();
