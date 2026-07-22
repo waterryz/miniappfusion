@@ -175,14 +175,12 @@
     .last-update { padding: 0 20px 8px; font-size: 11px; color: var(--muted); flex-shrink: 0; display: flex; align-items: center; gap: 5px; }
     .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 4px rgba(76,240,122,0.6); animation: pulse 2s ease-in-out infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-
     /* ── DRIVER SELF-VIEW (личный кабинет арендатора) ── */
     .pf-scroll { flex: 1; overflow-y: auto; padding: 12px 16px 24px; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 10px; }
     .pf-scroll::-webkit-scrollbar { display: none; }
     .mileage-loading { display: flex; align-items: center; gap: 8px; }
     .mileage-loading .spinner { width: 20px; height: 20px; border-width: 2px; }
     .mileage-loading span { font-size: 13px; color: var(--muted); }
-
     /* hero */
     .pf-hero { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
     .pf-hero-top { display: flex; align-items: center; gap: 12px; }
@@ -194,12 +192,10 @@
     .pf-tariff-chip { background: var(--accent-bg); border: 1px solid rgba(22,163,74,0.25); color: var(--accent); border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
     .pf-meta-sep { width: 1px; height: 12px; background: var(--border2); }
     .pf-hero-plate { display: flex; align-items: center; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-family: monospace; font-size: 13px; color: var(--text-secondary); }
-
     /* generic card */
     .pf-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
     .pf-card-head { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
     .pf-ico { font-size: 14px; }
-
     /* payment */
     .pf-pay-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
     .pf-pay-date { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; }
@@ -207,7 +203,6 @@
     .pf-pay-amount { text-align: right; flex-shrink: 0; }
     .pf-amount-lbl { font-size: 11px; color: var(--muted); }
     .pf-amount-val { font-family: var(--num); font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
-
     /* mileage */
     .pf-miles-big { font-family: var(--num); font-size: 26px; font-weight: 700; line-height: 1; letter-spacing: -0.5px; }
     .pf-miles-of { font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text-secondary); font-weight: 600; }
@@ -219,7 +214,6 @@
     .pf-mini-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
     .pf-mini-val { font-family: var(--num); font-size: 18px; font-weight: 700; margin-top: 4px; letter-spacing: -0.3px; }
     .pf-mini-unit { font-size: 10px; color: var(--muted); margin-top: 2px; }
-
     /* service */
     .pf-svc-row { display: flex; gap: 8px; }
     .pf-svc-item { flex: 1; min-width: 0; }
@@ -233,7 +227,6 @@
     .pf-svc-at { font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
     .pf-svc-at strong { font-family: var(--num); color: var(--text); font-weight: 700; }
     .pf-svc-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
-
     /* documents */
     .pf-upload { width: 100%; margin-top: 10px; border: 1.5px dashed var(--border2); border-radius: 12px; background: var(--surface); padding: 18px; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
     .pf-upload:active { border-color: var(--accent); background: var(--accent-bg); }
@@ -241,13 +234,10 @@
     .pf-upload-ico { font-size: 24px; line-height: 1; }
     .pf-upload-text { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent); margin-top: 6px; }
     .pf-upload-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
-
     /* GPS device field hint */
     .form-hint { font-size: 11.5px; color: var(--muted); margin-top: -4px; line-height: 1.5; }
-
     /* GPS badge on driver card */
     .gps-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-left: 2px; }
-
     /* ── light-theme elevation & polish ── */
     .driver-card, .info-block, .pf-hero, .pf-card, .vehicle-card, .stat-card {
       box-shadow: 0 1px 2px rgba(16,24,40,0.04), 0 2px 6px rgba(16,24,40,0.05);
@@ -259,7 +249,6 @@
 </head>
 <body>
 <div id="app">
-
   <!-- WIP (fallback) -->
   <div class="screen active" id="screen-wip">
     <div class="logo-bar">
@@ -273,7 +262,6 @@
       <pre id="wip-debug" style="display:none;margin-top:18px;max-width:320px;width:100%;white-space:pre-wrap;word-break:break-word;font-size:11px;line-height:1.5;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:left;font-family:monospace;"></pre>
     </div>
   </div>
-
   <!-- LOADING -->
   <div class="screen" id="screen-loading">
     <div class="logo-bar">
@@ -282,7 +270,6 @@
     </div>
     <div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Загрузка...</div></div>
   </div>
-
   <!-- ══════════════════════════════════════════
        DRIVER SELF-VIEW (role: driver)
   ══════════════════════════════════════════ -->
@@ -293,9 +280,7 @@
       <div class="logo-name">Prime Fusion</div>
       <div class="logo-tag" id="dv-role">Driver</div>
     </div>
-
     <div class="pf-scroll">
-
       <!-- HERO: арендатор + машина -->
       <div class="pf-hero">
         <div class="pf-hero-top">
@@ -314,7 +299,6 @@
         </div>
         <div class="pf-hero-plate"><span>🪪</span><span id="dv-plate">—</span></div>
       </div>
-
       <!-- PAYMENT: недельный платёж -->
       <div class="pf-card">
         <div class="pf-card-head"><span class="pf-ico">📅</span> Следующий платёж</div>
@@ -329,7 +313,6 @@
           </div>
         </div>
       </div>
-
       <!-- MILEAGE: пробег -->
       <div class="pf-card">
         <div class="pf-card-head"><span class="pf-ico">🛣</span> Пробег за текущий месяц</div>
@@ -345,7 +328,6 @@
           </div>
         </div>
       </div>
-
       <!-- SERVICE + OIL: сервис -->
       <div class="pf-card">
         <div class="pf-card-head"><span class="pf-ico">🔧</span> Сервис · каждые 7 000 миль</div>
@@ -360,7 +342,6 @@
         </div>
         <div class="pf-oil"><span class="pf-ico">🛢</span> Масло: <strong id="dv-oil">—</strong></div>
       </div>
-
       <!-- DOCUMENTS: документы водителя + загрузка -->
       <div class="pf-card">
         <div class="pf-card-head"><span class="pf-ico">📁</span> Документы</div>
@@ -372,10 +353,8 @@
         </button>
         <input type="file" id="dv-file-input" accept="image/*" style="display:none" onchange="dvUpload(event)" />
       </div>
-
     </div>
   </div>
-
   <!-- DRIVER LIGHTBOX (read-only, no delete) -->
   <div class="lightbox" id="dv-lightbox">
     <div class="lb-bar">
@@ -390,11 +369,9 @@
     </div>
     <div class="lb-counter" id="dv-lb-counter"></div>
   </div>
-
   <!-- ══════════════════════════════════════════
        ADMIN SCREENS
   ══════════════════════════════════════════ -->
-
   <!-- DRIVERS LIST -->
   <div class="screen" id="screen-drivers">
     <div class="logo-bar">
@@ -415,7 +392,6 @@
     </div>
     <div class="scroll-body" id="driver-list"></div>
   </div>
-
   <!-- DRIVER PROFILE (admin) -->
   <div class="screen" id="screen-profile">
     <div class="header">
@@ -435,7 +411,6 @@
       </div>
     </div>
   </div>
-
   <!-- DOCUMENTS (admin) -->
   <div class="screen" id="screen-docs">
     <div class="header">
@@ -455,7 +430,6 @@
       <div class="photo-grid" id="photo-grid"></div>
     </div>
   </div>
-
   <!-- UPLOAD (admin) -->
   <div class="screen" id="screen-upload">
     <div class="header">
@@ -484,7 +458,6 @@
       <button class="submit-btn" id="upload-btn" onclick="submitUpload()" disabled>Загрузить</button>
     </div>
   </div>
-
   <!-- ADD DRIVER (admin) -->
   <div class="screen" id="screen-add">
     <div class="header">
@@ -577,7 +550,6 @@
       <button class="submit-btn" id="add-btn" onclick="submitAddDriver()" disabled>Добавить водителя</button>
     </div>
   </div>
-
   <!-- EDIT DRIVER (admin) -->
   <div class="screen" id="screen-edit">
     <div class="header">
@@ -663,7 +635,6 @@
       <button class="submit-btn" id="edit-btn" onclick="submitEditDriver()">Сохранить изменения</button>
     </div>
   </div>
-
   <!-- FLEET -->
   <div class="screen" id="screen-fleet">
     <div class="logo-bar">
@@ -711,7 +682,6 @@
       </div>
     </div>
   </div>
-
   <!-- ADMIN LIGHTBOX -->
   <div class="lightbox" id="lightbox">
     <div class="lb-bar">
@@ -728,7 +698,6 @@
     <div class="lb-counter" id="lb-counter"></div>
   </div>
 </div>
-
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div class="modal-icon">⚠</div>
@@ -741,10 +710,11 @@
   </div>
 </div>
 <div class="toast" id="toast"></div>
-
 <script>
 const API = 'https://tg-bot-prime-fusion-production.up.railway.app';
 const FLEET_API = 'https://miniappfusion-backend-production.up.railway.app';
+// Перевод из km в мили (PlanetGPS всегда отдаёт километры).
+const KM_TO_MI = 0.621371;
 const tg = window.Telegram?.WebApp;
 const state = {
   drivers: [], filtered: [],
@@ -759,7 +729,6 @@ const state = {
 let _fleetTab = 'map';
 let _map = null;
 let _mapMarkers = [];
-
 // ── INIT ──────────────────────────────────────────────────────────
 async function init() {
   if (tg) { tg.ready(); tg.expand(); state.initData = tg.initData || ''; }
@@ -791,16 +760,13 @@ async function init() {
     showWip(dbg);
   }
 }
-
 function showWip(lines) {
   showScreen('wip');
   const el = document.getElementById('wip-debug');
   if (el && lines && lines.length) { el.style.display = 'block'; el.textContent = lines.join('\n'); }
 }
-
 // ── DRIVER HOME (личный кабинет арендатора) ───────────────────────
 function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
-
 // Разбор строки тарифа, напр. "Эконом ($650/нед · 2800 миль/мес)"
 function parseTariff(t) {
   const out = { label: '', price: null, miles: null, unlimited: false };
@@ -813,24 +779,20 @@ function parseTariff(t) {
   if (mm) out.miles = parseInt(mm[1].replace(/[\s,]/g, ''), 10);
   return out;
 }
-
 function _num(v) {
   if (v === null || v === undefined || String(v).trim() === '') return null;
   const n = parseFloat(String(v).replace(/[\s,]/g, ''));
   return isNaN(n) ? null : n;
 }
-
 const WD_NAMES = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
 const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 const SERVICE_INTERVAL = 7000;
-
 function oilType(odo) {
   if (odo == null) return '—';
   if (odo < 50000) return '0W-16';
   if (odo <= 150000) return '0W-20';
   return '5W-30';
 }
-
 function nextPaymentInfo(weekdayStr) {
   if (weekdayStr === '' || weekdayStr === null || weekdayStr === undefined) return null;
   const wd = parseInt(weekdayStr, 10);
@@ -843,7 +805,6 @@ function nextPaymentInfo(weekdayStr) {
     sub: diff === 0 ? 'Сегодня' : (diff === 1 ? 'Завтра' : `Осталось ${diff} дн.`),
   };
 }
-
 async function loadDriverHome() {
   try {
     const data = await api('/driver/me');
@@ -854,14 +815,12 @@ async function loadDriverHome() {
     showScreen('wip');
   }
 }
-
 // Рендер кабинета. Используется и водителем (/driver/me), и админом (просмотр /driver/{id}).
 function renderDriverHome(data) {
   const d = data.driver || {};
   const files = data.files || [];
   const mil = data.mileage || {};
   state.dvFiles = files;
-
   // режим просмотра админом: показать «назад», спрятать загрузку
   const preview = !!state.dvPreview;
   const back = document.getElementById('dv-back');
@@ -870,7 +829,6 @@ function renderDriverHome(data) {
   if (role) role.textContent = preview ? 'Просмотр' : 'Driver';
   const upBtn = document.getElementById('dv-upload-btn');
   if (upBtn) upBtn.style.display = preview ? 'none' : '';
-
   // ── HERO ──
   const year = String(d.car_year || '').trim();
   const trim = String(d.car_trim || '').trim();
@@ -879,25 +837,21 @@ function renderDriverHome(data) {
   setText('dv-name', d.name || '—');
   setText('dv-car', carLine);
   setText('dv-plate', d.car_number || '—');
-
   const t = parseTariff(d.tariff || '');
   setText('dv-tariff', t.label || '—');
   // цена/нед: кастомная (из админки) важнее тарифной
   const customPrice = _num(d.weekly_price);
   const price = customPrice != null ? customPrice : (t.price != null ? t.price : null);
   setText('dv-price', price != null ? '$' + price + '/нед' : '—');
-
   // лимит миль: кастомный (из админки) важнее тарифного
   const customLimit = _num(mil.limit);
   const limit = customLimit != null ? customLimit : (t.miles != null ? t.miles : null);
   setText('dv-limit', limit != null ? limit.toLocaleString() + ' mi/мес' : (t.unlimited ? 'Безлимит' : '—'));
-
   // ── PAYMENT ──
   const pay = nextPaymentInfo(d.payment_weekday);
   setText('dv-pay-amount', price != null ? '$' + price : '—');
   setText('dv-pay-date', pay ? pay.date : '—');
   setText('dv-pay-sub', pay ? pay.sub : 'День платежа не задан');
-
   // ── MILEAGE ── (значение берём с fleet-бэкенда — там рабочий GPS)
   const deviceId = d.planet_gps_device_id || '';
   const serverDone = _num(mil.value);
@@ -908,7 +862,6 @@ function renderDriverHome(data) {
   } else {
     renderMiles(null, limit, t);
   }
-
   // ── SERVICE + OIL ──
   // Масло — по пробегу на последнем ТО. «До ТО» = 7000 − (пробег с даты сервиса),
   // где пробег с даты сервиса берём из GPS (fleet-бэкенд). Плюс абсолютный пробег
@@ -922,16 +875,13 @@ function renderDriverHome(data) {
       : '';
   }
   loadServiceMileage(deviceId, (d.last_service_date || '').trim());
-
   // ── DOCUMENTS ──
   renderDvDocs(files);
 }
-
 function showMilesLoading() {
   document.getElementById('dv-miles-loading').style.display = '';
   document.getElementById('dv-miles-body').style.display = 'none';
 }
-
 // Подгрузка месячного пробега с fleet-бэкенда (там рабочий PlanetGPS),
 // с запасным запросом на сервис бота, если fleet недоступен.
 async function loadMonthlyMileage(deviceId, limit, t) {
@@ -946,7 +896,6 @@ async function loadMonthlyMileage(deviceId, limit, t) {
     renderMiles(null, limit, t);
   }
 }
-
 // Отрисовка карточки пробега: done — пройдено за месяц (миль) или null.
 function renderMiles(done, limit, t) {
   document.getElementById('dv-miles-loading').style.display = 'none';
@@ -986,7 +935,6 @@ function renderMiles(done, limit, t) {
     bar.style.width = '0%';
   }
 }
-
 // Загрузка пробега с даты последнего сервиса (GPS) → «сколько миль до ТО».
 async function loadServiceMileage(deviceId, sinceDate) {
   const loading = document.getElementById('dv-svc-loading');
@@ -1015,7 +963,6 @@ async function loadServiceMileage(deviceId, sinceDate) {
     renderService(null);
   }
 }
-
 // Отрисовка «N миль до ТО»: <500 — крупнеет и краснеет; ≤0 — «Пора на ТО».
 function renderService(remaining) {
   document.getElementById('dv-svc-loading').style.display = 'none';
@@ -1023,7 +970,6 @@ function renderService(remaining) {
   const numEl = document.getElementById('dv-svc-remain');
   const unitEl = document.getElementById('dv-svc-unit');
   const noteEl = document.getElementById('dv-svc-note');
-
   if (remaining === null || remaining === undefined || isNaN(remaining)) {
     numEl.textContent = '—';
     numEl.style.color = 'var(--muted)';
@@ -1061,7 +1007,6 @@ function renderService(remaining) {
     noteEl.textContent = '';
   }
 }
-
 function renderDvDocs(files) {
   const grid = document.getElementById('dv-doc-grid');
   if (!files.length) {
@@ -1074,7 +1019,6 @@ function renderDvDocs(files) {
       <div class="photo-label">${esc(f.name)}</div>
     </div>`).join('');
 }
-
 // Загрузка документа водителем в свою папку (POST /driver/me/upload)
 async function dvUpload(e) {
   const file = e.target.files && e.target.files[0];
@@ -1104,7 +1048,6 @@ async function dvUpload(e) {
   reader.onerror = () => { toast('Не удалось прочитать файл', 'error'); txt.textContent = original; btn.classList.remove('busy'); };
   reader.readAsDataURL(file);
 }
-
 function openDvLightbox(i) {
   state.dvLbIndex = i; updateDvLightbox();
   document.getElementById('dv-lightbox').classList.add('open');
@@ -1120,11 +1063,9 @@ function updateDvLightbox() {
 }
 function dvLightboxNav(d) { state.dvLbIndex = Math.max(0, Math.min(state.dvFiles.length-1, state.dvLbIndex+d)); updateDvLightbox(); }
 function closeDvLightbox() { document.getElementById('dv-lightbox').classList.remove('open'); }
-
 let _dvTx = 0;
 document.getElementById('dv-lightbox').addEventListener('touchstart', e => { _dvTx = e.touches[0].clientX; });
 document.getElementById('dv-lightbox').addEventListener('touchend', e => { if(Math.abs(_dvTx - e.changedTouches[0].clientX) > 50) dvLightboxNav(_dvTx > e.changedTouches[0].clientX ? 1 : -1); });
-
 // ── ADMIN ─────────────────────────────────────────────────────────
 async function api(path, opts={}, base=API) {
   const r = await fetch(base+path, {
@@ -1138,12 +1079,10 @@ async function api(path, opts={}, base=API) {
   }
   return r.json();
 }
-
 function showScreen(n) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-'+n).classList.add('active');
 }
-
 function switchTab(tab) {
   state.currentTab = tab;
   ['tab-drivers','tab-fleet','tab-drivers-2','tab-fleet-2'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('active'); });
@@ -1155,7 +1094,6 @@ function switchTab(tab) {
     showScreen('fleet'); loadFleet(); startFleetPolling();
   }
 }
-
 function switchFleetTab(tab) {
   _fleetTab = tab;
   ['map','list','report'].forEach(t => { const el = document.getElementById('fi-'+t); if(el) el.classList.toggle('active', t === tab); });
@@ -1171,13 +1109,11 @@ function switchFleetTab(tab) {
     if (!document.getElementById('report-to').value) document.getElementById('report-to').value = fmt(today);
   }
 }
-
 function initMap() {
   if (_map) return;
   _map = L.map('leaflet-map', { center: [40.73, -73.99], zoom: 11 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(_map);
 }
-
 function renderMap(vehicles) {
   if (!_map) return;
   _mapMarkers.forEach(m => m.remove()); _mapMarkers = [];
@@ -1192,17 +1128,22 @@ function renderMap(vehicles) {
       iconSize: [34,34], iconAnchor: [17,17],
     });
     const m = L.marker([lat,lng], {icon}).addTo(_map);
-    m.bindPopup(`<b>${v.name||v.sn}</b><br>${isMoving?'▶ В движении':'■ Стоит'}<br>${parseFloat(v.speed||0).toFixed(0)} km/h`);
+    m.bindPopup(`<b>${v.name||v.sn}</b><br>${isMoving?'▶ В движении':'■ Стоит'}<br>${(parseFloat(v.speed||0)*KM_TO_MI).toFixed(0)} mph`);
     _mapMarkers.push(m);
   });
   if (_mapMarkers.length > 0) _map.fitBounds(L.featureGroup(_mapMarkers).getBounds().pad(0.15));
 }
-
 async function loadDrivers() {
   const data = await api('/drivers');
   state.drivers = data; state.filtered = data; renderDriverList(data);
 }
-
+// Найти водителя по привязанной машине PlanetGPS (planet_gps_device_id === id устройства).
+function driverByDevice(deviceId) {
+  if (deviceId === undefined || deviceId === null || deviceId === '') return null;
+  return (state.drivers || []).find(
+    d => d.planet_gps_device_id && String(d.planet_gps_device_id) === String(deviceId)
+  ) || null;
+}
 function renderDriverList(drivers) {
   const el = document.getElementById('driver-list');
   if (!drivers.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">Нет водителей</div><div class="empty-sub">Нажмите + чтобы добавить</div></div>`; return; }
@@ -1220,13 +1161,11 @@ function renderDriverList(drivers) {
       <div class="d-chip ${d.file_count===0?'zero':''}">${d.file_count}</div>
     </div>`).join('');
 }
-
 function filterDrivers() {
   const q = document.getElementById('search-input').value.toLowerCase();
   state.filtered = state.drivers.filter(d => d.name.toLowerCase().includes(q) || d.car_number.toLowerCase().includes(q));
   renderDriverList(state.filtered);
 }
-
 function showDrivers() {
   document.getElementById('search-input').value = '';
   showScreen('drivers');
@@ -1234,7 +1173,6 @@ function showDrivers() {
   ['tab-drivers','tab-drivers-2'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('active'); });
   stopFleetPolling();
 }
-
 async function openDriver(id) {
   showScreen('loading');
   try {
@@ -1244,10 +1182,8 @@ async function openDriver(id) {
     renderProfile(data.driver, data.files); showScreen('profile');
   } catch(e) { toast('Ошибка загрузки','error'); showScreen('drivers'); }
 }
-
 function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
 function payWeekdayName(wd) { const n = parseInt(wd, 10); return (!isNaN(n) && n >= 0 && n <= 6) ? WD_NAMES[n] : '—'; }
-
 function renderProfile(d, files) {
   document.getElementById('profile-title').textContent = d.name;
   document.getElementById('profile-sub').textContent = d.car_number;
@@ -1276,7 +1212,6 @@ function renderProfile(d, files) {
   document.getElementById('info-block').innerHTML = rows.map(([k, v]) =>
     `<div class="info-row"><span class="info-key">${k}</span><span class="info-val">${v}</span></div>`).join('');
 }
-
 // Загрузка списка машин PlanetGPS в указанный <select>
 async function loadFleetIntoSelect(selectId, currentId) {
   const sel = document.getElementById(selectId);
@@ -1297,7 +1232,6 @@ async function loadFleetIntoSelect(selectId, currentId) {
     sel.innerHTML = `<option value="${esc(String(currentId || ''))}" selected>${currentId ? ('ID ' + esc(String(currentId))) : '— Не привязана —'}</option><option value="">— Не привязана —</option>`;
   }
 }
-
 // ── КАБИНЕТ ВОДИТЕЛЯ ИЗ АДМИНКИ (просмотр) ──
 function openDriverPreview() {
   state.dvPreview = true;
@@ -1308,7 +1242,6 @@ function exitDriverPreview() {
   state.dvPreview = false;
   showScreen('profile');
 }
-
 // ── РЕДАКТИРОВАНИЕ ВОДИТЕЛЯ ──
 function showEditDriver() {
   const d = state.currentDriver;
@@ -1357,21 +1290,17 @@ async function submitEditDriver() {
     btn.disabled = false; btn.textContent = 'Сохранить изменения';
   }
 }
-
 function showProfile() { showScreen('profile'); }
-
 function showDocuments() {
   document.getElementById('docs-sub').textContent = state.currentDriver.name;
   document.getElementById('docs-count').textContent = `${state.currentFiles.length} фото`;
   renderDocs(state.currentFiles); showScreen('docs');
 }
-
 function renderDocs(files) {
   const grid = document.getElementById('photo-grid');
   if (!files.length) { grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📂</div><div class="empty-title">Нет документов</div><div class="empty-sub">Загрузите первый</div></div>`; return; }
   grid.innerHTML = files.map((f,i) => `<div class="photo-cell" onclick="openLightbox(${i})"><img src="${f.url}" loading="lazy" alt="${esc(f.name)}"/><div class="photo-label">${esc(f.name)}</div></div>`).join('');
 }
-
 function openLightbox(i) { state.lbIndex=i; updateLightbox(); document.getElementById('lightbox').classList.add('open'); }
 function updateLightbox() {
   const f = state.currentFiles[state.lbIndex];
@@ -1387,7 +1316,6 @@ function closeLightbox() { document.getElementById('lightbox').classList.remove(
 let tx=0;
 document.getElementById('lightbox').addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
 document.getElementById('lightbox').addEventListener('touchend',e=>{if(Math.abs(tx-e.changedTouches[0].clientX)>50)lightboxNav(tx>e.changedTouches[0].clientX?1:-1);});
-
 function showUpload() {
   state.selectedFile=null;
   document.getElementById('file-input').value='';
@@ -1431,7 +1359,6 @@ async function submitUpload() {
     r.readAsDataURL(state.selectedFile);
   } catch(e) { toast('Ошибка: '+e.message,'error'); btn.disabled=false; btn.textContent='Загрузить'; }
 }
-
 function showAddDriver() {
   ['add-id','add-name','add-model','add-year','add-trim','add-number','add-limit','add-price','add-svc-mi'].forEach(id=>document.getElementById(id).value='');
   ['add-tariff','add-payday','add-svc-date','add-dmv-date'].forEach(id=>document.getElementById(id).value='');
@@ -1458,7 +1385,6 @@ async function submitAddDriver() {
     toast('Водитель добавлен','success'); await loadDrivers(); showScreen('drivers');
   } catch(e) { toast('Ошибка: '+e.message,'error'); btn.disabled=false; btn.textContent='Добавить водителя'; }
 }
-
 function confirmDeleteDriver() {
   const d=state.currentDriver;
   openModal('Удалить водителя?',`Удалить ${d.name} (${d.car_number})? Все документы будут удалены.`,deleteDriver);
@@ -1468,7 +1394,6 @@ async function deleteDriver() {
   try { await api(`/driver/${state.currentDriver.id}`,{method:'DELETE'}); toast('Водитель удалён','success'); await loadDrivers(); showScreen('drivers'); }
   catch(e) { toast('Ошибка: '+e.message,'error'); showScreen('profile'); }
 }
-
 function confirmDeleteFile() {
   const f=state.currentFiles[state.lbIndex];
   openModal('Удалить документ?',`Удалить "${f.name}"?`,deleteFile);
@@ -1484,7 +1409,6 @@ async function deleteFile() {
     document.getElementById('docs-count').textContent=`${data.files.length} фото`;
   } catch(e) { toast('Ошибка: '+e.message,'error'); }
 }
-
 async function loadFleet(manual=false) {
   if (manual) {
     const btn=document.getElementById('fleet-refresh-btn');
@@ -1529,7 +1453,6 @@ async function loadFleet(manual=false) {
     if (manual) toast('Ошибка обновления','error');
   }
 }
-
 function renderFleet(vehicles) {
   const list=document.getElementById('fleet-list'); if (!list) return;
   if (!vehicles.length) { list.innerHTML=`<div class="empty"><div class="empty-icon">🚗</div><div class="empty-title">Нет машин</div></div>`; return; }
@@ -1537,9 +1460,12 @@ function renderFleet(vehicles) {
   const st=vehicles.filter(v=>v.isStop===1||v.status==='Stop');
   list.innerHTML=[...mv,...st].map((v,i)=>{
     const m=v.isStop===0||v.status==='Move', sc=m?'moving':'stopped';
-    const spd=parseFloat(v.speed||0).toFixed(0);
-    const dist=parseFloat(v.distance||0);
-    const ds=dist>1000?(dist/1000).toFixed(1)+'k mi':Math.round(dist)+' mi';
+    // Скорость: PlanetGPS отдаёт км/ч → показываем мили/ч (задача 11).
+    const spd=(parseFloat(v.speed||0)*KM_TO_MI).toFixed(0);
+    // Пробег: берём пробег на последнем ТО у привязанного водителя (уже в милях).
+    const drv=driverByDevice(v.id);
+    const svcMi=drv?_num(drv.last_service_mileage):null;
+    const ds=svcMi!=null?Math.round(svcMi).toLocaleString()+' mi':'—';
     const crs=getCourseArrow(parseInt(v.course||0));
     let ts='';
     if(v.deviceUtcDate){try{const d=new Date(v.deviceUtcDate.replace(' ','T')+'Z');ts=d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})+' UTC';}catch(e){}}
@@ -1550,18 +1476,16 @@ function renderFleet(vehicles) {
         <div class="vc-badge ${sc}">${m?'▶ В движении':'■ Стоит'}</div>
       </div>
       <div class="vc-grid">
-        <div class="vc-metric"><div class="vc-metric-val">${spd} <span style="font-size:10px;color:var(--muted)">km/h</span></div><div class="vc-metric-lbl">Скорость</div></div>
+        <div class="vc-metric"><div class="vc-metric-val">${spd} <span style="font-size:10px;color:var(--muted)">mph</span></div><div class="vc-metric-lbl">Скорость</div></div>
         <div class="vc-metric"><div class="vc-metric-val">${crs}</div><div class="vc-metric-lbl">Курс</div></div>
-        <div class="vc-metric"><div class="vc-metric-val" style="font-size:12px">${ds}</div><div class="vc-metric-lbl">Пробег</div></div>
+        <div class="vc-metric"><div class="vc-metric-val" style="font-size:12px">${ds}</div><div class="vc-metric-lbl">Пробег на ТО</div></div>
       </div>
       ${v.latitude&&v.longitude?`<div class="vc-addr"><span>📍</span><span>${parseFloat(v.latitude).toFixed(5)}, ${parseFloat(v.longitude).toFixed(5)}</span></div>`:''}
       ${ts?`<div class="vc-time">🕐 ${ts}</div>`:''}
     </div>`;
   }).join('');
 }
-
 function getCourseArrow(c){const d=['↑ N','↗ NE','→ E','↘ SE','↓ S','↙ SW','← W','↖ NW'];return d[Math.round(c/45)%8];}
-
 async function downloadExcel() {
   const from=document.getElementById('report-from').value, to=document.getElementById('report-to').value;
   if (!from||!to){toast('Выберите период','error');return;}
@@ -1576,7 +1500,6 @@ async function downloadExcel() {
   } catch(e){toast('Ошибка: '+e.message,'error');}
   finally{btn.textContent='📥';btn.disabled=false;}
 }
-
 async function loadReport() {
   const from=document.getElementById('report-from').value, to=document.getElementById('report-to').value;
   if (!from||!to){toast('Выберите период','error');return;}
@@ -1598,7 +1521,7 @@ async function loadReport() {
         const name=r.targetName||r.name||r.DeviceName||`Устройство ${i+1}`;
         const rawMileage = r.mileage || r.Mileage || r.distance;
         const mileage = rawMileage !== undefined && rawMileage !== null
-          ? (parseFloat(rawMileage) * 0.621371).toFixed(2)
+          ? (parseFloat(rawMileage) * KM_TO_MI).toFixed(2)
           : '—';
         const alarms=r.alarm||r.Alarm||0;
         return `<div class="vehicle-card stopped" style="margin-bottom:8px;animation-delay:${i*40}ms">
@@ -1611,10 +1534,8 @@ async function loadReport() {
       }).join('');
   }catch(e){list.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Ошибка</div><div class="empty-sub">${esc(e.message)}</div></div>`;}
 }
-
 function startFleetPolling(){stopFleetPolling();state.fleetInterval=setInterval(()=>{if(state.currentTab==='fleet')loadFleet();},6000);}
 function stopFleetPolling(){if(state.fleetInterval){clearInterval(state.fleetInterval);state.fleetInterval=null;}}
-
 function openModal(title,text,onConfirm){
   document.getElementById('modal-title').textContent=title;
   document.getElementById('modal-text').textContent=text;
@@ -1623,10 +1544,8 @@ function openModal(title,text,onConfirm){
 }
 function closeModal(){document.getElementById('modal').classList.remove('open');}
 document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
-
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);}
 function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+type;setTimeout(()=>el.classList.remove('show'),2500);}
-
 init();
 </script>
 </body>
