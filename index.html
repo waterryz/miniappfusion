@@ -256,9 +256,9 @@
       <div class="logo-name">Prime Fusion</div>
     </div>
     <div class="wip-wrap">
-      <div class="wip-pill">⚙ В разработке</div>
-      <div class="wip-title">Скоро будет доступно</div>
-      <div class="wip-sub">Этот раздел находится в разработке. Следите за обновлениями.</div>
+      <div class="wip-pill" id="i18n-wip-pill">⚙ В разработке</div>
+      <div class="wip-title" id="i18n-wip-title">Скоро будет доступно</div>
+      <div class="wip-sub" id="i18n-wip-sub">Этот раздел находится в разработке. Следите за обновлениями.</div>
       <pre id="wip-debug" style="display:none;margin-top:18px;max-width:320px;width:100%;white-space:pre-wrap;word-break:break-word;font-size:11px;line-height:1.5;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:left;font-family:monospace;"></pre>
     </div>
   </div>
@@ -268,7 +268,7 @@
       <div class="logo-mark"><img src="https://res.cloudinary.com/dimqgnupo/image/upload/v1776772340/photo_2026-01-28_21-59-27_dnx6gl.jpg" alt="Prime Fusion" /></div>
       <div class="logo-name">Prime Fusion</div>
     </div>
-    <div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Загрузка...</div></div>
+    <div class="loading-wrap"><div class="spinner"></div><div class="loading-text" id="i18n-loading">Загрузка...</div></div>
   </div>
   <!-- ══════════════════════════════════════════
        DRIVER SELF-VIEW (role: driver)
@@ -301,37 +301,37 @@
       </div>
       <!-- PAYMENT: недельный платёж -->
       <div class="pf-card">
-        <div class="pf-card-head"><span class="pf-ico">📅</span> Следующий платёж</div>
+        <div class="pf-card-head"><span class="pf-ico">📅</span> <span id="i18n-pay-head">Следующий платёж</span></div>
         <div class="pf-pay-row">
           <div style="min-width:0">
             <div class="pf-pay-date" id="dv-pay-date">—</div>
             <div class="pf-pay-sub" id="dv-pay-sub">—</div>
           </div>
           <div class="pf-pay-amount">
-            <div class="pf-amount-lbl">Сумма</div>
+            <div class="pf-amount-lbl" id="i18n-amount-lbl">Сумма</div>
             <div class="pf-amount-val" id="dv-pay-amount">—</div>
           </div>
         </div>
       </div>
       <!-- MILEAGE: пробег -->
       <div class="pf-card">
-        <div class="pf-card-head"><span class="pf-ico">🛣</span> Пробег за текущий месяц</div>
-        <div class="mileage-loading" id="dv-miles-loading"><div class="spinner"></div><span>Загрузка пробега…</span></div>
+        <div class="pf-card-head"><span class="pf-ico">🛣</span> <span id="i18n-miles-head">Пробег за текущий месяц</span></div>
+        <div class="mileage-loading" id="dv-miles-loading"><div class="spinner"></div><span id="i18n-miles-loading">Загрузка пробега…</span></div>
         <div id="dv-miles-body" style="display:none">
-          <div class="pf-miles-big"><span id="dv-miles-done">—</span> <span class="pf-miles-of">/ <span id="dv-miles-limit">—</span> миль</span></div>
+          <div class="pf-miles-big"><span id="dv-miles-done">—</span> <span class="pf-miles-of">/ <span id="dv-miles-limit">—</span> <span id="i18n-miles-unit">миль</span></span></div>
           <div class="pf-bar"><div class="pf-bar-fill" id="dv-miles-bar"></div></div>
           <div class="pf-miles-pct" id="dv-miles-pct"></div>
           <div class="pf-mini-grid">
-            <div class="pf-mini"><div class="pf-mini-lbl">Осталось</div><div class="pf-mini-val" id="dv-remaining">—</div><div class="pf-mini-unit">миль</div></div>
-            <div class="pf-mini"><div class="pf-mini-lbl">Перерасход</div><div class="pf-mini-val" id="dv-over-miles">—</div><div class="pf-mini-unit">миль</div></div>
-            <div class="pf-mini"><div class="pf-mini-lbl">Доплата</div><div class="pf-mini-val" id="dv-over-cost">—</div><div class="pf-mini-unit">$0.25/mi</div></div>
+            <div class="pf-mini"><div class="pf-mini-lbl" id="i18n-rem-lbl">Осталось</div><div class="pf-mini-val" id="dv-remaining">—</div><div class="pf-mini-unit" id="i18n-rem-unit">миль</div></div>
+            <div class="pf-mini"><div class="pf-mini-lbl" id="i18n-over-lbl">Перерасход</div><div class="pf-mini-val" id="dv-over-miles">—</div><div class="pf-mini-unit" id="i18n-over-unit">миль</div></div>
+            <div class="pf-mini"><div class="pf-mini-lbl" id="i18n-sur-lbl">Доплата</div><div class="pf-mini-val" id="dv-over-cost">—</div><div class="pf-mini-unit">$0.25/mi</div></div>
           </div>
         </div>
       </div>
       <!-- SERVICE + OIL: сервис -->
       <div class="pf-card">
-        <div class="pf-card-head"><span class="pf-ico">🔧</span> Сервис · каждые 7 000 миль</div>
-        <div class="mileage-loading" id="dv-svc-loading"><div class="spinner"></div><span>Загрузка пробега…</span></div>
+        <div class="pf-card-head"><span class="pf-ico">🔧</span> <span id="i18n-svc-head">Сервис · каждые 7 000 миль</span></div>
+        <div class="mileage-loading" id="dv-svc-loading"><div class="spinner"></div><span id="i18n-svc-loading">Загрузка пробега…</span></div>
         <div id="dv-svc-body" style="display:none">
           <div class="pf-svc-until">
             <span class="pf-svc-until-num" id="dv-svc-remain">—</span>
@@ -340,16 +340,16 @@
           <div class="pf-svc-at" id="dv-svc-at"></div>
           <div class="pf-svc-note" id="dv-svc-note"></div>
         </div>
-        <div class="pf-oil"><span class="pf-ico">🛢</span> Масло: <strong id="dv-oil">—</strong></div>
+        <div class="pf-oil"><span class="pf-ico">🛢</span> <span id="i18n-oil-lbl">Масло:</span> <strong id="dv-oil">—</strong></div>
       </div>
       <!-- DOCUMENTS: документы водителя + загрузка -->
       <div class="pf-card">
-        <div class="pf-card-head"><span class="pf-ico">📁</span> Документы</div>
+        <div class="pf-card-head"><span class="pf-ico">📁</span> <span id="i18n-docs-head">Документы</span></div>
         <div class="photo-grid" id="dv-doc-grid"></div>
         <button class="pf-upload" id="dv-upload-btn" onclick="document.getElementById('dv-file-input').click()">
           <div class="pf-upload-ico">☁️</div>
-          <div class="pf-upload-text">Загрузить документ</div>
-          <div class="pf-upload-sub">JPG, PNG · до 10 МБ</div>
+          <div class="pf-upload-text" id="i18n-upload-text">Загрузить документ</div>
+          <div class="pf-upload-sub" id="i18n-upload-sub">JPG, PNG · до 10 МБ</div>
         </button>
         <input type="file" id="dv-file-input" accept="image/*" style="display:none" onchange="dvUpload(event)" />
       </div>
@@ -726,6 +726,9 @@ const FLEET_API = 'https://miniappfusion-backend-production.up.railway.app';
 // Перевод из km в мили (PlanetGPS всегда отдаёт километры).
 const KM_TO_MI = 0.621371;
 const tg = window.Telegram?.WebApp;
+// Язык кабинета передаётся ботом через ?lang=ru|en (выбор пользователя на /start).
+const LANG = ((new URLSearchParams(location.search).get('lang') || '').toLowerCase() === 'en') ? 'en' : 'ru';
+const RU = LANG === 'ru';
 const state = {
   drivers: [], filtered: [],
   currentDriver: null, currentFiles: [],
@@ -739,8 +742,34 @@ const state = {
 let _fleetTab = 'map';
 let _map = null;
 let _mapMarkers = [];
+// ── I18N: применяем EN-переводы статических лейблов (RU — как в разметке) ──
+function applyLangTxt(id, s) { const el = document.getElementById(id); if (el) el.textContent = s; }
+function applyLang() {
+  if (RU) return;
+  document.documentElement.lang = 'en';
+  applyLangTxt('i18n-loading', 'Loading...');
+  applyLangTxt('i18n-wip-pill', '⚙ In development');
+  applyLangTxt('i18n-wip-title', 'Coming soon');
+  applyLangTxt('i18n-wip-sub', 'This section is under development. Stay tuned.');
+  applyLangTxt('i18n-pay-head', 'Next payment');
+  applyLangTxt('i18n-amount-lbl', 'Amount');
+  applyLangTxt('i18n-miles-head', 'Mileage this month');
+  applyLangTxt('i18n-miles-loading', 'Loading mileage…');
+  applyLangTxt('i18n-miles-unit', 'mi');
+  applyLangTxt('i18n-rem-lbl', 'Remaining'); applyLangTxt('i18n-rem-unit', 'mi');
+  applyLangTxt('i18n-over-lbl', 'Overage'); applyLangTxt('i18n-over-unit', 'mi');
+  applyLangTxt('i18n-sur-lbl', 'Surcharge');
+  applyLangTxt('i18n-svc-head', 'Service · every 7,000 mi');
+  applyLangTxt('i18n-svc-loading', 'Loading mileage…');
+  applyLangTxt('dv-svc-unit', 'mi to service');
+  applyLangTxt('i18n-oil-lbl', 'Oil:');
+  applyLangTxt('i18n-docs-head', 'Documents');
+  applyLangTxt('i18n-upload-text', 'Upload document');
+  applyLangTxt('i18n-upload-sub', 'JPG, PNG · up to 10 MB');
+}
 // ── INIT ──────────────────────────────────────────────────────────
 async function init() {
+  applyLang();
   if (tg) { tg.ready(); tg.expand(); state.initData = tg.initData || ''; }
   showScreen('loading');
   const dbg = [];
@@ -794,8 +823,12 @@ function _num(v) {
   const n = parseFloat(String(v).replace(/[\s,]/g, ''));
   return isNaN(n) ? null : n;
 }
-const WD_NAMES = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
-const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const WD_NAMES = RU
+  ? ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота']
+  : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTHS_GEN = RU
+  ? ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+  : ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const SERVICE_INTERVAL = 7000;
 function oilType(odo) {
   if (odo == null) return '—';
@@ -811,8 +844,12 @@ function nextPaymentInfo(weekdayStr) {
   const diff = (wd - today.getDay() + 7) % 7;
   const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + diff);
   return {
-    date: `${WD_NAMES[wd]}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`,
-    sub: diff === 0 ? 'Сегодня' : (diff === 1 ? 'Завтра' : `Осталось ${diff} дн.`),
+    date: RU
+      ? `${WD_NAMES[wd]}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`
+      : `${WD_NAMES[wd]}, ${MONTHS_GEN[d.getMonth()]} ${d.getDate()}`,
+    sub: diff === 0 ? (RU ? 'Сегодня' : 'Today')
+       : diff === 1 ? (RU ? 'Завтра' : 'Tomorrow')
+       : (RU ? `Осталось ${diff} дн.` : `${diff} days left`),
   };
 }
 async function loadDriverHome() {
@@ -836,7 +873,7 @@ function renderDriverHome(data) {
   const back = document.getElementById('dv-back');
   if (back) back.style.display = preview ? 'flex' : 'none';
   const role = document.getElementById('dv-role');
-  if (role) role.textContent = preview ? 'Просмотр' : 'Driver';
+  if (role) role.textContent = preview ? (RU ? 'Просмотр' : 'Preview') : 'Driver';
   const upBtn = document.getElementById('dv-upload-btn');
   if (upBtn) upBtn.style.display = preview ? 'none' : '';
   // ── HERO ──
@@ -856,12 +893,12 @@ function renderDriverHome(data) {
   // лимит миль: кастомный (из админки) важнее тарифного
   const customLimit = _num(mil.limit);
   const limit = customLimit != null ? customLimit : (t.miles != null ? t.miles : null);
-  setText('dv-limit', limit != null ? limit.toLocaleString() + ' mi/мес' : (t.unlimited ? 'Безлимит' : '—'));
+  setText('dv-limit', limit != null ? limit.toLocaleString() + (RU ? ' mi/мес' : ' mi/mo') : (t.unlimited ? (RU ? 'Безлимит' : 'Unlimited') : '—'));
   // ── PAYMENT ──
   const pay = nextPaymentInfo(d.payment_weekday);
   setText('dv-pay-amount', price != null ? '$' + price : '—');
   setText('dv-pay-date', pay ? pay.date : '—');
-  setText('dv-pay-sub', pay ? pay.sub : 'День платежа не задан');
+  setText('dv-pay-sub', pay ? pay.sub : (RU ? 'День платежа не задан' : 'Payment day not set'));
   // ── MILEAGE ── (значение берём с fleet-бэкенда — там рабочий GPS)
   const deviceId = d.planet_gps_device_id || '';
   const serverDone = _num(mil.value);
@@ -882,7 +919,7 @@ function renderDriverHome(data) {
   const atEl = document.getElementById('dv-svc-at');
   if (atEl) {
     atEl.innerHTML = svcMi != null
-      ? 'ТО на пробеге <strong>' + (svcMi + SERVICE_INTERVAL).toLocaleString() + ' mi</strong>'
+      ? (RU ? 'ТО на пробеге <strong>' : 'Service at <strong>') + (svcMi + SERVICE_INTERVAL).toLocaleString() + ' mi</strong>'
       : '';
   }
   loadServiceMileage(deviceId, (d.last_service_date || '').trim());
@@ -957,7 +994,7 @@ async function loadServiceMileage(deviceId, sinceDate) {
     loading.style.display = 'none';
     body.style.display = 'block';
     const numEl = document.getElementById('dv-svc-remain');
-    numEl.textContent = 'Укажите дату сервиса';
+    numEl.textContent = RU ? 'Укажите дату сервиса' : 'Set service date';
     numEl.style.color = 'var(--muted)';
     numEl.style.fontSize = '15px';
     document.getElementById('dv-svc-unit').textContent = '';
@@ -987,25 +1024,27 @@ function renderService(remaining) {
     numEl.textContent = '—';
     numEl.style.color = 'var(--muted)';
     numEl.style.fontSize = '30px';
-    unitEl.textContent = 'миль до ТО';
+    unitEl.textContent = RU ? 'миль до ТО' : 'mi to service';
     noteEl.textContent = '';
     return;
   }
   if (remaining <= 0) {
     const over = Math.round(-remaining) || 0;       // миль сверх интервала (без -0)
     const fee = over * 0.5;                          // $0.50 за милю перепробега
-    numEl.textContent = 'Пора на ТО';
+    numEl.textContent = RU ? 'Пора на ТО' : 'Service due';
     numEl.style.color = 'var(--red)';
     numEl.style.fontSize = '26px';
     unitEl.textContent = '';
     noteEl.style.color = 'var(--red)';
-    noteEl.innerHTML =
-      'Перепробег: <strong>+' + over.toLocaleString() + ' миль</strong> сверх интервала<br>' +
-      'Доплата за перепробег: <strong>$' + fee.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</strong> ($0.50/mi)';
+    noteEl.innerHTML = RU
+      ? 'Перепробег: <strong>+' + over.toLocaleString() + ' миль</strong> сверх интервала<br>' +
+        'Доплата за перепробег: <strong>$' + fee.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</strong> ($0.50/mi)'
+      : 'Over by <strong>+' + over.toLocaleString() + ' mi</strong> past interval<br>' +
+        'Overage fee: <strong>$' + fee.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</strong> ($0.50/mi)';
     return;
   }
   numEl.textContent = Math.round(remaining).toLocaleString();
-  unitEl.textContent = 'миль до ТО';
+  unitEl.textContent = RU ? 'миль до ТО' : 'mi to service';
   if (remaining < 500) {
     const t = Math.min(1, Math.max(0, (500 - remaining) / 500)); // 0..1
     const from = [22, 24, 29], to = [229, 72, 77];
@@ -1013,7 +1052,7 @@ function renderService(remaining) {
     numEl.style.color = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
     numEl.style.fontSize = (30 + 14 * t) + 'px'; // 30 → 44
     noteEl.style.color = 'var(--red)';
-    noteEl.textContent = 'Скоро плановое ТО';
+    noteEl.textContent = RU ? 'Скоро плановое ТО' : 'Service coming up';
   } else {
     numEl.style.color = 'var(--green)';
     numEl.style.fontSize = '30px';
@@ -1023,7 +1062,7 @@ function renderService(remaining) {
 function renderDvDocs(files) {
   const grid = document.getElementById('dv-doc-grid');
   if (!files.length) {
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:22px 12px"><div class="empty-icon">📂</div><div class="empty-title">Нет документов</div><div class="empty-sub">Загрузите первый — кнопкой ниже</div></div>`;
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:22px 12px"><div class="empty-icon">📂</div><div class="empty-title">${RU?'Нет документов':'No documents'}</div><div class="empty-sub">${RU?'Загрузите первый — кнопкой ниже':'Upload your first below'}</div></div>`;
     return;
   }
   grid.innerHTML = files.map((f, i) => `
@@ -1041,24 +1080,24 @@ async function dvUpload(e) {
   const txt = btn.querySelector('.pf-upload-text');
   const original = txt.textContent;
   btn.classList.add('busy');
-  txt.textContent = 'Загрузка…';
+  txt.textContent = RU ? 'Загрузка…' : 'Uploading…';
   const reader = new FileReader();
   reader.onload = async ev => {
     try {
       const base = (file.name || 'document').replace(/\.[^.]+$/, '');
       await api('/driver/me/upload', { method: 'POST', body: JSON.stringify({ image: ev.target.result, name: base }) });
-      toast('Документ загружен', 'success');
+      toast(RU ? 'Документ загружен' : 'Document uploaded', 'success');
       const data = await api('/driver/me');
       state.dvFiles = data.files || [];
       renderDvDocs(state.dvFiles);
     } catch (err) {
-      toast('Ошибка: ' + err.message, 'error');
+      toast((RU ? 'Ошибка: ' : 'Error: ') + err.message, 'error');
     } finally {
       txt.textContent = original;
       btn.classList.remove('busy');
     }
   };
-  reader.onerror = () => { toast('Не удалось прочитать файл', 'error'); txt.textContent = original; btn.classList.remove('busy'); };
+  reader.onerror = () => { toast(RU ? 'Не удалось прочитать файл' : 'Could not read file', 'error'); txt.textContent = original; btn.classList.remove('busy'); };
   reader.readAsDataURL(file);
 }
 function openDvLightbox(i) {
