@@ -547,6 +547,11 @@
         <input class="form-input" id="add-dmv-date" type="date" />
         <div class="form-hint">Инспекция проходит раз в 4 месяца.</div>
       </div>
+      <div class="form-group">
+        <div class="form-label">Дата пересадки водителя <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+        <input class="form-input" id="add-reset-date" type="date" />
+        <div class="form-hint">Если водитель сел на машину посреди месяца — месячный пробег считается с этой даты, а не с 1-го числа. Так новый водитель не наследует пробег предыдущего. Пусто — с начала месяца.</div>
+      </div>
       <button class="submit-btn" id="add-btn" onclick="submitAddDriver()" disabled>Добавить водителя</button>
     </div>
   </div>
@@ -631,6 +636,11 @@
       <div class="form-group">
         <div class="form-label">Дата последней DMV инспекции</div>
         <input class="form-input" id="edit-dmv-date" type="date" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Дата пересадки водителя (обнуление пробега)</div>
+        <input class="form-input" id="edit-reset-date" type="date" />
+        <div class="form-hint">Месячный пробег считается с этой даты. Обнови при пересадке нового водителя посреди месяца.</div>
       </div>
       <button class="submit-btn" id="edit-btn" onclick="submitEditDriver()">Сохранить изменения</button>
     </div>
@@ -858,7 +868,8 @@ function renderDriverHome(data) {
   if (serverDone != null) {
     renderMiles(serverDone, limit, t);
   } else if (deviceId) {
-    loadMonthlyMileage(deviceId, limit, t);
+    // reset date — дата пересадки водителя (обнуление месячного пробега)
+    loadMonthlyMileage(deviceId, limit, t, (d.mileage_reset_date || '').trim());
   } else {
     renderMiles(null, limit, t);
   }
@@ -884,9 +895,11 @@ function showMilesLoading() {
 }
 // Подгрузка месячного пробега с fleet-бэкенда (там рабочий PlanetGPS),
 // с запасным запросом на сервис бота, если fleet недоступен.
-async function loadMonthlyMileage(deviceId, limit, t) {
+async function loadMonthlyMileage(deviceId, limit, t, resetDate) {
   showMilesLoading();
-  const path = '/api/mileage/' + encodeURIComponent(deviceId);
+  let path = '/api/mileage/' + encodeURIComponent(deviceId);
+  // Если задана дата пересадки — считаем месячный пробег с неё (обнуление).
+  if (resetDate) path += '?since=' + encodeURIComponent(resetDate);
   try {
     let r;
     try { r = await api(path, {}, FLEET_API); }
@@ -1206,6 +1219,7 @@ function renderProfile(d, files) {
     ['День платежа', payWeekdayName(d.payment_weekday)],
     ['Сервис (пробег)', svcMi != null ? (svcMi.toLocaleString() + ' mi') : '—'],
     ['DMV', d.dmv_inspection_date || '—'],
+    ['Пересадка (обнуление)', d.mileage_reset_date || '—'],
     ['ID', `<span class="mono">${esc(d.id)}</span>`],
     ['Документов', `<span style="color:var(--accent)">${files.length}</span>`],
   ];
@@ -1258,6 +1272,7 @@ function showEditDriver() {
   document.getElementById('edit-svc-mi').value = d.last_service_mileage || '';
   document.getElementById('edit-svc-date').value = d.last_service_date || '';
   document.getElementById('edit-dmv-date').value = d.dmv_inspection_date || '';
+  document.getElementById('edit-reset-date').value = d.mileage_reset_date || '';
   checkEditReady();
   showScreen('edit');
   loadFleetIntoSelect('edit-gps', d.planet_gps_device_id || '');
@@ -1277,6 +1292,7 @@ async function submitEditDriver() {
       payment_weekday: val('edit-payday'),
       last_service_mileage: val('edit-svc-mi'), last_service_date: val('edit-svc-date'),
       dmv_inspection_date: val('edit-dmv-date'),
+      mileage_reset_date: val('edit-reset-date'),
     };
     await api(`/driver/${state.currentDriver.id}`, { method: 'PATCH', body: JSON.stringify(body) });
     toast('Сохранено', 'success');
@@ -1361,7 +1377,7 @@ async function submitUpload() {
 }
 function showAddDriver() {
   ['add-id','add-name','add-model','add-year','add-trim','add-number','add-limit','add-price','add-svc-mi'].forEach(id=>document.getElementById(id).value='');
-  ['add-tariff','add-payday','add-svc-date','add-dmv-date'].forEach(id=>document.getElementById(id).value='');
+  ['add-tariff','add-payday','add-svc-date','add-dmv-date','add-reset-date'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('add-btn').disabled=true;
   document.getElementById('add-btn').textContent='Добавить водителя';
   showScreen('add');
@@ -1381,6 +1397,7 @@ async function submitAddDriver() {
       planet_gps_device_id: val('add-gps'), payment_weekday: val('add-payday'),
       last_service_mileage: val('add-svc-mi'),
       last_service_date: val('add-svc-date'), dmv_inspection_date: val('add-dmv-date'),
+      mileage_reset_date: val('add-reset-date'),
     })});
     toast('Водитель добавлен','success'); await loadDrivers(); showScreen('drivers');
   } catch(e) { toast('Ошибка: '+e.message,'error'); btn.disabled=false; btn.textContent='Добавить водителя'; }
