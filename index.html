@@ -203,6 +203,12 @@
     .pf-pay-amount { text-align: right; flex-shrink: 0; }
     .pf-amount-lbl { font-size: 11px; color: var(--muted); }
     .pf-amount-val { font-family: var(--num); font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    /* free week — строка внутри карточки платежа */
+    .pf-free { display: flex; align-items: center; gap: 9px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .pf-free-date { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent); }
+    .pf-free-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    /* прошедшая дата гасится, чтобы не выглядела как актуальная акция */
+    .pf-free.past .pf-free-date { color: var(--muted); }
     /* mileage */
     .pf-miles-big { font-family: var(--num); font-size: 26px; font-weight: 700; line-height: 1; letter-spacing: -0.5px; }
     .pf-miles-of { font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text-secondary); font-weight: 600; }
@@ -310,6 +316,14 @@
           <div class="pf-pay-amount">
             <div class="pf-amount-lbl" id="i18n-amount-lbl">Сумма</div>
             <div class="pf-amount-val" id="dv-pay-amount">—</div>
+          </div>
+        </div>
+        <!-- Бесплатная неделя: показывается, только если админ задал дату -->
+        <div class="pf-free" id="dv-free-week" style="display:none">
+          <span class="pf-ico">🎁</span>
+          <div style="min-width:0">
+            <div class="pf-free-date" id="dv-free-date">—</div>
+            <div class="pf-free-sub" id="dv-free-sub"></div>
           </div>
         </div>
       </div>
@@ -534,6 +548,11 @@
         <div class="form-hint">Дата ближайшего платежа считается автоматически.</div>
       </div>
       <div class="form-group">
+        <div class="form-label">Дата бесплатной недели <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+        <input class="form-input" id="add-free-week" type="date" />
+        <div class="form-hint">Показывается водителю в карточке платежа. Пусто — строки в кабинете нет.</div>
+      </div>
+      <div class="form-group">
         <div class="form-label">Сервис: пробег на последнем ТО, mi <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
         <input class="form-input" id="add-svc-mi" type="text" inputmode="numeric" placeholder="44850" />
       </div>
@@ -624,6 +643,11 @@
           <option value="5">Пятница</option><option value="6">Суббота</option>
           <option value="0">Воскресенье</option>
         </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Дата бесплатной недели</div>
+        <input class="form-input" id="edit-free-week" type="date" />
+        <div class="form-hint">Очисти поле, когда неделя отработана — строка у водителя пропадёт.</div>
       </div>
       <div class="form-group">
         <div class="form-label">Сервис: пробег на последнем ТО, mi</div>
@@ -852,6 +876,30 @@ function nextPaymentInfo(weekdayStr) {
        : (RU ? `Осталось ${diff} дн.` : `${diff} days left`),
   };
 }
+// Дата бесплатной недели (free_week_date, 'YYYY-MM-DD') — задаётся админом.
+// Возвращает {date, sub, past} либо null, если дата не задана или битая.
+function freeWeekInfo(dateStr) {
+  const m = String(dateStr || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  // Собираем дату по частям: new Date('2026-09-15') парсится как UTC и в
+  // минусовых поясах (NY) съезжает на день назад.
+  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  // Проверяем, что дата не «перекрутилась» (2026-13-40 → февраль): JS молча
+  // переносит лишние месяцы и дни, и битое значение выглядело бы валидным.
+  if (d.getFullYear() !== +m[1] || d.getMonth() !== +m[2] - 1 || d.getDate() !== +m[3]) return null;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const days = Math.round((d - today) / 86400000);
+  const label = RU
+    ? `${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`
+    : `${MONTHS_GEN[d.getMonth()]} ${d.getDate()}`;
+  let sub;
+  if (days === 0)      sub = RU ? 'Сегодня — платить не нужно' : 'Today — no payment due';
+  else if (days === 1) sub = RU ? 'Завтра' : 'Tomorrow';
+  else if (days > 1)   sub = RU ? `Через ${days} дн.` : `In ${days} days`;
+  else                 sub = RU ? 'Уже прошла' : 'Already passed';
+  return { date: label, sub, past: days < 0 };
+}
 async function loadDriverHome() {
   try {
     const data = await api('/driver/me');
@@ -899,6 +947,17 @@ function renderDriverHome(data) {
   setText('dv-pay-amount', price != null ? '$' + price : '—');
   setText('dv-pay-date', pay ? pay.date : '—');
   setText('dv-pay-sub', pay ? pay.sub : (RU ? 'День платежа не задан' : 'Payment day not set'));
+  // Бесплатная неделя: нет даты — строку прячем, чтобы карточка не пустовала.
+  const fw = freeWeekInfo(d.free_week_date);
+  const fwBox = document.getElementById('dv-free-week');
+  if (fwBox) {
+    fwBox.style.display = fw ? 'flex' : 'none';
+    if (fw) {
+      fwBox.classList.toggle('past', fw.past);
+      setText('dv-free-date', (RU ? 'Бесплатная неделя: ' : 'Free week: ') + fw.date);
+      setText('dv-free-sub', fw.sub);
+    }
+  }
   // ── MILEAGE ── (значение берём с fleet-бэкенда — там рабочий GPS)
   const deviceId = d.planet_gps_device_id || '';
   const serverDone = _num(mil.value);
@@ -1256,6 +1315,7 @@ function renderProfile(d, files) {
     ['Лимит миль/мес', limit != null ? (limit.toLocaleString() + (custom != null ? ' · кастом' : ' · тариф')) : (t.unlimited ? 'Безлимит' : '—')],
     ['GPS', d.planet_gps_device_id ? '<span style="color:var(--accent)">подключён</span>' : 'нет'],
     ['День платежа', payWeekdayName(d.payment_weekday)],
+    ['Бесплатная неделя', esc(d.free_week_date || '—')],
     ['Сервис (пробег)', svcMi != null ? (svcMi.toLocaleString() + ' mi') : '—'],
     ['DMV', d.dmv_inspection_date || '—'],
     ['Пересадка (обнуление)', d.mileage_reset_date || '—'],
@@ -1308,6 +1368,7 @@ function showEditDriver() {
   document.getElementById('edit-limit').value = d.monthly_mileage_limit || '';
   document.getElementById('edit-price').value = d.weekly_price || '';
   document.getElementById('edit-payday').value = (d.payment_weekday === '' || d.payment_weekday == null) ? '' : String(d.payment_weekday);
+  document.getElementById('edit-free-week').value = d.free_week_date || '';
   document.getElementById('edit-svc-mi').value = d.last_service_mileage || '';
   document.getElementById('edit-svc-date').value = d.last_service_date || '';
   document.getElementById('edit-dmv-date').value = d.dmv_inspection_date || '';
@@ -1329,6 +1390,7 @@ async function submitEditDriver() {
       monthly_mileage_limit: val('edit-limit'), weekly_price: val('edit-price'),
       planet_gps_device_id: val('edit-gps'),
       payment_weekday: val('edit-payday'),
+      free_week_date: val('edit-free-week'),
       last_service_mileage: val('edit-svc-mi'), last_service_date: val('edit-svc-date'),
       dmv_inspection_date: val('edit-dmv-date'),
       mileage_reset_date: val('edit-reset-date'),
@@ -1416,7 +1478,7 @@ async function submitUpload() {
 }
 function showAddDriver() {
   ['add-id','add-name','add-model','add-year','add-trim','add-number','add-limit','add-price','add-svc-mi'].forEach(id=>document.getElementById(id).value='');
-  ['add-tariff','add-payday','add-svc-date','add-dmv-date','add-reset-date'].forEach(id=>document.getElementById(id).value='');
+  ['add-tariff','add-payday','add-free-week','add-svc-date','add-dmv-date','add-reset-date'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('add-btn').disabled=true;
   document.getElementById('add-btn').textContent='Добавить водителя';
   showScreen('add');
@@ -1434,6 +1496,7 @@ async function submitAddDriver() {
       car_year: val('add-year'), car_trim: val('add-trim'), car_number: val('add-number'),
       tariff: val('add-tariff'), monthly_mileage_limit: val('add-limit'), weekly_price: val('add-price'),
       planet_gps_device_id: val('add-gps'), payment_weekday: val('add-payday'),
+      free_week_date: val('add-free-week'),
       last_service_mileage: val('add-svc-mi'),
       last_service_date: val('add-svc-date'), dmv_inspection_date: val('add-dmv-date'),
       mileage_reset_date: val('add-reset-date'),
