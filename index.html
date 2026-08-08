@@ -352,6 +352,7 @@
             <span class="pf-svc-until-unit" id="dv-svc-unit">миль до ТО</span>
           </div>
           <div class="pf-svc-at" id="dv-svc-at"></div>
+          <div class="pf-svc-at" id="dv-svc-odo" style="opacity:.75"></div>
           <div class="pf-svc-note" id="dv-svc-note"></div>
         </div>
         <div class="pf-oil"><span class="pf-ico">🛢</span> <span id="i18n-oil-lbl">Масло:</span> <strong id="dv-oil">—</strong></div>
@@ -420,9 +421,47 @@
       <div class="actions-wrap" style="padding:14px 0 0">
         <button class="action-btn primary" onclick="openDriverPreview()">👁 Кабинет водителя</button>
         <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showEditDriver()">✏️ Редактировать данные</button>
+        <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showOdoScreen()">🧭 Сверка одометра</button>
         <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showDocuments()">📁 Документы водителя</button>
         <button class="action-btn danger" onclick="confirmDeleteDriver()">🗑 Удалить водителя</button>
       </div>
+    </div>
+  </div>
+  <!-- ODOMETER CHECK (admin): сверка пробега по фото одометра -->
+  <div class="screen" id="screen-odo">
+    <div class="header">
+      <button class="back-btn" onclick="showScreen('profile')">←</button>
+      <div class="header-info">
+        <div class="header-title">Сверка одометра</div>
+        <div class="header-sub" id="odo-sub"></div>
+      </div>
+    </div>
+    <div class="scroll-body" style="padding-top:14px">
+      <div class="info-block" id="odo-state" style="margin:0 0 14px"></div>
+      <div class="form-group">
+        <div class="form-label">Показание одометра с фото, mi</div>
+        <input class="form-input" id="odo-mi" type="text" inputmode="numeric" placeholder="128970" oninput="checkOdoReady()" />
+        <div class="form-hint">Цифра ровно как на фото. Она станет новой точкой отсчёта, и накопленная погрешность трекера обнулится.</div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Дата снимка</div>
+        <input class="form-input" id="odo-date" type="date" />
+        <div class="form-hint">По умолчанию сегодня. Если фото прислали вчера — поставьте вчерашнюю, иначе погрешность посчитается неверно.</div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Заметка <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
+        <input class="form-input" id="odo-note" type="text" placeholder="фото из WhatsApp" />
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input type="checkbox" id="odo-is-service" style="width:18px;height:18px" />
+          <span style="font-size:14px">Это сверка на сервисе — сдвинуть базу ТО</span>
+        </label>
+        <div class="form-hint">Отметьте, если машину только что обслужили: пробег и дата ТО обновятся этой же цифрой, отдельно редактировать не нужно.</div>
+      </div>
+      <button class="submit-btn" id="odo-btn" onclick="submitOdoCheck()" disabled>Записать сверку</button>
+      <div class="form-label" style="margin:20px 0 8px">История сверок</div>
+      <div id="odo-history"></div>
     </div>
   </div>
   <!-- DOCUMENTS (admin) -->
@@ -746,7 +785,10 @@
 <div class="toast" id="toast"></div>
 <script>
 const API = 'https://tg-bot-prime-fusion-production.up.railway.app';
-const FLEET_API = 'https://miniappfusion-backend-production.up.railway.app';
+// Весь бэкенд (водители + PlanetGPS) собран на одном сервисе. Константу
+// оставляем, чтобы не переписывать все места вызова: она указывает туда же,
+// что и API. Если когда-нибудь GPS снова вынесут отдельно — меняется одна строка.
+const FLEET_API = API;
 // Перевод из km в мили (PlanetGPS всегда отдаёт километры).
 const KM_TO_MI = 0.621371;
 const tg = window.Telegram?.WebApp;
@@ -1058,6 +1100,7 @@ async function loadServiceMileage(deviceId, sinceDate) {
     numEl.style.fontSize = '15px';
     document.getElementById('dv-svc-unit').textContent = '';
     document.getElementById('dv-svc-note').textContent = '';
+    renderOdoLine(null);
     return;
   }
   if (!deviceId) { renderService(null); return; }
@@ -1066,19 +1109,46 @@ async function loadServiceMileage(deviceId, sinceDate) {
   try {
     const path = '/api/service-mileage/' + encodeURIComponent(deviceId) + '?since=' + encodeURIComponent(sinceDate);
     const r = await api(path, {}, FLEET_API);
+    // Новый бэкенд отдаёт state: одометр посчитан от последней сверки по фото
+    // и скорректирован на погрешность трекера. Интервал берём с сервера —
+    // чтобы порог не приходилось держать в двух местах.
+    const st = r && r.state;
+    if (st && st.miles_to_service != null) {
+      renderService(st.miles_to_service, st);
+      return;
+    }
+    // Фолбэк на старую схему: «сырой» GPS с даты сервиса.
     const driven = _num(r && r.mileage);
-    renderService(driven != null ? (SERVICE_INTERVAL - driven) : null);
+    renderService(driven != null ? (SERVICE_INTERVAL - driven) : null, null);
   } catch (e) {
-    renderService(null);
+    renderService(null, null);
+  }
+}
+// Строка «сейчас 128 970 mi · сверка 8 авг» под пробегом следующего ТО.
+// Без сверок пишем, что цифра по трекеру — чтобы никто не принимал её за одометр.
+function renderOdoLine(st) {
+  const el = document.getElementById('dv-svc-odo');
+  if (!el) return;
+  if (!st || st.odometer == null) { el.innerHTML = ''; return; }
+  const odo = Math.round(st.odometer).toLocaleString();
+  if (st.last_check_date) {
+    const [y, m, dd] = st.last_check_date.split('-').map(Number);
+    const when = RU ? `${dd} ${MONTHS_GEN[m - 1]}` : `${MONTHS_GEN[m - 1]} ${dd}`;
+    el.innerHTML = (RU ? 'Сейчас <strong>' : 'Now <strong>') + odo + ' mi</strong>'
+                 + (RU ? ' · сверка ' : ' · checked ') + when;
+  } else {
+    el.innerHTML = (RU ? 'Сейчас <strong>' : 'Now <strong>') + odo + ' mi</strong>'
+                 + (RU ? ' · по трекеру, без сверки' : ' · tracker only, not verified');
   }
 }
 // Отрисовка «N миль до ТО»: <500 — крупнеет и краснеет; ≤0 — «Пора на ТО».
-function renderService(remaining) {
+function renderService(remaining, st) {
   document.getElementById('dv-svc-loading').style.display = 'none';
   document.getElementById('dv-svc-body').style.display = 'block';
   const numEl = document.getElementById('dv-svc-remain');
   const unitEl = document.getElementById('dv-svc-unit');
   const noteEl = document.getElementById('dv-svc-note');
+  renderOdoLine(st);
   if (remaining === null || remaining === undefined || isNaN(remaining)) {
     numEl.textContent = '—';
     numEl.style.color = 'var(--muted)';
@@ -1294,6 +1364,17 @@ async function openDriver(id) {
   } catch(e) { toast('Ошибка загрузки','error'); showScreen('drivers'); }
 }
 function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+// «0.9529 · −4.7%» вместо голого числа: 0.95 сам по себе ничего не говорит.
+function trackerFactorLabel(factor, checks) {
+  const f = _num(factor);
+  if (f == null) return '—';
+  if (!checks) return '1.0 · нет сверок';
+  if (Math.abs(f - 1) <= 0.0005) return f + ' · расхождений нет';
+  const pct = ((1 / f - 1) * 100);
+  const color = Math.abs(pct) > 3 ? 'var(--red)' : 'var(--text)';
+  const dir = pct > 0 ? 'завышает' : 'занижает';
+  return `<span style="color:${color}">${f} · трекер ${dir} на ${Math.abs(pct).toFixed(1)}%</span>`;
+}
 function payWeekdayName(wd) { const n = parseInt(wd, 10); return (!isNaN(n) && n >= 0 && n <= 6) ? WD_NAMES[n] : '—'; }
 function renderProfile(d, files) {
   document.getElementById('profile-title').textContent = d.name;
@@ -1317,6 +1398,8 @@ function renderProfile(d, files) {
     ['День платежа', payWeekdayName(d.payment_weekday)],
     ['Бесплатная неделя', esc(d.free_week_date || '—')],
     ['Сервис (пробег)', svcMi != null ? (svcMi.toLocaleString() + ' mi') : '—'],
+    ['Сверок одометра', String(d.odometer_checks_count || 0)],
+    ['Коэффициент трекера', trackerFactorLabel(d.gps_factor, d.odometer_checks_count)],
     ['DMV', d.dmv_inspection_date || '—'],
     ['Пересадка (обнуление)', d.mileage_reset_date || '—'],
     ['ID', `<span class="mono">${esc(d.id)}</span>`],
@@ -1405,6 +1488,146 @@ async function submitEditDriver() {
     toast('Ошибка: ' + e.message, 'error');
   } finally {
     btn.disabled = false; btn.textContent = 'Сохранить изменения';
+  }
+}
+// ── СВЕРКА ОДОМЕТРА (admin) ──
+// Пробег ведётся по трекеру, но правду задаёт одометр: админ вбивает цифру
+// с фото, она становится якорем, а сервер сам считает, насколько за тот же
+// период соврал трекер, и выводит коэффициент на будущее.
+function todayISO() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+function checkOdoReady() {
+  document.getElementById('odo-btn').disabled = _num(val('odo-mi')) == null;
+}
+function showOdoScreen() {
+  const d = state.currentDriver;
+  document.getElementById('odo-sub').textContent = d.name;
+  document.getElementById('odo-mi').value = '';
+  document.getElementById('odo-note').value = '';
+  document.getElementById('odo-is-service').checked = false;
+  document.getElementById('odo-date').value = todayISO();
+  document.getElementById('odo-state').innerHTML = '<div class="info-row"><span class="info-key">Загрузка…</span><span class="info-val"></span></div>';
+  document.getElementById('odo-history').innerHTML = '';
+  checkOdoReady();
+  showScreen('odo');
+  loadOdoData();
+}
+async function loadOdoData() {
+  try {
+    const r = await api(`/driver/${state.currentDriver.id}/odometer`);
+    state.odoState = r.state || {};
+    renderOdoState(r.state || {});
+    renderOdoHistory(r.checks || []);
+  } catch (e) {
+    document.getElementById('odo-state').innerHTML =
+      `<div class="info-row"><span class="info-key">Ошибка</span><span class="info-val">${esc(e.message)}</span></div>`;
+  }
+}
+function renderOdoState(st) {
+  const f = st.gps_factor;
+  // Коэффициент показываем как «трекер завышает/занижает на N%» — так понятнее,
+  // чем голое 0.9529.
+  let fTxt = '1.0 · сверок нет';
+  if (f != null && Math.abs(f - 1) > 0.0005) {
+    const pct = Math.abs((1 / f - 1) * 100).toFixed(1);
+    fTxt = `${f} · трекер ${f < 1 ? 'завышает' : 'занижает'} на ${pct}%`;
+  } else if (st.checks_count) {
+    fTxt = `${f} · расхождений не найдено`;
+  }
+  const rows = [
+    ['Одометр сейчас', st.odometer != null
+      ? `<strong>${Math.round(st.odometer).toLocaleString()} mi</strong>`
+      : '<span style="color:var(--muted)">нет данных GPS</span>'],
+    ['Последняя сверка', st.last_check_date || '—'],
+    ['Точка отсчёта', st.anchor
+      ? `${Math.round(st.anchor.mileage).toLocaleString()} mi · ${st.anchor.date}` +
+        (st.anchor_source === 'service' ? ' · с ТО' : '')
+      : '—'],
+    ['По трекеру с неё', st.gps_since_anchor != null ? Math.round(st.gps_since_anchor).toLocaleString() + ' mi' : '—'],
+    ['Коэффициент', fTxt],
+    ['До ТО', st.miles_to_service != null
+      ? `<strong style="color:${st.miles_to_service < 500 ? 'var(--red)' : 'var(--accent)'}">${Math.round(st.miles_to_service).toLocaleString()} mi</strong>`
+      : '—'],
+  ];
+  document.getElementById('odo-state').innerHTML = rows.map(([k, v]) =>
+    `<div class="info-row"><span class="info-key">${k}</span><span class="info-val">${v}</span></div>`).join('');
+}
+function renderOdoHistory(checks) {
+  const box = document.getElementById('odo-history');
+  if (!checks.length) {
+    box.innerHTML = '<div class="form-hint" style="padding:8px 0">Сверок пока нет. Первая станет точкой отсчёта — погрешность посчитается со второй.</div>';
+    return;
+  }
+  box.innerHTML = checks.slice().reverse().map(c => {
+    const drift = c.drift;
+    const driftTxt = drift == null
+      ? '<span style="color:var(--muted)">первая сверка</span>'
+      : `<span style="color:${Math.abs(drift) > 100 ? 'var(--red)' : 'var(--muted)'}">` +
+        `трекер ${drift < 0 ? '+' : '−'}${Math.abs(Math.round(drift)).toLocaleString()} mi` +
+        (c.drift_pct != null ? ` (${Math.abs(c.drift_pct).toFixed(1)}%)` : '') + '</span>';
+    const pair = (c.real_since_prev != null && c.gps_since_prev != null)
+      ? `реально ${Math.round(c.real_since_prev).toLocaleString()} · трекер ${Math.round(c.gps_since_prev).toLocaleString()}`
+      : '';
+    return `<div class="info-block" style="margin:0 0 8px">
+      <div class="info-row"><span class="info-key">${esc(c.date)}</span>
+        <span class="info-val"><strong>${Math.round(c.mileage).toLocaleString()} mi</strong></span></div>
+      <div class="info-row"><span class="info-key">Погрешность</span><span class="info-val">${driftTxt}</span></div>
+      ${pair ? `<div class="info-row"><span class="info-key">За период</span><span class="info-val">${pair}</span></div>` : ''}
+      ${c.note ? `<div class="info-row"><span class="info-key">Заметка</span><span class="info-val">${esc(c.note)}</span></div>` : ''}
+      <div class="info-row"><span class="info-key"></span><span class="info-val">
+        <a href="#" style="color:var(--red)" onclick="deleteOdoCheck('${esc(c.date)}');return false">удалить</a></span></div>
+    </div>`;
+  }).join('');
+}
+async function submitOdoCheck() {
+  const btn = document.getElementById('odo-btn');
+  const mi = _num(val('odo-mi'));
+  if (mi == null) return;
+  btn.disabled = true; btn.textContent = 'Записываю...';
+  try {
+    const r = await api(`/driver/${state.currentDriver.id}/odometer`, {
+      method: 'POST',
+      body: JSON.stringify({
+        mileage: mi,
+        date: val('odo-date') || todayISO(),
+        note: val('odo-note'),
+        is_service: document.getElementById('odo-is-service').checked,
+      }),
+    });
+    const c = r.check || {};
+    toast(c.drift != null
+      ? `Записано. Трекер соврал на ${Math.abs(Math.round(c.drift)).toLocaleString()} mi`
+      : 'Записано — точка отсчёта задана', 'success');
+    document.getElementById('odo-mi').value = '';
+    document.getElementById('odo-note').value = '';
+    document.getElementById('odo-is-service').checked = false;
+    checkOdoReady();
+    await loadOdoData();
+    // карточка водителя показывает пробег на ТО — перечитываем профиль
+    const data = await api(`/driver/${state.currentDriver.id}`);
+    state.currentDriver = data.driver; state.currentFiles = data.files;
+    state.currentMileage = data.mileage || {};
+    renderProfile(data.driver, data.files);
+  } catch (e) {
+    toast('Ошибка: ' + e.message, 'error');
+  } finally {
+    btn.textContent = 'Записать сверку';
+    checkOdoReady();
+  }
+}
+async function deleteOdoCheck(date) {
+  if (!confirm(`Удалить сверку от ${date}?`)) return;
+  try {
+    await api(`/driver/${state.currentDriver.id}/odometer`, {
+      method: 'DELETE', body: JSON.stringify({ date }),
+    });
+    toast('Сверка удалена', 'success');
+    await loadOdoData();
+  } catch (e) {
+    toast('Ошибка: ' + e.message, 'error');
   }
 }
 function showProfile() { showScreen('profile'); }
