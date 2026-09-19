@@ -418,8 +418,10 @@
     </div>
     <div class="scroll-body" style="padding-top:14px">
       <div class="info-block" id="info-block" style="margin:0"></div>
+      <div id="field-check" style="margin:12px 0 0;display:none"></div>
       <div class="actions-wrap" style="padding:14px 0 0">
         <button class="action-btn primary" onclick="openDriverPreview()">👁 Кабинет водителя</button>
+        <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="runFieldCheck()">🔎 Проверить заполнение</button>
         <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showEditDriver()">✏️ Редактировать данные</button>
         <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showOdoScreen()">🧭 Сверка одометра</button>
         <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showDocuments()">📁 Документы водителя</button>
@@ -1379,6 +1381,9 @@ function payWeekdayName(wd) { const n = parseInt(wd, 10); return (!isNaN(n) && n
 function renderProfile(d, files) {
   document.getElementById('profile-title').textContent = d.name;
   document.getElementById('profile-sub').textContent = d.car_number;
+  // Прячем отчёт проверки от предыдущего водителя — он относился к другому профилю.
+  const _fc = document.getElementById('field-check');
+  if (_fc) { _fc.style.display = 'none'; _fc.innerHTML = ''; }
   const t = parseTariff(d.tariff || '');
   const custom = _num(d.monthly_mileage_limit);
   const limit = custom != null ? custom : t.miles;
@@ -1407,6 +1412,115 @@ function renderProfile(d, files) {
   ];
   document.getElementById('info-block').innerHTML = rows.map(([k, v]) =>
     `<div class="info-row"><span class="info-key">${k}</span><span class="info-val">${v}</span></div>`).join('');
+}
+// ── ПРОВЕРКА ЗАПОЛНЕНИЯ ПРОФИЛЯ (admin) ──────────────────────────────
+// По кнопке в карточке водителя проходим по всем полям: находим пустые
+// обязательные/рекомендованные и явно кривые значения, выводим цветной отчёт.
+// Красный (🔴) — критично (пустое обязательное или невалидное значение),
+// жёлтый (🟡) — замечание (не заполнено рекомендованное или подозрительно).
+function _dateISO(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s) return null;                 // пусто — не проверяем здесь
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return NaN;                  // значение есть, но не ISO-дата → криво
+  const dt = new Date(+m[1], +m[2] - 1, +m[3]);
+  return isNaN(dt.getTime()) ? NaN : dt;
+}
+function validateDriverFields(d) {
+  const issues = [];
+  const add = (level, label, msg) => issues.push({ level, label, msg });
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const nextYear = today.getFullYear() + 1;
+  const has = v => String(v == null ? '' : v).trim() !== '';
+
+  // — Обязательные —
+  if (!has(d.car_model)) add('crit', RU ? 'Модель авто' : 'Car model', RU ? 'не заполнена' : 'is empty');
+  if (!has(d.car_number)) add('crit', RU ? 'Номер авто' : 'Plate', RU ? 'не заполнен' : 'is empty');
+  else if (!/^T\d{5,7}C$/i.test(String(d.car_number).replace(/\s/g, '')))
+    add('warn', RU ? 'Номер авто' : 'Plate', (RU ? 'похож на некорректный TLC-номер: ' : 'looks off for a TLC plate: ') + esc(d.car_number));
+  if (!has(d.tariff)) add('crit', RU ? 'Тариф' : 'Tariff', RU ? 'не выбран' : 'not selected');
+
+  // — Год авто —
+  if (has(d.car_year)) {
+    const y = parseInt(String(d.car_year).replace(/\D/g, ''), 10);
+    if (!(y >= 2000 && y <= nextYear)) add('warn', RU ? 'Год авто' : 'Car year', (RU ? 'похож на ошибку: ' : 'looks wrong: ') + esc(d.car_year));
+  }
+
+  // — Числовые: лимит / цена / пробег ТО —
+  const numCheck = (raw, label, lo, hi) => {
+    if (!has(raw)) return;
+    const n = _num(raw);
+    if (n == null) { add('crit', label, (RU ? 'не число: ' : 'not a number: ') + esc(raw)); return; }
+    if (n < lo || n > hi) add('warn', label, (RU ? 'подозрительное значение: ' : 'suspicious value: ') + n.toLocaleString());
+  };
+  numCheck(d.monthly_mileage_limit, RU ? 'Лимит миль/мес' : 'Mileage limit', 500, 20000);
+  numCheck(d.weekly_price, RU ? 'Цена/нед' : 'Weekly price', 100, 5000);
+  numCheck(d.last_service_mileage, RU ? 'Пробег на ТО' : 'Service mileage', 100, 600000);
+
+  // — GPS / день платежа (нужны для авторасчётов) —
+  if (!has(d.planet_gps_device_id))
+    add('warn', 'GPS', RU ? 'не привязан — месячный пробег не считается автоматически' : 'not linked — monthly mileage is not auto-tracked');
+  if (!(d.payment_weekday !== '' && d.payment_weekday != null))
+    add('warn', RU ? 'День платежа' : 'Payment day', RU ? 'не задан — дата платежа не считается' : 'not set — payment date is not computed');
+
+  // — Сервис: пробег и дата ТО должны быть вместе —
+  const svcMi = has(d.last_service_mileage), svcDt = has(d.last_service_date);
+  if (!svcMi && !svcDt)
+    add('warn', RU ? 'Сервис (ТО)' : 'Service', RU ? 'не заполнены пробег и дата — марка масла и следующее ТО не считаются' : 'mileage and date empty — oil grade and next service are not computed');
+  else if (svcMi !== svcDt)
+    add('crit', RU ? 'Сервис (ТО)' : 'Service', RU ? 'заполнено только одно из двух — нужны и пробег, и дата' : 'only one of mileage/date is filled — need both');
+
+  // — DMV —
+  if (!has(d.dmv_inspection_date)) add('warn', 'DMV', RU ? 'не указана дата инспекции' : 'inspection date not set');
+
+  // — Даты: формат и «в будущем» там, где это ошибка —
+  const dateChecks = [
+    ['last_service_date', RU ? 'Дата ТО' : 'Service date', true],
+    ['dmv_inspection_date', 'DMV', true],
+    ['free_week_date', RU ? 'Бесплатная неделя' : 'Free week', false],
+    ['mileage_reset_date', RU ? 'Дата пересадки' : 'Reset date', false],
+  ];
+  const threeYearsAgo = new Date(today); threeYearsAgo.setFullYear(today.getFullYear() - 3);
+  for (const [key, label, noFuture] of dateChecks) {
+    const dt = _dateISO(d[key]);
+    if (dt !== null && (typeof dt === 'number' && isNaN(dt))) { add('warn', label, (RU ? 'дата в неверном формате: ' : 'bad date format: ') + esc(d[key])); continue; }
+    if (dt instanceof Date && noFuture) {
+      if (dt > today) add('warn', label, RU ? 'дата в будущем' : 'date is in the future');
+      else if (dt < threeYearsAgo) add('warn', label, RU ? 'дата очень старая' : 'date is very old');
+    }
+  }
+  return issues;
+}
+function runFieldCheck() {
+  const d = state.currentDriver;
+  const box = document.getElementById('field-check');
+  if (!d || !box) return;
+  const issues = validateDriverFields(d);
+  const crit = issues.filter(i => i.level === 'crit');
+  const warn = issues.filter(i => i.level === 'warn');
+  const AMBER = '#b45309', AMBER_BG = 'rgba(217,119,6,0.12)';
+  let inner;
+  if (!issues.length) {
+    inner = `<div class="info-row" style="background:var(--accent-bg)"><span class="info-key" style="color:var(--accent)">✅ ${RU ? 'Всё заполнено' : 'All good'}</span><span class="info-val" style="color:var(--accent)">${RU ? 'полей с ошибками нет' : 'no field issues'}</span></div>`;
+  } else {
+    const head = `<div style="padding:10px 14px;font-size:13px;font-weight:600;border-bottom:1px solid var(--border)">🔎 ${RU ? 'Проверка заполнения' : 'Field check'}: `
+      + (crit.length ? `<span style="color:var(--red)">${crit.length} ${RU ? 'критич.' : 'critical'}</span>` : '')
+      + (crit.length && warn.length ? ' · ' : '')
+      + (warn.length ? `<span style="color:${AMBER}">${warn.length} ${RU ? 'замечан.' : 'warnings'}</span>` : '')
+      + `</div>`;
+    const row = i => {
+      const isCrit = i.level === 'crit';
+      const col = isCrit ? 'var(--red)' : AMBER, bg = isCrit ? 'var(--red-bg)' : AMBER_BG, dot = isCrit ? '🔴' : '🟡';
+      return `<div class="info-row" style="background:${bg}"><span class="info-key" style="color:${col}">${dot} ${esc(i.label)}</span><span class="info-val" style="color:${col};text-align:right;max-width:62%">${i.msg}</span></div>`;
+    };
+    inner = head + crit.map(row).join('') + warn.map(row).join('');
+  }
+  box.className = 'info-block';
+  box.innerHTML = inner;
+  box.style.display = 'block';
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (!issues.length) toast(RU ? 'Всё заполнено корректно' : 'All fields OK', 'success');
+  else toast((RU ? 'Найдено замечаний: ' : 'Issues found: ') + issues.length, crit.length ? 'error' : '');
 }
 // Загрузка списка машин PlanetGPS в указанный <select>
 async function loadFleetIntoSelect(selectId, currentId) {
