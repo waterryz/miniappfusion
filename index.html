@@ -707,6 +707,33 @@
         <input class="form-input" id="edit-reset-date" type="date" />
         <div class="form-hint">Месячный пробег считается с этой даты. Обнови при пересадке нового водителя посреди месяца.</div>
       </div>
+      <div class="form-group">
+        <div class="form-label">Язык сообщений, выбранный водителем</div>
+        <select class="form-select" id="edit-language">
+          <option value="">Ещё не выбран</option>
+          <option value="ru">Русский</option><option value="en">English</option>
+          <option value="es">Español</option><option value="ky">Кыргызча</option>
+          <option value="uz">O‘zbekcha</option><option value="ka">ქართული</option>
+          <option value="kk">Қазақша</option><option value="uk">Українська</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Номер для SMS</div>
+        <input class="form-input" id="edit-sms-phone" type="tel" placeholder="+1…" />
+        <div class="form-hint" id="edit-sms-verified"></div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Подтверждённые имена плательщика в банке</div>
+        <textarea class="form-input" id="edit-bank-aliases" rows="3" placeholder="Каждое имя с новой строки"></textarea>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Последний день аренды включительно</div>
+        <input class="form-input" id="edit-rental-end" type="date" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Срок следующей DMV-инспекции</div>
+        <input class="form-input" id="edit-dmv-due" type="date" />
+      </div>
       <button class="submit-btn" id="edit-btn" onclick="submitEditDriver()">Сохранить изменения</button>
     </div>
   </div>
@@ -1570,6 +1597,24 @@ function showEditDriver() {
   document.getElementById('edit-svc-date').value = d.last_service_date || '';
   document.getElementById('edit-dmv-date').value = d.dmv_inspection_date || '';
   document.getElementById('edit-reset-date').value = d.mileage_reset_date || '';
+  const languageSelect = document.getElementById('edit-language');
+  languageSelect.querySelectorAll('[data-custom-language]').forEach(el => el.remove());
+  if (d.preferred_language && !Array.from(languageSelect.options).some(o => o.value === d.preferred_language)) {
+    const option = new Option(d.preferred_language, d.preferred_language);
+    option.dataset.customLanguage = 'true'; languageSelect.add(option);
+  }
+  languageSelect.value = d.preferred_language || '';
+  document.getElementById('edit-sms-phone').value = d.sms_phone || '';
+  document.getElementById('edit-sms-verified').textContent = d.sms_phone_verified_at ? 'Номер проверен. После изменения потребуется новая проверка.' : 'Принадлежность номера ещё не проверена.';
+  let bankAliases;
+  try { bankAliases = JSON.parse(d.bank_payer_aliases || '[]'); }
+  catch { toast('Не удалось прочитать банковские имена. Сохранение отменено.', 'error'); return; }
+  if (!Array.isArray(bankAliases) || bankAliases.some(v => typeof v !== 'string')) {
+    toast('Неверный формат банковских имён. Сохранение отменено.', 'error'); return;
+  }
+  document.getElementById('edit-bank-aliases').value = bankAliases.join('\n');
+  document.getElementById('edit-rental-end').value = d.rental_end_date || '';
+  document.getElementById('edit-dmv-due').value = d.dmv_due_date || '';
   checkEditReady();
   showScreen('edit');
   loadFleetIntoSelect('edit-gps', d.planet_gps_device_id || '');
@@ -1591,6 +1636,9 @@ async function submitEditDriver() {
       last_service_mileage: val('edit-svc-mi'), last_service_date: val('edit-svc-date'),
       dmv_inspection_date: val('edit-dmv-date'),
       mileage_reset_date: val('edit-reset-date'),
+      preferred_language: val('edit-language'), sms_phone: val('edit-sms-phone'),
+      bank_payer_aliases: JSON.stringify(val('edit-bank-aliases').split('\n').map(s => s.trim()).filter(Boolean)),
+      rental_end_date: val('edit-rental-end'), dmv_due_date: val('edit-dmv-due'),
     };
     await api(`/driver/${state.currentDriver.id}`, { method: 'PATCH', body: JSON.stringify(body) });
     toast('Сохранено', 'success');
@@ -2006,3 +2054,4 @@ init();
 </script>
 </body>
 </html>
+
