@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>Prime Fusion</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -248,6 +248,17 @@
     .driver-card, .info-block, .pf-hero, .pf-card, .vehicle-card, .stat-card {
       box-shadow: 0 1px 2px rgba(16,24,40,0.04), 0 2px 6px rgba(16,24,40,0.05);
     }
+    .service-note-entry { width:100%; margin-top:16px; min-height:54px; padding:12px; border:1px solid var(--border2); border-radius:12px; background:var(--card); color:var(--text); font-size:18px; font-weight:600; cursor:pointer; }
+    #screen-service-notes .form-body { font-size:18px; line-height:1.5; }
+    #screen-service-notes textarea { width:100%; min-height:135px; resize:vertical; padding:14px; border:1px solid var(--border2); border-radius:12px; background:var(--card); color:var(--text); font:inherit; }
+    #screen-service-notes .submit-btn { min-height:54px; font-size:18px; }
+    .service-note { padding:16px; margin:12px 0; border:1px solid var(--border2); border-radius:12px; background:var(--card); }
+    .service-note p { white-space:pre-wrap; overflow-wrap:anywhere; margin:10px 0; }
+    .service-note small { color:var(--text-secondary); font-size:14px; }
+    #notes-status { min-height:28px; margin:8px 0; white-space:pre-wrap; }
+    #notes-visibility { display:flex; gap:12px; align-items:center; margin:12px 0; }
+    #notes-shared { width:24px; height:24px; }
+    #notes-history summary { padding:14px 0; cursor:pointer; }
     .toast { box-shadow: 0 6px 24px rgba(16,24,40,0.16); }
     .modal { background: var(--card); box-shadow: 0 -6px 30px rgba(16,24,40,0.18); }
     .modal-btn.cancel { background: var(--surface); }
@@ -357,6 +368,7 @@
         </div>
         <div class="pf-oil"><span class="pf-ico">🛢</span> <span id="i18n-oil-lbl">Масло:</span> <strong id="dv-oil">—</strong></div>
       </div>
+      <button class="service-note-entry" id="dv-service-notes" onclick="openServiceNotes('me')">📝 К следующему сервису</button>
       <!-- DOCUMENTS: документы водителя + загрузка -->
       <div class="pf-card">
         <div class="pf-card-head"><span class="pf-ico">📁</span> <span id="i18n-docs-head">Документы</span></div>
@@ -366,8 +378,26 @@
           <div class="pf-upload-text" id="i18n-upload-text">Загрузить документ</div>
           <div class="pf-upload-sub" id="i18n-upload-sub">JPG, PNG · до 10 МБ</div>
         </button>
-        <input type="file" id="dv-file-input" accept="image/*" style="display:none" onchange="dvUpload(event)" />
+        <input type="file" id="dv-file-input" accept="image/jpeg,image/png" style="display:none" onchange="dvUpload(event)" />
       </div>
+    </div>
+  </div>
+  <div class="screen" id="screen-service-notes">
+    <div class="header">
+      <button class="back-btn" id="notes-back" aria-label="Назад" onclick="closeServiceNotes()">←</button>
+      <div class="header-info"><div class="header-title" id="notes-title">К следующему сервису</div><div class="header-sub" id="notes-car"></div></div>
+    </div>
+    <div class="form-body">
+      <p id="notes-help">Напиши, что проверить на следующем сервисе. Например: «Скрипят тормоза. Проверьте слева спереди».</p>
+      <label for="notes-text" id="notes-label">Твоя заметка</label>
+      <textarea id="notes-text" maxlength="1000" placeholder="Пара предложений о машине" oninput="noteTextChanged()"></textarea>
+      <label id="notes-visibility" hidden><input type="checkbox" id="notes-shared" onchange="noteTextChanged()"><span id="notes-visibility-label">Показать арендатору этой машины</span></label>
+      <p id="notes-privacy"></p>
+      <button class="submit-btn" id="notes-save" onclick="saveServiceNote()" disabled>Сохранить заметку</button>
+      <div id="notes-status" role="status" aria-live="polite"></div>
+      <button class="service-note-entry" id="notes-retry" onclick="loadServiceNotes()" hidden>Загрузить заметки ещё раз</button>
+      <div id="notes-list"></div>
+      <details id="notes-history"><summary id="notes-history-label">Выполнено на сервисе</summary><div id="notes-done"></div></details>
     </div>
   </div>
   <!-- DRIVER LIGHTBOX (read-only, no delete) -->
@@ -420,6 +450,7 @@
       <div class="info-block" id="info-block" style="margin:0"></div>
       <div id="field-check" style="margin:12px 0 0;display:none"></div>
       <div class="actions-wrap" style="padding:14px 0 0">
+        <button class="action-btn" onclick="openServiceNotes(state.currentDriver.id)">📝 К следующему сервису</button>
         <button class="action-btn primary" onclick="openDriverPreview()">👁 Кабинет водителя</button>
         <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="runFieldCheck()">🔎 Проверить заполнение</button>
         <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showEditDriver()">✏️ Редактировать данные</button>
@@ -504,7 +535,7 @@
           <div class="drop-zone-sub">JPG, PNG · до 10 МБ</div>
           <img class="upload-preview" id="upload-preview" />
         </div>
-        <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileSelect(event)" />
+        <input type="file" id="file-input" accept="image/jpeg,image/png" style="display:none" onchange="handleFileSelect(event)" />
       </div>
       <div class="form-group">
         <div class="form-label">Название документа</div>
@@ -832,7 +863,7 @@ const state = {
   fleetData: [], fleetInterval: null,
   currentTab: 'drivers',
   // driver self-view
-  dvFiles: [], dvLbIndex: 0,
+  dvFiles: [], dvLbIndex: 0, mileageRequest: 0, serviceRequest: 0,
 };
 let _fleetTab = 'map';
 let _map = null;
@@ -841,6 +872,16 @@ let _mapMarkers = [];
 function applyLangTxt(id, s) { const el = document.getElementById(id); if (el) el.textContent = s; }
 function applyLang() {
   if (RU) return;
+  applyLangTxt('dv-service-notes', '📝 Next service notes');
+  applyLangTxt('notes-title', 'Next service notes');
+  applyLangTxt('notes-help', 'Write what needs checking at the next service. Example: “The brakes squeak. Please check the front left wheel.”');
+  applyLangTxt('notes-label', 'Your note');
+  document.getElementById('notes-text').placeholder = 'A couple of sentences about the car';
+  applyLangTxt('notes-visibility-label', 'Show to the tenant of this car');
+  applyLangTxt('notes-save', 'Save note');
+  applyLangTxt('notes-history-label', 'Completed at service');
+  applyLangTxt('notes-retry', 'Load notes again');
+  document.getElementById('notes-back').setAttribute('aria-label', 'Back');
   document.documentElement.lang = 'en';
   applyLangTxt('i18n-loading', 'Loading...');
   applyLangTxt('i18n-wip-pill', '⚙ In development');
@@ -887,18 +928,33 @@ async function init() {
       return;
     } catch (e2) {
       dbg.push('/driver/me ✕ ' + e2.message);
-      showWip(dbg);
+      showAccessError(e2);
     }
   } catch (e) {
     dbg.push('/me ✕ ' + e.message);
-    showWip(dbg);
+    showAccessError(e);
   }
 }
-function showWip(lines) {
+function showAccessError(error) {
   showScreen('wip');
-  const el = document.getElementById('wip-debug');
-  if (el && lines && lines.length) { el.style.display = 'block'; el.textContent = lines.join('\n'); }
+  const status = error && error.status;
+  setText('i18n-wip-pill', RU ? 'Не удалось открыть кабинет' : 'Unable to open your account');
+  const title = status === 401 ? (RU ? 'Открой кабинет через бота' : 'Open your account through the bot')
+    : status === 403 || status === 404 ? (RU ? 'Карточка не найдена' : 'Account not found')
+    : (RU ? 'Не удалось загрузить данные' : 'Unable to load data');
+  setText('i18n-wip-title', title);
+  setText('i18n-wip-sub', status === 401
+    ? (RU ? 'Закрой это окно. В Telegram нажми кнопку кабинета в боте ещё раз.' : 'Close this window. In Telegram, tap the account button in the bot again.')
+    : status === 403 || status === 404
+    ? (RU ? 'Обратись к владельцу: он проверит доступ к твоей карточке.' : 'Contact the owner to check access to your account.')
+    : (RU ? 'Проверь интернет и нажми «Повторить загрузку».' : 'Check your connection and tap “Try again”.'));
+  const detail = document.getElementById('wip-debug'); detail.style.display = 'none'; detail.textContent = '';
+  let retry = document.getElementById('access-retry');
+  if (!retry) { retry = document.createElement('button'); retry.id='access-retry'; retry.className='service-note-entry'; detail.after(retry); }
+  retry.hidden = status === 401 || status === 403 || status === 404;
+  retry.textContent = RU ? 'Повторить загрузку' : 'Try again'; retry.onclick = init;
 }
+
 // ── DRIVER HOME (личный кабинет арендатора) ───────────────────────
 function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
 // Разбор строки тарифа, напр. "Эконом ($650/нед · 2800 миль/мес)"
@@ -978,17 +1034,19 @@ async function loadDriverHome() {
     renderDriverHome(data);
     showScreen('driver-home');
   } catch (e) {
-    showScreen('wip');
+    showAccessError(e);
   }
 }
 // Рендер кабинета. Используется и водителем (/driver/me), и админом (просмотр /driver/{id}).
 function renderDriverHome(data) {
+  ++state.mileageRequest; ++state.serviceRequest;
   const d = data.driver || {};
   const files = data.files || [];
   const mil = data.mileage || {};
   state.dvFiles = files;
   // режим просмотра админом: показать «назад», спрятать загрузку
   const preview = !!state.dvPreview;
+  document.getElementById('dv-service-notes').style.display = preview ? 'none' : ''; 
   const back = document.getElementById('dv-back');
   if (back) back.style.display = preview ? 'flex' : 'none';
   const role = document.getElementById('dv-role');
@@ -1063,6 +1121,7 @@ function showMilesLoading() {
 // Подгрузка месячного пробега с fleet-бэкенда (там рабочий PlanetGPS),
 // с запасным запросом на сервис бота, если fleet недоступен.
 async function loadMonthlyMileage(deviceId, limit, t, resetDate) {
+  const requestId = ++state.mileageRequest;
   showMilesLoading();
   let path = '/api/mileage/' + encodeURIComponent(deviceId);
   // Если задана дата пересадки — считаем месячный пробег с неё (обнуление).
@@ -1071,9 +1130,9 @@ async function loadMonthlyMileage(deviceId, limit, t, resetDate) {
     let r;
     try { r = await api(path, {}, FLEET_API); }
     catch (e1) { r = await api(path, {}, API); }
-    renderMiles(_num(r && r.mileage), limit, t);
+    if (requestId === state.mileageRequest) renderMiles(_num(r && r.mileage), limit, t);
   } catch (e) {
-    renderMiles(null, limit, t);
+    if (requestId === state.mileageRequest) renderMiles(null, limit, t);
   }
 }
 // Отрисовка карточки пробега: done — пройдено за месяц (миль) или null.
@@ -1117,6 +1176,7 @@ function renderMiles(done, limit, t) {
 }
 // Загрузка пробега с даты последнего сервиса (GPS) → «сколько миль до ТО».
 async function loadServiceMileage(deviceId, sinceDate) {
+  const requestId = ++state.serviceRequest;
   const loading = document.getElementById('dv-svc-loading');
   const body = document.getElementById('dv-svc-body');
   // нет даты сервиса → просим её указать
@@ -1141,6 +1201,7 @@ async function loadServiceMileage(deviceId, sinceDate) {
     // Новый бэкенд отдаёт state: одометр посчитан от последней сверки по фото
     // и скорректирован на погрешность трекера. Интервал берём с сервера —
     // чтобы порог не приходилось держать в двух местах.
+    if (requestId !== state.serviceRequest) return;
     const st = r && r.state;
     if (st && st.miles_to_service != null) {
       renderService(st.miles_to_service, st);
@@ -1150,7 +1211,7 @@ async function loadServiceMileage(deviceId, sinceDate) {
     const driven = _num(r && r.mileage);
     renderService(driven != null ? (SERVICE_INTERVAL - driven) : null, null);
   } catch (e) {
-    renderService(null, null);
+    if (requestId === state.serviceRequest) renderService(null, null);
   }
 }
 // Строка «сейчас 128 970 mi · сверка 8 авг» под пробегом следующего ТО.
@@ -1230,34 +1291,33 @@ function renderDvDocs(files) {
     </div>`).join('');
 }
 // Загрузка документа водителем в свою папку (POST /driver/me/upload)
-async function dvUpload(e) {
-  const file = e.target.files && e.target.files[0];
-  e.target.value = '';
-  if (!file) return;
-  const btn = document.getElementById('dv-upload-btn');
-  const txt = btn.querySelector('.pf-upload-text');
-  const original = txt.textContent;
-  btn.classList.add('busy');
-  txt.textContent = RU ? 'Загрузка…' : 'Uploading…';
-  const reader = new FileReader();
-  reader.onload = async ev => {
-    try {
-      const base = (file.name || 'document').replace(/\.[^.]+$/, '');
-      await api('/driver/me/upload', { method: 'POST', body: JSON.stringify({ image: ev.target.result, name: base }) });
-      toast(RU ? 'Документ загружен' : 'Document uploaded', 'success');
-      const data = await api('/driver/me');
-      state.dvFiles = data.files || [];
-      renderDvDocs(state.dvFiles);
-    } catch (err) {
-      toast((RU ? 'Ошибка: ' : 'Error: ') + err.message, 'error');
-    } finally {
-      txt.textContent = original;
-      btn.classList.remove('busy');
-    }
-  };
-  reader.onerror = () => { toast(RU ? 'Не удалось прочитать файл' : 'Could not read file', 'error'); txt.textContent = original; btn.classList.remove('busy'); };
-  reader.readAsDataURL(file);
+function readDocumentFile(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) return reject(new Error(RU ? 'Выбери фото документа.' : 'Choose a document photo.'));
+    if (file.size > 10 * 1024 * 1024) return reject(new Error(RU ? 'Фото больше 10 МБ. Выбери файл поменьше.' : 'Photo exceeds 10 MB. Choose a smaller file.'));
+    if (file.type && !['image/jpeg', 'image/png'].includes(file.type)) return reject(new Error(RU ? 'Выбери фото JPG или PNG.' : 'Choose a JPG or PNG photo.'));
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = () => reject(new Error(RU ? 'Не удалось прочитать фото. Выбери его заново.' : 'Could not read the photo. Select it again.'));
+    reader.readAsDataURL(file);
+  });
 }
+async function dvUpload(e) {
+  const file = e.target.files && e.target.files[0]; e.target.value = ''; if (!file) return;
+  const btn = document.getElementById('dv-upload-btn'); if (btn.disabled) return;
+  const txt = btn.querySelector('.pf-upload-text'), original = txt.textContent;
+  btn.disabled = true; btn.classList.add('busy'); txt.textContent = RU ? 'Загрузка…' : 'Uploading…';
+  try {
+    const image = await readDocumentFile(file);
+    const name = (file.name || 'document').replace(/\.[^.]+$/, '');
+    await api('/driver/me/upload', {method:'POST', body:JSON.stringify({image, name})});
+    toast(RU ? 'Документ загружен' : 'Document uploaded', 'success');
+    try { const data = await api('/driver/me'); state.dvFiles = data.files || []; renderDvDocs(state.dvFiles); }
+    catch (_) { toast(RU ? 'Фото сохранено. Открой кабинет заново, чтобы обновить список.' : 'Photo saved. Reopen your account to refresh the list.'); }
+  } catch (err) { toast(err.message, 'error'); }
+  finally { btn.disabled=false; txt.textContent=original; btn.classList.remove('busy'); }
+}
+
 function openDvLightbox(i) {
   state.dvLbIndex = i; updateDvLightbox();
   document.getElementById('dv-lightbox').classList.add('open');
@@ -1285,11 +1345,14 @@ async function api(path, opts={}, base=API) {
   if (!r.ok) {
     let msg = `HTTP ${r.status}`;
     try { const j = await r.json(); if (j.error) msg = j.error; } catch {}
-    throw new Error(msg);
+    const error = new Error(msg); error.status = r.status; throw error;
   }
   return r.json();
 }
 function showScreen(n) {
+  if (n !== 'driver-home' && document.getElementById('screen-driver-home').classList.contains('active')) {
+    ++state.mileageRequest; ++state.serviceRequest;
+  }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-'+n).classList.add('active');
 }
@@ -1451,7 +1514,7 @@ function _dateISO(v) {
   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return NaN;                  // значение есть, но не ISO-дата → криво
   const dt = new Date(+m[1], +m[2] - 1, +m[3]);
-  return isNaN(dt.getTime()) ? NaN : dt;
+  return isNaN(dt.getTime()) || dt.getFullYear() !== +m[1] || dt.getMonth() !== +m[2] - 1 || dt.getDate() !== +m[3] ? NaN : dt;
 }
 function validateDriverFields(d) {
   const issues = [];
@@ -1550,25 +1613,31 @@ function runFieldCheck() {
   else toast((RU ? 'Найдено замечаний: ' : 'Issues found: ') + issues.length, crit.length ? 'error' : '');
 }
 // Загрузка списка машин PlanetGPS в указанный <select>
+let fleetSelectRequest = 0;
 async function loadFleetIntoSelect(selectId, currentId) {
-  const sel = document.getElementById(selectId);
-  if (!sel) return;
-  sel.innerHTML = '<option value="">⏳ Загрузка машин...</option>';
+  const sel = document.getElementById(selectId); if (!sel) return;
+  const current = String(currentId || '');
+  const requestId = String(++fleetSelectRequest); sel.dataset.requestId = requestId;
+  sel.replaceChildren(new Option('— Не привязана —', ''));
+  if (current) sel.add(new Option('Текущая машина · ID ' + current, current));
+  sel.value = current; sel.disabled = true;
   try {
     const data = await api('/api/fleet', {}, FLEET_API);
-    let vehicles = [];
-    if (data.d) {
-      try {
-        const fixed = data.d.replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":').replace(/:\s*'([^']*)'/g, ':"$1"');
-        vehicles = JSON.parse(fixed).devices || [];
-      } catch(e) {}
-    }
-    sel.innerHTML = '<option value="">— Не привязана —</option>' +
-      vehicles.map(v => `<option value="${v.id}" ${String(v.id) === String(currentId || '') ? 'selected' : ''}>${esc(v.name)} (${esc(v.sn)})</option>`).join('');
+    if (sel.dataset.requestId !== requestId) return;
+    const fixed = (data.d || '').replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":').replace(/:\s*'([^']*)'/g, ':"$1"');
+    const vehicles = JSON.parse(fixed).devices;
+    if (!Array.isArray(vehicles)) throw new Error('Invalid fleet response');
+    sel.replaceChildren(new Option('— Не привязана —', ''));
+    if (current && !vehicles.some(v => String(v.id) === current)) sel.add(new Option('Текущая машина · ID ' + current, current));
+    vehicles.forEach(v => sel.add(new Option(`${v.name || ''} (${v.sn || ''})`, String(v.id))));
+    sel.value = current;
   } catch(e) {
-    sel.innerHTML = `<option value="${esc(String(currentId || ''))}" selected>${currentId ? ('ID ' + esc(String(currentId))) : '— Не привязана —'}</option><option value="">— Не привязана —</option>`;
+    // Keep the original association on network/parse errors or missing devices.
+  } finally {
+    if (sel.dataset.requestId === requestId) sel.disabled = false;
   }
 }
+
 // ── КАБИНЕТ ВОДИТЕЛЯ ИЗ АДМИНКИ (просмотр) ──
 function openDriverPreview() {
   state.dvPreview = true;
@@ -1588,7 +1657,10 @@ function showEditDriver() {
   document.getElementById('edit-year').value = d.car_year || '';
   document.getElementById('edit-trim').value = d.car_trim || '';
   document.getElementById('edit-number').value = d.car_number || '';
-  document.getElementById('edit-tariff').value = d.tariff || '';
+  const tariffSelect = document.getElementById('edit-tariff');
+  const tariff = d.tariff || '';
+  if (tariff && !Array.from(tariffSelect.options).some(o => o.value === tariff)) tariffSelect.add(new Option(tariff, tariff));
+  tariffSelect.value = tariff;
   document.getElementById('edit-limit').value = d.monthly_mileage_limit || '';
   document.getElementById('edit-price').value = d.weekly_price || '';
   document.getElementById('edit-payday').value = (d.payment_weekday === '' || d.payment_weekday == null) ? '' : String(d.payment_weekday);
@@ -1618,15 +1690,14 @@ function showEditDriver() {
   checkEditReady();
   showScreen('edit');
   loadFleetIntoSelect('edit-gps', d.planet_gps_device_id || '');
+  state.editBaseline = editDriverBody();
 }
 function checkEditReady() {
   // Изменения существующего водителя можно сохранять при любом заполнении.
   document.getElementById('edit-btn').disabled = false;
 }
-async function submitEditDriver() {
-  const btn = document.getElementById('edit-btn'); btn.disabled = true; btn.textContent = 'Сохраняю...';
-  try {
-    const body = {
+function editDriverBody() {
+  return {
       car_model: val('edit-model'), car_year: val('edit-year'), car_trim: val('edit-trim'),
       car_number: val('edit-number'), tariff: val('edit-tariff'),
       monthly_mileage_limit: val('edit-limit'), weekly_price: val('edit-price'),
@@ -1640,9 +1711,19 @@ async function submitEditDriver() {
       bank_payer_aliases: JSON.stringify(val('edit-bank-aliases').split('\n').map(s => s.trim()).filter(Boolean)),
       rental_end_date: val('edit-rental-end'), dmv_due_date: val('edit-dmv-due'),
     };
-    await api(`/driver/${state.currentDriver.id}`, { method: 'PATCH', body: JSON.stringify(body) });
+}
+async function submitEditDriver() {
+  const driverId = state.currentDriver.id;
+  const btn = document.getElementById('edit-btn'); btn.disabled = true; btn.textContent = 'Сохраняю...';
+  try {
+    const body = editDriverBody();
+    for (const key of Object.keys(body)) if (body[key] === state.editBaseline[key]) delete body[key];
+    if (Object.keys(body).length) await api(`/driver/${driverId}`, { method: 'PATCH', body: JSON.stringify(body) });
     toast('Сохранено', 'success');
-    const data = await api(`/driver/${state.currentDriver.id}`);
+    const data = await api(`/driver/${driverId}`);
+    state.drivers = state.drivers.map(d => d.id === driverId ? {...d, ...data.driver, file_count:data.files.length} : d);
+    filterDrivers();
+    if (!state.currentDriver || state.currentDriver.id !== driverId) return;
     state.currentDriver = data.driver; state.currentFiles = data.files; state.currentMileage = data.mileage || {};
     renderProfile(data.driver, data.files);
     showScreen('profile');
@@ -1830,37 +1911,38 @@ function showUpload() {
   document.getElementById('upload-sub').textContent=state.currentDriver.name;
   showScreen('upload');
 }
-function handleFileSelect(e) {
-  const file=e.target.files[0]; if(!file) return;
-  state.selectedFile=file;
-  const r=new FileReader();
-  r.onload=ev=>{
-    const p=document.getElementById('upload-preview');
-    p.src=ev.target.result; p.classList.add('visible');
+async function handleFileSelect(e) {
+  const file=e.target.files[0]; state.selectedFile=null; checkUploadReady(); if(!file) return;
+  try {
+    const image=await readDocumentFile(file);
+    state.selectedFile=file;
+    const p=document.getElementById('upload-preview'); p.src=image; p.classList.add('visible');
     document.getElementById('drop-zone').classList.add('has-file');
     document.getElementById('drop-zone').querySelector('.drop-zone-text').textContent=file.name;
     checkUploadReady();
-  };
-  r.readAsDataURL(file);
+  } catch(e) { toast(e.message,'error'); }
 }
+
 function checkUploadReady() { document.getElementById('upload-btn').disabled=!(state.selectedFile&&document.getElementById('doc-name').value.trim().length>0); }
 async function submitUpload() {
   const btn=document.getElementById('upload-btn');
+  const driverId=state.currentDriver.id, file=state.selectedFile, name=val('doc-name');
   btn.disabled=true; btn.textContent='Загружаю...';
   try {
-    const r=new FileReader();
-    r.onload=async ev=>{
-      const name=document.getElementById('doc-name').value.trim();
-      await api(`/driver/${state.currentDriver.id}/upload`,{method:'POST',body:JSON.stringify({image:ev.target.result,name})});
-      toast('Документ загружен','success');
-      const data=await api(`/driver/${state.currentDriver.id}`);
+    const image=await readDocumentFile(file);
+    await api(`/driver/${driverId}/upload`,{method:'POST',body:JSON.stringify({image,name})});
+    toast('Документ загружен','success');
+    try {
+      const data=await api(`/driver/${driverId}`);
+      if (!state.currentDriver || state.currentDriver.id !== driverId) return;
       state.currentFiles=data.files; renderDocs(data.files);
       document.getElementById('docs-count').textContent=`${data.files.length} фото`;
       showScreen('docs');
-    };
-    r.readAsDataURL(state.selectedFile);
-  } catch(e) { toast('Ошибка: '+e.message,'error'); btn.disabled=false; btn.textContent='Загрузить'; }
+    } catch (_) { toast('Фото сохранено. Открой документы заново, чтобы обновить список.'); }
+  } catch(e) { toast(e.message,'error'); }
+  finally { btn.textContent='Загрузить'; checkUploadReady(); }
 }
+
 function showAddDriver() {
   ['add-id','add-name','add-model','add-year','add-trim','add-number','add-limit','add-price','add-svc-mi'].forEach(id=>document.getElementById(id).value='');
   ['add-tariff','add-payday','add-free-week','add-svc-date','add-dmv-date','add-reset-date'].forEach(id=>document.getElementById(id).value='');
@@ -2023,7 +2105,7 @@ async function loadReport() {
     list.innerHTML=`<div class="slabel" style="padding-top:14px">Пробег ${from} — ${to}</div>`+
       rows.map((r,i)=>{
         const name=r.targetName||r.name||r.DeviceName||`Устройство ${i+1}`;
-        const rawMileage = r.mileage || r.Mileage || r.distance;
+        const rawMileage = r.mileage ?? r.Mileage ?? r.distance;
         const mileage = rawMileage !== undefined && rawMileage !== null
           ? (parseFloat(rawMileage) * KM_TO_MI).toFixed(2)
           : '—';
@@ -2048,6 +2130,114 @@ function openModal(title,text,onConfirm){
 }
 function closeModal(){document.getElementById('modal').classList.remove('open');}
 document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+let notesView = null, notesSequence = 0;
+const noteDrafts = new Map();
+function noteRequestId() { return crypto.randomUUID(); }
+function noteDraftKey(view) { return view.id + ':' + (view.vehicleKey || ''); }
+function rememberNoteDraft() {
+  if (!notesView || !notesView.vehicleKey) return;
+  noteDrafts.set(noteDraftKey(notesView), {text:val('notes-text'), shared:document.getElementById('notes-shared').checked, requestId:notesView.requestId});
+}
+function noteTextChanged() {
+  if (!notesView) return;
+  notesView.requestId = noteRequestId(); rememberNoteDraft(); updateNoteControls();
+}
+function updateNoteControls() {
+  const v=notesView, ready=!!(v && v.ready && v.vehicleKey), busy=!!(v && v.busy);
+  document.getElementById('notes-save').disabled=!ready || busy || !val('notes-text');
+  document.getElementById('notes-text').disabled=!ready || busy;
+  document.getElementById('notes-shared').disabled=busy;
+  document.getElementById('notes-back').disabled=busy;
+  document.getElementById('notes-save').textContent=busy ? (RU?'Сохраняю…':'Saving…') : (RU?'Сохранить заметку':'Save note');
+}
+async function openServiceNotes(driverId) {
+  const back=document.querySelector('.screen.active')?.id.replace('screen-','') || 'profile';
+  rememberNoteDraft();
+  notesView={id:String(driverId),back,sequence:++notesSequence,ready:false,busy:false,vehicleKey:null,requestId:noteRequestId()};
+  setText('notes-car',''); setText('notes-status',RU?'Загружаю заметки…':'Loading notes…');
+  document.getElementById('notes-text').value=''; document.getElementById('notes-shared').checked=false;
+  document.getElementById('notes-visibility').style.display='none'; setText('notes-privacy','');
+  document.getElementById('notes-list').replaceChildren(); document.getElementById('notes-done').replaceChildren();
+  document.getElementById('notes-history').hidden=true; document.getElementById('notes-retry').hidden=true;
+  updateNoteControls(); showScreen('service-notes'); await loadServiceNotes();
+}
+function closeServiceNotes() {
+  if (!notesView || notesView.busy) return;
+  rememberNoteDraft(); const back=notesView.back; notesView=null; ++notesSequence; showScreen(back);
+}
+async function loadServiceNotes() {
+  const view=notesView; if (!view || view.busy) return;
+  const seq=++notesSequence; view.sequence=seq; view.ready=false; updateNoteControls();
+  try {
+    const data=await api(`/driver/${encodeURIComponent(view.id)}/service-notes`);
+    if (notesView!==view || seq!==notesSequence) return;
+    view.vehicleKey=data.vehicle_key; view.admin=!!data.is_admin; view.ready=true;
+    const draft=noteDrafts.get(noteDraftKey(view));
+    document.getElementById('notes-text').value=draft?.text || '';
+    document.getElementById('notes-shared').checked=!!draft?.shared;
+    view.requestId=draft?.requestId || noteRequestId();
+    renderServiceNotes(data);
+    setText('notes-status',view.vehicleKey ? '' : (RU?'Машина ещё не указана. Обратись к владельцу.':'No car assigned yet. Contact the owner.'));
+    document.getElementById('notes-retry').hidden=true;
+  } catch(e) {
+    if (notesView!==view || seq!==notesSequence) return;
+    setText('notes-status',e.status===404 ? (RU?'Заметки пока недоступны. Попробуй позже.':'Notes are not available yet. Try again later.') : (RU?'Не удалось загрузить заметки. Нажми «Загрузить заметки ещё раз».':'Could not load notes. Tap “Load notes again”.'));
+    document.getElementById('notes-retry').hidden=false;
+  } finally { if(notesView===view && seq===notesSequence) updateNoteControls(); }
+}
+function renderServiceNotes(data) {
+  const view=notesView; if(!view) return;
+  setText('notes-car',data.car_number || '');
+  document.getElementById('notes-visibility').hidden=!view.admin;
+  document.getElementById('notes-visibility').style.display=view.admin?'flex':'none';
+  setText('notes-privacy',view.admin
+    ? (RU?'Без галочки заметку видит только администрация. Запись остаётся у машины.':'Without the checkbox, only administrators can see this note. Notes stay with the car.')
+    : (RU?'Твою заметку увидит владелец. Здесь также показаны его сообщения для тебя.':'The owner will see your note. Their shared notes are also shown here.'));
+  const open=document.getElementById('notes-list'), done=document.getElementById('notes-done'); open.replaceChildren(); done.replaceChildren();
+  for(const note of (data.notes || []).slice().reverse()) {
+    const card=document.createElement('article'); card.className='service-note';
+    const meta=document.createElement('small');
+    const who=note.author_role==='owner' ? (RU?'Владелец':'Owner') : (RU?'Арендатор':'Tenant');
+    const date=new Date(note.created_at).toLocaleDateString(RU?'ru-RU':'en-US');
+    meta.textContent=who+' · '+date+(view.admin && note.visibility==='internal' ? (RU?' · внутренняя':' · internal') : '');
+    const text=document.createElement('p'); text.textContent=note.text;
+    card.append(meta,text);
+    if(view.admin) {
+      const btn=document.createElement('button'); btn.className='service-note-entry';
+      btn.textContent=note.status==='done' ? (RU?'Вернуть к следующему сервису':'Reopen for next service') : (RU?'Отметить выполненным':'Mark complete');
+      btn.onclick=()=>completeServiceNote(note.id,note.status==='done'?'open':'done'); card.append(btn);
+    }
+    (note.status==='done'?done:open).append(card);
+  }
+  if(!open.childElementCount) { const empty=document.createElement('p'); empty.textContent=RU?'Пока нет заметок к следующему сервису.':'No notes for the next service yet.'; open.append(empty); }
+  document.getElementById('notes-history').hidden=!done.childElementCount;
+}
+async function saveServiceNote() {
+  const view=notesView; if(!view || !view.ready || view.busy || !view.vehicleKey || !val('notes-text')) return;
+  rememberNoteDraft(); view.busy=true; updateNoteControls();
+  const body={text:val('notes-text'),vehicle_key:view.vehicleKey,request_id:view.requestId,visibility:view.admin && document.getElementById('notes-shared').checked?'shared':'internal'};
+  try {
+    const data=await api(`/driver/${encodeURIComponent(view.id)}/service-notes`,{method:'POST',body:JSON.stringify(body)});
+    if(notesView!==view) return;
+    noteDrafts.delete(noteDraftKey(view)); document.getElementById('notes-text').value=''; view.requestId=noteRequestId();
+    renderServiceNotes(data);
+    setText('notes-status',RU?'Заметка сохранена к следующему сервису.':'Note saved for the next service.');
+  } catch(e) {
+    if(notesView!==view) return;
+    setText('notes-status',e.status===409 ? (RU?'Машина изменилась. Текст сохранён в черновике. Закрой и заново открой заметки.':'The assigned car changed. Your draft is kept. Close and reopen notes.') : (RU?'Не удалось сохранить. Текст остался здесь. Нажми «Сохранить заметку» ещё раз.':'Could not save. Your text is kept here. Tap “Save note” again.'));
+    if(e.status===409) view.ready=false;
+  } finally { if(notesView===view) {view.busy=false;updateNoteControls();} }
+}
+async function completeServiceNote(id,status) {
+  const view=notesView; if(!view?.admin || view.busy || !view.ready) return;
+  view.busy=true;updateNoteControls();
+  try {
+    const data=await api(`/driver/${encodeURIComponent(view.id)}/service-notes/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({vehicle_key:view.vehicleKey,status})});
+    if(notesView!==view) return;
+    renderServiceNotes(data);setText('notes-status',RU?'Статус заметки сохранён.':'Note status saved.');
+  } catch(e) { if(notesView===view) setText('notes-status',RU?'Не удалось изменить статус. Попробуй ещё раз.':'Could not update the status. Please try again.'); }
+  finally { if(notesView===view) {view.busy=false;updateNoteControls();} }
+}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);}
 function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+type;setTimeout(()=>el.classList.remove('show'),2500);}
 init();
