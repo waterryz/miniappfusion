@@ -207,6 +207,10 @@
     .pf-pay-amount { text-align: right; flex-shrink: 0; }
     .pf-amount-lbl { font-size: 11px; color: var(--muted); }
     .pf-amount-val { font-family: var(--num); font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    .pf-deposit-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 13px; }
+    .pf-deposit-row + .pf-deposit-row { border-top: 1px solid var(--border); }
+    .pf-deposit-row span { color: var(--muted); }
+    .pf-deposit-row strong { text-align: right; font-family: var(--num); }
     /* free week — строка внутри карточки платежа */
     .pf-free { display: flex; align-items: center; gap: 9px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
     .pf-free-date { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent); }
@@ -341,6 +345,13 @@
             <div class="pf-free-sub" id="dv-free-sub"></div>
           </div>
         </div>
+      </div>
+      <!-- DEPOSIT: separate from weekly rent; blanks stay unknown. -->
+      <div class="pf-card">
+        <div class="pf-card-head"><span class="pf-ico">💰</span> <span id="i18n-deposit-head">Депозит</span></div>
+        <div class="pf-deposit-row"><span id="i18n-deposit-contract">По договору</span><strong id="dv-deposit-contract">—</strong></div>
+        <div class="pf-deposit-row"><span id="i18n-deposit-paid">Подтверждено внесено</span><strong id="dv-deposit-paid">—</strong></div>
+        <div class="pf-deposit-row"><span id="i18n-deposit-balance">Разница</span><strong id="dv-deposit-balance">—</strong></div>
       </div>
       <!-- MILEAGE: пробег -->
       <div class="pf-card">
@@ -612,6 +623,17 @@
         </div>
       </div>
       <div class="form-hint" style="margin:-6px 0 4px">Кастомные лимит и цена переопределяют тариф. Пусто — берётся из тарифа.</div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Депозит по договору, $</div>
+          <input class="form-input" id="add-deposit-contract" type="text" inputmode="decimal" placeholder="неизвестно" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Внесено по депозиту, $</div>
+          <input class="form-input" id="add-deposit-paid" type="text" inputmode="decimal" placeholder="не подтверждено" />
+        </div>
+      </div>
+      <div class="form-hint" style="margin:-6px 0 4px">Пусто — неизвестно; 0 — подтверждённый ноль. Не включайте сюда рент или возврат депозита.</div>
       <div class="form-group">
         <div class="form-label">Машина в PlanetGPS <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
         <select class="form-select" id="add-gps"><option value="">— Не привязана —</option></select>
@@ -711,6 +733,17 @@
         </div>
       </div>
       <div class="form-hint" style="margin:-6px 0 4px">Кастомные лимит и цена переопределяют тариф. Пусто — берётся из тарифа.</div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Депозит по договору, $</div>
+          <input class="form-input" id="edit-deposit-contract" type="text" inputmode="decimal" placeholder="неизвестно" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Внесено по депозиту, $</div>
+          <input class="form-input" id="edit-deposit-paid" type="text" inputmode="decimal" placeholder="не подтверждено" />
+        </div>
+      </div>
+      <div class="form-hint" style="margin:-6px 0 4px">Пусто — неизвестно; 0 — подтверждённый ноль. Не включайте сюда рент или возврат депозита.</div>
       <div class="form-group">
         <div class="form-label">Машина в PlanetGPS</div>
         <select class="form-select" id="edit-gps"><option value="">— Не привязана —</option></select>
@@ -898,6 +931,10 @@ function applyLang() {
   applyLangTxt('i18n-wip-sub', 'This section is under development. Stay tuned.');
   applyLangTxt('i18n-pay-head', 'Next payment');
   applyLangTxt('i18n-amount-lbl', 'Amount');
+  applyLangTxt('i18n-deposit-head', 'Deposit');
+  applyLangTxt('i18n-deposit-contract', 'Agreement amount');
+  applyLangTxt('i18n-deposit-paid', 'Confirmed received');
+  applyLangTxt('i18n-deposit-balance', 'Difference');
   applyLangTxt('i18n-miles-head', 'Mileage this month');
   applyLangTxt('i18n-miles-loading', 'Loading mileage…');
   applyLangTxt('i18n-miles-unit', 'mi');
@@ -982,6 +1019,18 @@ function _num(v) {
   if (v === null || v === undefined || String(v).trim() === '') return null;
   const n = parseFloat(String(v).replace(/[\s,]/g, ''));
   return isNaN(n) ? null : n;
+}
+function depositAmount(v) {
+  const raw = String(v == null ? '' : v).trim();
+  if (!/^\d{1,12}(?:\.\d{1,2})?$/.test(raw)) return null;
+  return '$' + Number(raw).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function depositBalance(v) {
+  const raw = String(v == null ? '' : v).trim();
+  if (!/^-?\d{1,12}\.\d{2}$/.test(raw)) return null;
+  const amount = Number(raw);
+  const formatted = '$' + Math.abs(amount).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return amount < 0 ? (RU ? 'Переплата ' : 'Excess ') + formatted : formatted;
 }
 const WD_NAMES = RU
   ? ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота']
@@ -1086,6 +1135,9 @@ function renderDriverHome(data) {
   setText('dv-pay-amount', price != null ? '$' + price : '—');
   setText('dv-pay-date', pay ? pay.date : '—');
   setText('dv-pay-sub', pay ? pay.sub : (RU ? 'День платежа не задан' : 'Payment day not set'));
+  setText('dv-deposit-contract', depositAmount(d.deposit_contract) || (RU ? 'Не указано' : 'Not set'));
+  setText('dv-deposit-paid', depositAmount(d.deposit_paid) || (RU ? 'Не подтверждено' : 'Unconfirmed'));
+  setText('dv-deposit-balance', depositBalance(d.deposit_balance) || (RU ? 'Не рассчитана' : 'Not calculated'));
   // Бесплатная неделя: нет даты — строку прячем, чтобы карточка не пустовала.
   const fw = freeWeekInfo(d.free_week_date);
   const fwBox = document.getElementById('dv-free-week');
@@ -1522,6 +1574,9 @@ function renderProfile(d, files) {
     ['Номер', `<span class="mono">${esc(d.car_number || '—')}</span>`],
     ['Тариф', esc(d.tariff || '—')],
     ['Цена/нед', price != null ? ('$' + price + (customPrice != null ? ' · кастом' : ' · тариф')) : '—'],
+    ['Депозит по договору', depositAmount(d.deposit_contract) || 'Не указано'],
+    ['Подтверждено внесено', depositAmount(d.deposit_paid) || 'Не подтверждено'],
+    ['Разница по депозиту', depositBalance(d.deposit_balance) || 'Не рассчитана'],
     ['Лимит миль/мес', limit != null ? (limit.toLocaleString() + (custom != null ? ' · кастом' : ' · тариф')) : (t.unlimited ? 'Безлимит' : '—')],
     ['GPS', d.planet_gps_device_id ? '<span style="color:var(--accent)">подключён</span>' : 'нет'],
     ['День платежа', payWeekdayName(d.payment_weekday)],
@@ -1697,6 +1752,8 @@ function showEditDriver() {
   tariffSelect.value = tariff;
   document.getElementById('edit-limit').value = d.monthly_mileage_limit || '';
   document.getElementById('edit-price').value = d.weekly_price || '';
+  document.getElementById('edit-deposit-contract').value = d.deposit_contract == null ? '' : d.deposit_contract;
+  document.getElementById('edit-deposit-paid').value = d.deposit_paid == null ? '' : d.deposit_paid;
   document.getElementById('edit-payday').value = (d.payment_weekday === '' || d.payment_weekday == null) ? '' : String(d.payment_weekday);
   document.getElementById('edit-free-week').value = d.free_week_date || '';
   document.getElementById('edit-svc-mi').value = d.last_service_mileage || '';
@@ -1735,6 +1792,7 @@ function editDriverBody() {
       car_model: val('edit-model'), car_year: val('edit-year'), car_trim: val('edit-trim'),
       car_number: val('edit-number'), tariff: val('edit-tariff'),
       monthly_mileage_limit: val('edit-limit'), weekly_price: val('edit-price'),
+      deposit_contract: val('edit-deposit-contract'), deposit_paid: val('edit-deposit-paid'),
       planet_gps_device_id: val('edit-gps'),
       payment_weekday: val('edit-payday'),
       free_week_date: val('edit-free-week'),
@@ -1979,7 +2037,7 @@ async function submitUpload() {
 }
 
 function showAddDriver() {
-  ['add-id','add-name','add-model','add-year','add-trim','add-number','add-limit','add-price','add-svc-mi'].forEach(id=>document.getElementById(id).value='');
+  ['add-id','add-name','add-model','add-year','add-trim','add-number','add-limit','add-price','add-deposit-contract','add-deposit-paid','add-svc-mi'].forEach(id=>document.getElementById(id).value='');
   ['add-tariff','add-payday','add-free-week','add-svc-date','add-dmv-date','add-reset-date'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('add-btn').disabled=true;
   document.getElementById('add-btn').textContent='Добавить водителя';
@@ -1993,17 +2051,26 @@ function checkAddReady() {
 async function submitAddDriver() {
   const btn=document.getElementById('add-btn'); btn.disabled=true; btn.textContent='Добавляю...';
   try {
-    await api('/drivers',{method:'POST',body:JSON.stringify({
+    const result = await api('/drivers',{method:'POST',body:JSON.stringify({
       id: val('add-id'), name: val('add-name'), car_model: val('add-model'),
       car_year: val('add-year'), car_trim: val('add-trim'), car_number: val('add-number'),
       tariff: val('add-tariff'), monthly_mileage_limit: val('add-limit'), weekly_price: val('add-price'),
+      deposit_contract: val('add-deposit-contract'), deposit_paid: val('add-deposit-paid'),
       planet_gps_device_id: val('add-gps'), payment_weekday: val('add-payday'),
       free_week_date: val('add-free-week'),
       last_service_mileage: val('add-svc-mi'),
       last_service_date: val('add-svc-date'), dmv_inspection_date: val('add-dmv-date'),
       mileage_reset_date: val('add-reset-date'),
     })});
-    toast('Водитель добавлен','success'); await loadDrivers(); showScreen('drivers');
+    await loadDrivers(); showScreen('drivers');
+    const notification = result.onboarding && result.onboarding.notification;
+    if (notification === 'accepted') {
+      toast('Кабинет создан. Кнопка входа принята Telegram к отправке.','success');
+    } else if (notification === 'not_active') {
+      openModal('Кабинет создан','Кабинет неактивен; кнопка входа не отправлялась.',closeModal,'Понятно');
+    } else {
+      openModal('Кабинет создан','Доставка кнопки входа не подтверждена. Попросите водителя открыть бота и нажать /start. Повторно кабинет не создавайте.',closeModal,'Понятно');
+    }
   } catch(e) { toast('Ошибка: '+e.message,'error'); btn.disabled=false; btn.textContent='Добавить водителя'; }
 }
 function confirmArchiveDriver() {
