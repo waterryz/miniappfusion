@@ -52,6 +52,10 @@
     .search-icon { color: var(--muted); font-size: 15px; }
     .search-input { flex: 1; background: none; border: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 11px 0; outline: none; }
     .search-input::placeholder { color: var(--muted); }
+    .list-switch { display: flex; gap: 8px; padding: 0 20px 8px; flex-shrink: 0; }
+    .list-switch button { flex: 1; padding: 9px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--card); color: var(--text-secondary); font: 600 13px 'DM Sans', sans-serif; cursor: pointer; }
+    .list-switch button.active { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+    [hidden] { display: none !important; }
     .icon-btn { width: 42px; height: 42px; border-radius: var(--radius-sm); background: var(--accent); color: #ffffff; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .icon-btn:active { opacity: 0.85; transform: scale(0.95); }
     .scroll-body { flex: 1; overflow-y: auto; padding: 6px 20px 28px; -webkit-overflow-scrolling: touch; }
@@ -435,6 +439,10 @@
       </div>
       <button class="icon-btn" onclick="showAddDriver()">+</button>
     </div>
+    <div class="list-switch" aria-label="Список водителей">
+      <button id="drivers-active" class="active" onclick="switchDriverView(false)">Действующие</button>
+      <button id="drivers-archive" onclick="switchDriverView(true)">Архив</button>
+    </div>
     <div class="scroll-body" id="driver-list"></div>
   </div>
   <!-- DRIVER PROFILE (admin) -->
@@ -450,13 +458,14 @@
       <div class="info-block" id="info-block" style="margin:0"></div>
       <div id="field-check" style="margin:12px 0 0;display:none"></div>
       <div class="actions-wrap" style="padding:14px 0 0">
-        <button class="action-btn" onclick="openServiceNotes(state.currentDriver.id)">📝 К следующему сервису</button>
-        <button class="action-btn primary" onclick="openDriverPreview()">👁 Кабинет водителя</button>
-        <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="runFieldCheck()">🔎 Проверить заполнение</button>
-        <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showEditDriver()">✏️ Редактировать данные</button>
-        <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showOdoScreen()">🧭 Сверка одометра</button>
+        <button class="action-btn" data-active-driver onclick="openServiceNotes(state.currentDriver.id)">📝 К следующему сервису</button>
+        <button class="action-btn primary" data-active-driver onclick="openDriverPreview()">👁 Личный кабинет</button>
+        <button class="action-btn" data-active-driver style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="runFieldCheck()">🔎 Проверить заполнение</button>
+        <button class="action-btn" data-active-driver style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showEditDriver()">✏️ Редактировать данные</button>
+        <button class="action-btn" data-active-driver style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showOdoScreen()">🧭 Сверка одометра</button>
         <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showDocuments()">📁 Документы водителя</button>
-        <button class="action-btn danger" onclick="confirmDeleteDriver()">🗑 Удалить водителя</button>
+        <button class="action-btn danger" id="archive-driver-btn" onclick="confirmArchiveDriver()">📦 В архив</button>
+        <button class="action-btn primary" id="restore-driver-btn" onclick="confirmRestoreDriver()" hidden>↩ Восстановить</button>
       </div>
     </div>
   </div>
@@ -856,14 +865,14 @@ const tg = window.Telegram?.WebApp;
 const LANG = ((new URLSearchParams(location.search).get('lang') || '').toLowerCase() === 'en') ? 'en' : 'ru';
 const RU = LANG === 'ru';
 const state = {
-  drivers: [], filtered: [],
-  currentDriver: null, currentFiles: [],
+  drivers: [], archivedDrivers: [], archiveView: false, filtered: [],
+  currentDriver: null, currentFiles: [], currentFilesAvailable: true,
   lbIndex: 0, selectedFile: null,
   initData: '', pendingAction: null,
   fleetData: [], fleetInterval: null,
   currentTab: 'drivers',
   // driver self-view
-  dvFiles: [], dvLbIndex: 0, mileageRequest: 0, serviceRequest: 0,
+  dvFiles: [], dvFilesAvailable: true, dvLbIndex: 0, mileageRequest: 0, serviceRequest: 0,
 };
 let _fleetTab = 'map';
 let _map = null;
@@ -1044,6 +1053,7 @@ function renderDriverHome(data) {
   const files = data.files || [];
   const mil = data.mileage || {};
   state.dvFiles = files;
+  state.dvFilesAvailable = data.files_available !== false;
   // режим просмотра админом: показать «назад», спрятать загрузку
   const preview = !!state.dvPreview;
   document.getElementById('dv-service-notes').style.display = preview ? 'none' : ''; 
@@ -1112,7 +1122,7 @@ function renderDriverHome(data) {
   }
   loadServiceMileage(deviceId, (d.last_service_date || '').trim());
   // ── DOCUMENTS ──
-  renderDvDocs(files);
+  renderDvDocs(files, state.dvFilesAvailable);
 }
 function showMilesLoading() {
   document.getElementById('dv-miles-loading').style.display = '';
@@ -1278,8 +1288,12 @@ function renderService(remaining, st) {
     noteEl.textContent = '';
   }
 }
-function renderDvDocs(files) {
+function renderDvDocs(files, available=true) {
   const grid = document.getElementById('dv-doc-grid');
+  if (!available) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:22px 12px"><div class="empty-icon">⚠️</div><div class="empty-title">${RU?'Документы временно недоступны':'Documents temporarily unavailable'}</div><div class="empty-sub">${RU?'Повторите позже':'Please try again later'}</div></div>`;
+    return;
+  }
   if (!files.length) {
     grid.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:22px 12px"><div class="empty-icon">📂</div><div class="empty-title">${RU?'Нет документов':'No documents'}</div><div class="empty-sub">${RU?'Загрузите первый — кнопкой ниже':'Upload your first below'}</div></div>`;
     return;
@@ -1312,7 +1326,7 @@ async function dvUpload(e) {
     const name = (file.name || 'document').replace(/\.[^.]+$/, '');
     await api('/driver/me/upload', {method:'POST', body:JSON.stringify({image, name})});
     toast(RU ? 'Документ загружен' : 'Document uploaded', 'success');
-    try { const data = await api('/driver/me'); state.dvFiles = data.files || []; renderDvDocs(state.dvFiles); }
+    try { const data = await api('/driver/me'); state.dvFiles = data.files || []; state.dvFilesAvailable = data.files_available !== false; renderDvDocs(state.dvFiles, state.dvFilesAvailable); }
     catch (_) { toast(RU ? 'Фото сохранено. Открой кабинет заново, чтобы обновить список.' : 'Photo saved. Reopen your account to refresh the list.'); }
   } catch (err) { toast(err.message, 'error'); }
   finally { btn.disabled=false; txt.textContent=original; btn.classList.remove('busy'); }
@@ -1408,7 +1422,19 @@ function renderMap(vehicles) {
 }
 async function loadDrivers() {
   const data = await api('/drivers');
-  state.drivers = data; state.filtered = data; renderDriverList(data);
+  state.drivers = data;
+  filterDrivers();
+}
+async function switchDriverView(archived) {
+  if (archived) {
+    try { state.archivedDrivers = await api('/drivers?only_archived=1'); }
+    catch (e) { toast('Не удалось загрузить архив: ' + e.message, 'error'); return; }
+  }
+  state.archiveView = archived;
+  document.getElementById('drivers-active').classList.toggle('active', !archived);
+  document.getElementById('drivers-archive').classList.toggle('active', archived);
+  document.getElementById('search-input').value = '';
+  filterDrivers();
 }
 // Найти водителя по привязанной машине PlanetGPS (planet_gps_device_id === id устройства).
 function driverByDevice(deviceId) {
@@ -1419,7 +1445,9 @@ function driverByDevice(deviceId) {
 }
 function renderDriverList(drivers) {
   const el = document.getElementById('driver-list');
-  if (!drivers.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">Нет водителей</div><div class="empty-sub">Нажмите + чтобы добавить</div></div>`; return; }
+  if (!drivers.length) { el.innerHTML = state.archiveView
+    ? `<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Архив пуст</div></div>`
+    : `<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">Нет водителей</div><div class="empty-sub">Нажмите + чтобы добавить</div></div>`; return; }
   const n = drivers.length, s = n===1?'ь':n<5?'я':'ей';
   el.innerHTML = `<div class="slabel">${n} водител${s}</div>` + drivers.map(d => `
     <div class="driver-card" onclick="openDriver('${d.id}')">
@@ -1431,16 +1459,18 @@ function renderDriverList(drivers) {
         </div>
         <div class="d-plate">${esc(d.car_number)}</div>
       </div>
-      <div class="d-chip ${d.file_count===0?'zero':''}">${d.file_count}</div>
+      <div class="d-chip ${d.file_count==null||d.file_count===0?'zero':''}">${d.file_count==null?'—':d.file_count}</div>
     </div>`).join('');
 }
 function filterDrivers() {
   const q = document.getElementById('search-input').value.toLowerCase();
-  state.filtered = state.drivers.filter(d => d.name.toLowerCase().includes(q) || d.car_number.toLowerCase().includes(q));
+  const source = state.archiveView ? state.archivedDrivers : state.drivers;
+  state.filtered = source.filter(d => (d.name || '').toLowerCase().includes(q) || (d.car_number || '').toLowerCase().includes(q));
   renderDriverList(state.filtered);
 }
 function showDrivers() {
   document.getElementById('search-input').value = '';
+  filterDrivers();
   showScreen('drivers');
   ['tab-drivers','tab-fleet','tab-drivers-2','tab-fleet-2'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('active'); });
   ['tab-drivers','tab-drivers-2'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('active'); });
@@ -1451,6 +1481,7 @@ async function openDriver(id) {
   try {
     const data = await api(`/driver/${id}`);
     state.currentDriver = data.driver; state.currentFiles = data.files;
+    state.currentFilesAvailable = data.files_available !== false;
     state.currentMileage = data.mileage || {};
     renderProfile(data.driver, data.files); showScreen('profile');
   } catch(e) { toast('Ошибка загрузки','error'); showScreen('drivers'); }
@@ -1470,7 +1501,10 @@ function trackerFactorLabel(factor, checks) {
 function payWeekdayName(wd) { const n = parseInt(wd, 10); return (!isNaN(n) && n >= 0 && n <= 6) ? WD_NAMES[n] : '—'; }
 function renderProfile(d, files) {
   document.getElementById('profile-title').textContent = d.name;
-  document.getElementById('profile-sub').textContent = d.car_number;
+  document.getElementById('profile-sub').textContent = d.archived ? `${d.car_number || '—'} · В архиве` : d.car_number;
+  document.querySelectorAll('[data-active-driver]').forEach(button => { button.hidden = !!d.archived; });
+  document.getElementById('archive-driver-btn').hidden = !!d.archived;
+  document.getElementById('restore-driver-btn').hidden = !d.archived;
   // Прячем отчёт проверки от предыдущего водителя — он относился к другому профилю.
   const _fc = document.getElementById('field-check');
   if (_fc) { _fc.style.display = 'none'; _fc.innerHTML = ''; }
@@ -1498,7 +1532,7 @@ function renderProfile(d, files) {
     ['DMV', d.dmv_inspection_date || '—'],
     ['Пересадка (обнуление)', d.mileage_reset_date || '—'],
     ['ID', `<span class="mono">${esc(d.id)}</span>`],
-    ['Документов', `<span style="color:var(--accent)">${files.length}</span>`],
+    ['Документов', state.currentFilesAvailable ? `<span style="color:var(--accent)">${files.length}</span>` : 'Не проверено'],
   ];
   document.getElementById('info-block').innerHTML = rows.map(([k, v]) =>
     `<div class="info-row"><span class="info-key">${k}</span><span class="info-val">${v}</span></div>`).join('');
@@ -1641,7 +1675,7 @@ async function loadFleetIntoSelect(selectId, currentId) {
 // ── КАБИНЕТ ВОДИТЕЛЯ ИЗ АДМИНКИ (просмотр) ──
 function openDriverPreview() {
   state.dvPreview = true;
-  renderDriverHome({ driver: state.currentDriver, files: state.currentFiles, mileage: state.currentMileage || {} });
+  renderDriverHome({ driver: state.currentDriver, files: state.currentFiles, files_available: state.currentFilesAvailable, mileage: state.currentMileage || {} });
   showScreen('driver-home');
 }
 function exitDriverPreview() {
@@ -1721,10 +1755,10 @@ async function submitEditDriver() {
     if (Object.keys(body).length) await api(`/driver/${driverId}`, { method: 'PATCH', body: JSON.stringify(body) });
     toast('Сохранено', 'success');
     const data = await api(`/driver/${driverId}`);
-    state.drivers = state.drivers.map(d => d.id === driverId ? {...d, ...data.driver, file_count:data.files.length} : d);
+    state.drivers = state.drivers.map(d => d.id === driverId ? {...d, ...data.driver, file_count:data.files_available === false ? null : data.files.length} : d);
     filterDrivers();
     if (!state.currentDriver || state.currentDriver.id !== driverId) return;
-    state.currentDriver = data.driver; state.currentFiles = data.files; state.currentMileage = data.mileage || {};
+    state.currentDriver = data.driver; state.currentFiles = data.files; state.currentFilesAvailable = data.files_available !== false; state.currentMileage = data.mileage || {};
     renderProfile(data.driver, data.files);
     showScreen('profile');
   } catch(e) {
@@ -1851,7 +1885,7 @@ async function submitOdoCheck() {
     await loadOdoData();
     // карточка водителя показывает пробег на ТО — перечитываем профиль
     const data = await api(`/driver/${state.currentDriver.id}`);
-    state.currentDriver = data.driver; state.currentFiles = data.files;
+    state.currentDriver = data.driver; state.currentFiles = data.files; state.currentFilesAvailable = data.files_available !== false;
     state.currentMileage = data.mileage || {};
     renderProfile(data.driver, data.files);
   } catch (e) {
@@ -1876,11 +1910,12 @@ async function deleteOdoCheck(date) {
 function showProfile() { showScreen('profile'); }
 function showDocuments() {
   document.getElementById('docs-sub').textContent = state.currentDriver.name;
-  document.getElementById('docs-count').textContent = `${state.currentFiles.length} фото`;
-  renderDocs(state.currentFiles); showScreen('docs');
+  document.getElementById('docs-count').textContent = state.currentFilesAvailable ? `${state.currentFiles.length} фото` : 'Нет связи с хранилищем';
+  renderDocs(state.currentFiles, state.currentFilesAvailable); showScreen('docs');
 }
-function renderDocs(files) {
+function renderDocs(files, available=true) {
   const grid = document.getElementById('photo-grid');
+  if (!available) { grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">Документы временно недоступны</div><div class="empty-sub">Повторите позже</div></div>`; return; }
   if (!files.length) { grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📂</div><div class="empty-title">Нет документов</div><div class="empty-sub">Загрузите первый</div></div>`; return; }
   grid.innerHTML = files.map((f,i) => `<div class="photo-cell" onclick="openLightbox(${i})"><img src="${f.url}" loading="lazy" alt="${esc(f.name)}"/><div class="photo-label">${esc(f.name)}</div></div>`).join('');
 }
@@ -1935,8 +1970,8 @@ async function submitUpload() {
     try {
       const data=await api(`/driver/${driverId}`);
       if (!state.currentDriver || state.currentDriver.id !== driverId) return;
-      state.currentFiles=data.files; renderDocs(data.files);
-      document.getElementById('docs-count').textContent=`${data.files.length} фото`;
+      state.currentFiles=data.files; state.currentFilesAvailable=data.files_available !== false; renderDocs(data.files,state.currentFilesAvailable);
+      document.getElementById('docs-count').textContent=state.currentFilesAvailable ? `${data.files.length} фото` : 'Нет связи с хранилищем';
       showScreen('docs');
     } catch (_) { toast('Фото сохранено. Открой документы заново, чтобы обновить список.'); }
   } catch(e) { toast(e.message,'error'); }
@@ -1971,15 +2006,29 @@ async function submitAddDriver() {
     toast('Водитель добавлен','success'); await loadDrivers(); showScreen('drivers');
   } catch(e) { toast('Ошибка: '+e.message,'error'); btn.disabled=false; btn.textContent='Добавить водителя'; }
 }
-function confirmDeleteDriver() {
+function confirmArchiveDriver() {
   const d=state.currentDriver;
-  openModal('Удалить водителя?',`Удалить ${d.name} (${d.car_number})? Все документы будут удалены.`,deleteDriver);
+  openModal('Перенести в архив?',`${d.name} (${d.car_number}) исчезнет из действующих водителей и потеряет доступ к кабинету. Карточка, документы и история сохранятся.`,archiveDriver,'В архив');
 }
-async function deleteDriver() {
+function confirmRestoreDriver() {
+  const d=state.currentDriver;
+  openModal('Восстановить водителя?',`Вернуть ${d.name} в действующие водители? Проверьте назначение машины перед возобновлением работы.`,restoreDriver,'Восстановить');
+}
+async function changeDriverArchive(archived) {
+  const d=state.currentDriver;
   closeModal(); showScreen('loading');
-  try { await api(`/driver/${state.currentDriver.id}`,{method:'DELETE'}); toast('Водитель удалён','success'); await loadDrivers(); showScreen('drivers'); }
-  catch(e) { toast('Ошибка: '+e.message,'error'); showScreen('profile'); }
+  try {
+    await api(`/driver/${d.id}/${archived ? 'archive' : 'restore'}`,{
+      method:'POST',body:JSON.stringify({expected_version:d.version})
+    });
+    await loadDrivers();
+    await switchDriverView(archived);
+    toast(archived ? 'Водитель перенесён в архив' : 'Водитель восстановлен','success');
+    showScreen('drivers');
+  } catch(e) { toast('Ошибка: '+e.message,'error'); showScreen('profile'); }
 }
+async function archiveDriver() { await changeDriverArchive(true); }
+async function restoreDriver() { await changeDriverArchive(false); }
 function confirmDeleteFile() {
   const f=state.currentFiles[state.lbIndex];
   openModal('Удалить документ?',`Удалить "${f.name}"?`,deleteFile);
@@ -1991,8 +2040,8 @@ async function deleteFile() {
     await api('/file',{method:'DELETE',body:JSON.stringify({public_id:f.public_id})});
     toast('Документ удалён','success'); closeLightbox();
     const data=await api(`/driver/${state.currentDriver.id}`);
-    state.currentFiles=data.files; renderDocs(data.files);
-    document.getElementById('docs-count').textContent=`${data.files.length} фото`;
+    state.currentFiles=data.files; state.currentFilesAvailable=data.files_available !== false; renderDocs(data.files,state.currentFilesAvailable);
+    document.getElementById('docs-count').textContent=state.currentFilesAvailable ? `${data.files.length} фото` : 'Нет связи с хранилищем';
   } catch(e) { toast('Ошибка: '+e.message,'error'); }
 }
 async function loadFleet(manual=false) {
@@ -2122,10 +2171,11 @@ async function loadReport() {
 }
 function startFleetPolling(){stopFleetPolling();state.fleetInterval=setInterval(()=>{if(state.currentTab==='fleet')loadFleet();},6000);}
 function stopFleetPolling(){if(state.fleetInterval){clearInterval(state.fleetInterval);state.fleetInterval=null;}}
-function openModal(title,text,onConfirm){
+function openModal(title,text,onConfirm,confirmText='Удалить'){
   document.getElementById('modal-title').textContent=title;
   document.getElementById('modal-text').textContent=text;
   document.getElementById('modal-confirm').onclick=onConfirm;
+  document.getElementById('modal-confirm').textContent=confirmText;
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(){document.getElementById('modal').classList.remove('open');}
