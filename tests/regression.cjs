@@ -24,6 +24,24 @@ const results=[];
    const text=document.getElementById('vehicle-history-body').textContent;
    return{paths,hasTransfer:text.includes('Former → Current'),hasCaveat:text.includes('Закрытая заметка не подтверждает выполненное ТО'),hasPrivateMoney:text.includes('депозит')};
   },r=>{assert.deepEqual(r.paths,['/admin/vehicles','/admin/vehicles/T142367C']);assert.equal(r.hasTransfer,true);assert.equal(r.hasCaveat,true);assert.equal(r.hasPrivateMoney,false);});
+  await check('Owner reviews broker file before it can enter a driver cabinet',async()=>{
+   state.initData='owner-test';state.drivers=[{id:'7135912048',name:'Test Driver',car_number:'T100001C'}];
+   let sent=null,queueCalls=0;
+   api=async(path,opts={})=>{
+    if(path==='/admin/driver-mail/review'){queueCalls++;return{items:queueCalls===1?[{key:'m1:1',filename:'license.jpg',reason:'driver_identity_ambiguous',candidate_driver_id:''}]:[]};}
+    if(path.endsWith('/approve')){sent=JSON.parse(opts.body);return{ok:true};}
+    throw Error('Unexpected route '+path);
+   };
+   fetch=async()=>({ok:true,headers:new Headers({'Content-Type':'image/jpeg','X-Document-SHA256':'a'.repeat(64)}),blob:async()=>new Blob(['photo'],{type:'image/jpeg'})});
+   await openMailReview();await openMailReviewAttachment(0);
+   const before=state.mailReview.index;
+   document.getElementById('mail-review-driver').value='7135912048';
+   await approveMailReview();
+   const blocked=sent===null;
+   document.getElementById('mail-review-confirm').checked=true;
+   await approveMailReview();
+   return{before,blocked,sent,queueCalls,screen:document.getElementById('screen-mail-review').classList.contains('active')};
+  },r=>{assert.equal(r.before,0);assert.equal(r.blocked,true);assert.deepEqual(r.sent,{driver_id:'7135912048',confirmed_full_name:'Test Driver',expected_sha256:'a'.repeat(64)});assert.equal(r.queueCalls,2);assert.equal(r.screen,true);});
   await check('Deposit keeps unknown, confirmed zero and excess separate from rent',()=>{
    const base={name:'Demo',car_number:'DEMO',weekly_price:'675'};
    renderDriverHome({driver:{...base},files:[],mileage:{}});
