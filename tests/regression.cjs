@@ -144,6 +144,21 @@ const results=[];
    api=async(p,o={})=>{if(o.method==='POST')throw Object.assign(new Error('changed'),{status:409});return{vehicle_key:'plate:DEMO',car_number:'DEMO',is_admin:false,notes:[]};};
    await openServiceNotes('me');document.getElementById('notes-text').value='Check brakes';noteTextChanged();await saveServiceNote();return{text:val('notes-text'),disabled:document.getElementById('notes-save').disabled};
   },r=>assert.deepEqual(r,{text:'Check brakes',disabled:true}));
+  await check('Admin service reports show validation and escaped supplements',async()=>{
+   state.currentDriver={id:'101',name:'Beka',car_number:'DEMO'};
+   api=async p=>({records:[{id:'report-one',kind:'report',received_at:'2026-09-28T12:00:00Z',
+    body:{category:'service',car:'DEMO',status:'needs_supplements',validation:{version:2,issues:['odometer_unverified']},
+     history:[{version:1,photos:['receipt'],at:'2026-09-28T12:00:00Z'},
+              {version:2,photos:['odometer'],comment:'<img src=x onerror=alert(1)>',at:'2026-09-28T12:10:00Z'}]},
+    notices:[{recipient:'driver',version:2,status:'delivered'}]}]});
+   await openServiceReports('101');
+   const list=document.getElementById('service-reports-list');
+   return{screen:document.querySelector('.screen.active').id,hasId:list.textContent.includes('report-one'),
+    hasIssue:list.textContent.includes('Пробег не подтверждён'),hasDelivery:list.textContent.includes('доставлен'),
+    versions:(list.textContent.match(/Версия/g)||[]).length,injectedImages:list.querySelectorAll('img').length,
+    overflow:document.documentElement.scrollWidth>innerWidth};
+  },r=>assert.deepEqual(r,{screen:'screen-service-reports',hasId:true,hasIssue:true,
+   hasDelivery:true,versions:2,injectedImages:0,overflow:false}),'service-reports.png');
   fs.writeFileSync(path.join(__dirname,'results.json'),JSON.stringify(results,null,2));console.log(JSON.stringify({passed:results.length,tests:results.map(r=>r.name)},null,2));
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
