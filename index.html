@@ -454,7 +454,21 @@
       <button id="drivers-active" class="active" onclick="switchDriverView(false)">Действующие</button>
       <button id="drivers-archive" onclick="switchDriverView(true)">Архив</button>
     </div>
+    <div class="actions-wrap" style="padding:4px 16px 8px">
+      <button class="action-btn" onclick="openVehicles()">🚘 Карточки автомобилей</button>
+    </div>
     <div class="scroll-body" id="driver-list"></div>
+  </div>
+  <!-- READ-ONLY VEHICLE HISTORY FOR OWNER -->
+  <div class="screen" id="screen-vehicles">
+    <div class="header">
+      <button class="back-btn" onclick="closeVehicleHistory()">←</button>
+      <div class="header-info">
+        <div class="header-title">Автомобили</div>
+        <div class="header-sub">История по номеру машины</div>
+      </div>
+    </div>
+    <div class="scroll-body" id="vehicle-history-body" style="padding:14px 16px"></div>
   </div>
   <!-- DRIVER PROFILE (admin) -->
   <div class="screen" id="screen-profile">
@@ -475,6 +489,7 @@
         <button class="action-btn" data-active-driver style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showEditDriver()">✏️ Редактировать данные</button>
         <button class="action-btn" data-active-driver style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showOdoScreen()">🧭 Сверка одометра</button>
         <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showDocuments()">📁 Документы водителя</button>
+        <button class="action-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="openVehicleHistory(state.currentDriver.car_number)">🚘 История машины</button>
         <button class="action-btn danger" id="archive-driver-btn" onclick="confirmArchiveDriver()">📦 В архив</button>
         <button class="action-btn primary" id="restore-driver-btn" onclick="confirmRestoreDriver()" hidden>↩ Восстановить</button>
       </div>
@@ -903,6 +918,7 @@ const state = {
   lbIndex: 0, selectedFile: null,
   initData: '', pendingAction: null,
   fleetData: [], fleetInterval: null,
+  vehicleItems: [], vehicleBack: 'drivers',
   currentTab: 'drivers',
   // driver self-view
   dvFiles: [], dvFilesAvailable: true, dvLbIndex: 0, mileageRequest: 0, serviceRequest: 0,
@@ -1414,6 +1430,58 @@ async function api(path, opts={}, base=API) {
     const error = new Error(msg); error.status = r.status; throw error;
   }
   return r.json();
+}
+function vehicleTime(value) {
+  const date = new Date(value || '');
+  return Number.isNaN(date.getTime()) ? 'время не указано'
+    : date.toLocaleString('ru-RU', {timeZone:'America/New_York', dateStyle:'medium', timeStyle:'short'});
+}
+function closeVehicleHistory() {
+  if (state.vehicleBack === 'profile') showScreen('profile');
+  else if (state.vehicleBack === 'list') openVehicles();
+  else showScreen('drivers');
+}
+async function openVehicles() {
+  state.vehicleBack = 'drivers'; showScreen('vehicles');
+  const body = document.getElementById('vehicle-history-body');
+  body.textContent = 'Загружаем автомобили…';
+  try {
+    const result = await api('/admin/vehicles');
+    state.vehicleItems = Array.isArray(result.items) ? result.items : [];
+    body.innerHTML = state.vehicleItems.length ? state.vehicleItems.map((row,index)=>`
+      <div class="driver-card" onclick="openVehicleHistory(state.vehicleItems[${index}].plate,true)">
+        <div class="d-avatar">🚘</div><div class="d-info"><div class="d-name">${esc(row.models?.[0] || 'Модель не сверена')}</div>
+        <div class="d-plate">${esc(row.plate)} · ${row.assignment_status==='ambiguous'?'Несколько назначений':row.current_drivers?.length?esc(row.current_drivers[0].name):'Назначение не подтверждено'}</div></div>
+      </div>`).join('') : 'Автомобили не найдены в доступном реестре.';
+  } catch (error) { body.textContent = 'Не удалось загрузить машины: '+error.message; }
+}
+async function openVehicleHistory(plate, fromList=false) {
+  if (!plate) { toast('У водителя не указан номер машины.', 'error'); return; }
+  state.vehicleBack = fromList ? 'list' : 'profile'; showScreen('vehicles');
+  const body = document.getElementById('vehicle-history-body');
+  body.textContent = 'Загружаем историю…';
+  try {
+    const record = await api('/admin/vehicles/'+encodeURIComponent(plate));
+    const active = (record.current_drivers||[]).map(d=>esc(d.name)).join(', ') || 'не подтверждён';
+    const transfers = (record.transfers||[]).map(e=>`<div class="info-block" style="margin:0 0 8px">
+      <b>${esc(vehicleTime(e.at))}</b><br>${esc(e.from_name || 'Прежний водитель не указан')} → ${esc(e.to_name || 'Новый водитель не указан')}
+    </div>`).join('') || '<div class="form-hint">В доступном журнале передач записей нет. Более ранняя история может отсутствовать.</div>';
+    const notes = record.service_notes_available
+      ? (record.service_notes||[]).map(n=>`<div class="info-block" style="margin:0 0 8px">
+          <b>${esc(vehicleTime(n.created_at))}</b> · ${n.status==='done'?'Заметка закрыта':'Заметка открыта'}<br>${esc(n.text||'')}
+        </div>`).join('') || '<div class="form-hint">В доступном хранилище сервисных заметок записей нет.</div>'
+      : '<div class="form-hint">Сервисные заметки сейчас не получены.</div>';
+    body.innerHTML = `<div class="info-block" style="margin:0 0 14px">
+      <div class="form-label">${esc(record.plate)}</div>
+      <div><b>${esc((record.models||[]).join(', ') || 'Модель не сверена')}</b></div>
+      <div>Действующий водитель: ${active}</div>
+      <div>VIN: не сверен · Документы автомобиля: не подключены</div>
+      ${record.assignment_status==='ambiguous'?'<div style="color:var(--danger)">Номер есть у нескольких действующих водителей — требуется сверка.</div>':''}
+      <div class="form-hint">${esc(record.coverage_note||'История неполная.')}</div>
+    </div><div class="slabel">Передачи автомобиля</div>${transfers}
+    <div class="slabel" style="margin-top:14px">Сервисные заметки</div>${notes}
+    <div class="form-hint" style="margin-top:12px">Закрытая заметка не подтверждает выполненное ТО. Фактический сервис, ремонты, полисы и ДТП требуют отдельных первичных документов.</div>`;
+  } catch (error) { body.textContent = 'Не удалось открыть историю: '+error.message; }
 }
 function showScreen(n) {
   if (n !== 'driver-home' && document.getElementById('screen-driver-home').classList.contains('active')) {

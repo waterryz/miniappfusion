@@ -12,6 +12,18 @@ const results=[];
   finally{await page.close();}
  }
  try{
+  await check('Vehicle history is read only and does not label notes as completed service',async()=>{
+   const paths=[];
+   api=async path=>{
+    paths.push(path);
+    if(path==='/admin/vehicles')return{items:[{plate:'T142367C',models:['Toyota Sienna'],current_drivers:[{name:'Current'}],assignment_status:'assigned'}]};
+    if(path==='/admin/vehicles/T142367C')return{plate:'T142367C',models:['Toyota Sienna'],current_drivers:[{name:'Current'}],assignment_status:'assigned',coverage_note:'История неполная.',transfers:[{at:'2026-09-28T12:00:00Z',from_name:'Former',to_name:'Current'}],service_notes_available:true,service_notes:[{created_at:'2026-09-27T12:00:00Z',status:'done',text:'Check brakes'}]};
+    throw Error('Unexpected route '+path);
+   };
+   await openVehicles();await openVehicleHistory('T142367C',true);
+   const text=document.getElementById('vehicle-history-body').textContent;
+   return{paths,hasTransfer:text.includes('Former → Current'),hasCaveat:text.includes('Закрытая заметка не подтверждает выполненное ТО'),hasPrivateMoney:text.includes('депозит')};
+  },r=>{assert.deepEqual(r.paths,['/admin/vehicles','/admin/vehicles/T142367C']);assert.equal(r.hasTransfer,true);assert.equal(r.hasCaveat,true);assert.equal(r.hasPrivateMoney,false);});
   await check('Deposit keeps unknown, confirmed zero and excess separate from rent',()=>{
    const base={name:'Demo',car_number:'DEMO',weekly_price:'675'};
    renderDriverHome({driver:{...base},files:[],mileage:{}});
