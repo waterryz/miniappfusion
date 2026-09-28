@@ -456,6 +456,7 @@
     </div>
     <div class="actions-wrap" style="padding:4px 16px 8px">
       <button class="action-btn" onclick="openVehicles()">🚘 Карточки автомобилей</button>
+      <button class="action-btn" onclick="openMailReview()">📨 Документы из почты</button>
     </div>
     <div class="scroll-body" id="driver-list"></div>
   </div>
@@ -469,6 +470,36 @@
       </div>
     </div>
     <div class="scroll-body" id="vehicle-history-body" style="padding:14px 16px"></div>
+  </div>
+  <!-- OWNER REVIEW OF BROKER-MAIL ATTACHMENTS -->
+  <div class="screen" id="screen-mail-review">
+    <div class="header">
+      <button class="back-btn" onclick="closeMailReview()">←</button>
+      <div class="header-info">
+        <div class="header-title">Документы из почты</div>
+        <div class="header-sub">Только проверка владельцем</div>
+      </div>
+    </div>
+    <div class="scroll-body" style="padding:14px 16px">
+      <div id="mail-review-list"></div>
+      <div id="mail-review-detail" hidden>
+        <div class="info-block" style="margin:0 0 12px">
+          <div class="form-label" id="mail-review-filename"></div>
+          <img id="mail-review-image" alt="Вложение из письма" style="display:block;width:100%;max-height:50vh;object-fit:contain;background:#fff;border-radius:12px;margin:12px 0" />
+          <div class="form-hint">Сверьте полное имя внутри самого документа. Имя файла и тема письма недостаточны.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="mail-review-driver">Водитель</label>
+          <select class="form-select" id="mail-review-driver"><option value="">Выберите водителя</option></select>
+        </div>
+        <label style="display:flex;gap:10px;align-items:flex-start;margin:12px 0">
+          <input id="mail-review-confirm" type="checkbox" style="width:20px;height:20px;flex-shrink:0" />
+          <span>Я проверил имя в документе и подтверждаю, что файл принадлежит выбранному водителю.</span>
+        </label>
+        <button class="submit-btn" id="mail-review-approve" onclick="approveMailReview()">Добавить в личный кабинет</button>
+        <button class="action-btn" onclick="resetMailReviewDetail()" style="margin-top:10px">Вернуться к списку</button>
+      </div>
+    </div>
   </div>
   <!-- DRIVER PROFILE (admin) -->
   <div class="screen" id="screen-profile">
@@ -919,6 +950,7 @@ const state = {
   initData: '', pendingAction: null,
   fleetData: [], fleetInterval: null,
   vehicleItems: [], vehicleBack: 'drivers',
+  mailReview: {items:[], index:-1, sha:'', objectUrl:''},
   currentTab: 'drivers',
   // driver self-view
   dvFiles: [], dvFilesAvailable: true, dvLbIndex: 0, mileageRequest: 0, serviceRequest: 0,
@@ -1482,6 +1514,92 @@ async function openVehicleHistory(plate, fromList=false) {
     <div class="slabel" style="margin-top:14px">Сервисные заметки</div>${notes}
     <div class="form-hint" style="margin-top:12px">Закрытая заметка не подтверждает выполненное ТО. Фактический сервис, ремонты, полисы и ДТП требуют отдельных первичных документов.</div>`;
   } catch (error) { body.textContent = 'Не удалось открыть историю: '+error.message; }
+}
+function resetMailReviewDetail() {
+  if (state.mailReview.objectUrl) URL.revokeObjectURL(state.mailReview.objectUrl);
+  state.mailReview.objectUrl = '';
+  state.mailReview.sha = '';
+  state.mailReview.index = -1;
+  document.getElementById('mail-review-image').removeAttribute('src');
+  document.getElementById('mail-review-detail').hidden = true;
+  document.getElementById('mail-review-list').hidden = false;
+  document.getElementById('mail-review-confirm').checked = false;
+}
+function closeMailReview() { resetMailReviewDetail(); showScreen('drivers'); }
+async function openMailReview() {
+  resetMailReviewDetail(); showScreen('mail-review');
+  const list = document.getElementById('mail-review-list');
+  list.textContent = 'Проверяем очередь писем…';
+  try {
+    const result = await api('/admin/driver-mail/review');
+    state.mailReview.items = Array.isArray(result.items) ? result.items : [];
+    if (!state.mailReview.items.length) {
+      list.textContent = 'Непроверенных вложений пока нет.';
+      return;
+    }
+    list.innerHTML = state.mailReview.items.map((item, index) => {
+      const available = ['driver_identity_ambiguous','document_identity_unverified'].includes(item.reason);
+      const date = Number(item.message_internal_date);
+      const when = Number.isFinite(date) && date > 0
+        ? new Date(date).toLocaleString('ru-RU',{timeZone:'America/New_York'}) : 'время неизвестно';
+      return `<div class="info-block" style="margin:0 0 10px">
+        <div style="font-weight:700">${esc(item.filename || 'Вложение')}</div>
+        <div class="form-hint">${esc(when)} · ${available ? 'Нужна сверка документа' : 'Требуется отдельная проверка источника'}</div>
+        ${available ? `<button class="action-btn" onclick="openMailReviewAttachment(${index})">Открыть и проверить</button>` : ''}
+      </div>`;
+    }).join('');
+  } catch (error) {
+    list.textContent = error.status === 503
+      ? 'Подключение почты ещё не настроено. Документы не считаются отсутствующими.'
+      : 'Не удалось прочитать очередь: ' + error.message;
+  }
+}
+async function openMailReviewAttachment(index) {
+  resetMailReviewDetail();
+  const item = state.mailReview.items[index];
+  if (!item || !['driver_identity_ambiguous','document_identity_unverified'].includes(item.reason)) return;
+  try {
+    const response = await fetch(API+'/admin/driver-mail/review/'+encodeURIComponent(item.key)+'/attachment', {
+      headers:{'X-Telegram-Init-Data':state.initData}, cache:'no-store',
+    });
+    if (!response.ok) throw new Error('Файл изменился или недоступен. Обновите очередь.');
+    const type = response.headers.get('Content-Type') || '';
+    const sha = response.headers.get('X-Document-SHA256') || '';
+    if (!['image/jpeg','image/png'].includes(type.split(';')[0]) || !/^[a-f0-9]{64}$/.test(sha))
+      throw new Error('Неверный формат файла или контрольная сумма.');
+    const blob = await response.blob();
+    state.mailReview.objectUrl = URL.createObjectURL(blob);
+    state.mailReview.sha = sha;
+    state.mailReview.index = index;
+    document.getElementById('mail-review-image').src = state.mailReview.objectUrl;
+    document.getElementById('mail-review-filename').textContent = item.filename || 'Вложение';
+    const select = document.getElementById('mail-review-driver');
+    select.innerHTML = '<option value="">Выберите водителя</option>' + state.drivers.map(d =>
+      `<option value="${esc(d.id)}">${esc(d.name)} · ${esc(d.car_number || 'без машины')}</option>`).join('');
+    select.value = state.drivers.some(d=>String(d.id)===String(item.candidate_driver_id))
+      ? String(item.candidate_driver_id) : '';
+    document.getElementById('mail-review-list').hidden = true;
+    document.getElementById('mail-review-detail').hidden = false;
+  } catch (error) { toast(error.message, 'error'); }
+}
+async function approveMailReview() {
+  const review = state.mailReview;
+  const item = review.items[review.index];
+  const driverId = document.getElementById('mail-review-driver').value;
+  const driver = state.drivers.find(d=>String(d.id)===driverId);
+  if (!item || !review.sha || !driver || !document.getElementById('mail-review-confirm').checked) {
+    toast('Сначала откройте файл, выберите водителя и подтвердите сверку имени.', 'error'); return;
+  }
+  const button = document.getElementById('mail-review-approve');
+  button.disabled = true;
+  try {
+    await api('/admin/driver-mail/review/'+encodeURIComponent(item.key)+'/approve', {
+      method:'POST', body:JSON.stringify({driver_id:driverId,confirmed_full_name:driver.name,expected_sha256:review.sha}),
+    });
+    toast('Документ подтверждён и добавлен.', 'success');
+    await openMailReview();
+  } catch (error) { toast(error.message, 'error'); }
+  finally { button.disabled = false; }
 }
 function showScreen(n) {
   if (n !== 'driver-home' && document.getElementById('screen-driver-home').classList.contains('active')) {
