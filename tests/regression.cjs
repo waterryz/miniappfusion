@@ -12,6 +12,38 @@ const results=[];
   finally{await page.close();}
  }
  try{
+  await check('Archive keeps the card and documents; restore uses dedicated actions',async()=>{
+   const driver={id:'101',name:'Demo',car_number:'T100001C',version:1,archived:false};
+   const files=[{name:'license',url:'https://example.invalid/license.jpg'}];
+   const calls=[];
+   api=async(p,o={})=>{
+    calls.push([p,o.method||'GET']);
+    if(p==='/driver/101/archive'){driver.archived=true;driver.version=2;return{success:true};}
+    if(p==='/driver/101/restore'){driver.archived=false;driver.version=3;return{success:true};}
+    if(p==='/drivers')return driver.archived?[]:[{...driver,file_count:1}];
+    if(p==='/drivers?only_archived=1')return driver.archived?[{...driver,file_count:1}]:[];
+    if(p==='/driver/101')return{driver:{...driver},files};
+    throw new Error('Unexpected route: '+p);
+   };
+   state.currentDriver={...driver};state.currentFiles=files;
+   renderProfile(state.currentDriver,files);confirmArchiveDriver();
+   const archiveText=document.getElementById('modal-text').textContent;
+   await archiveDriver();await openDriver('101');
+   const archived={visible:!document.getElementById('restore-driver-btn').hidden,previewHidden:document.querySelector('[data-active-driver]').hidden,docs:state.currentFiles.length,listed:state.archivedDrivers.length};
+   confirmRestoreDriver();await restoreDriver();
+   return{archiveText,archived,active:state.drivers.length,calls};
+  },r=>{
+   assert.match(r.archiveText,/сохранятся/);
+   assert.deepEqual(r.archived,{visible:true,previewHidden:true,docs:1,listed:1});
+   assert.equal(r.active,1);
+   assert.ok(r.calls.some(([p,m])=>p==='/driver/101/archive'&&m==='POST'));
+   assert.ok(r.calls.some(([p,m])=>p==='/driver/101/restore'&&m==='POST'));
+   assert.ok(r.calls.every(([,m])=>m!=='DELETE'));
+  });
+  await check('Document storage outage is shown as unavailable, not empty',()=>{
+   renderDocs([],false);renderDvDocs([],false);
+   return{admin:document.getElementById('photo-grid').textContent,tenant:document.getElementById('dv-doc-grid').textContent};
+  },r=>{assert.match(r.admin,/временно недоступны/);assert.match(r.tenant,/временно недоступны/);assert.doesNotMatch(r.tenant,/Нет документов/);});
   await check('Pending GPS and unknown tariff are preserved; PATCH only changes price',async()=>{
    state.currentDriver={id:'101',name:'Demo',car_number:'DEMO',planet_gps_device_id:'GPS-OLD',tariff:'Стандарт',weekly_price:'650'};
    let sent;api=async(p,o={})=>{if(p==='/api/fleet')return new Promise(()=>{});if(o.method==='PATCH'){sent=JSON.parse(o.body);return{};}return{driver:state.currentDriver,files:[]};};
