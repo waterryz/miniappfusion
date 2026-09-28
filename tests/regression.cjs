@@ -12,6 +12,39 @@ const results=[];
   finally{await page.close();}
  }
  try{
+  await check('Deposit keeps unknown, confirmed zero and excess separate from rent',()=>{
+   const base={name:'Demo',car_number:'DEMO',weekly_price:'675'};
+   renderDriverHome({driver:{...base},files:[],mileage:{}});
+   const unknown={contract:document.getElementById('dv-deposit-contract').textContent,paid:document.getElementById('dv-deposit-paid').textContent,balance:document.getElementById('dv-deposit-balance').textContent,rent:document.getElementById('dv-pay-amount').textContent};
+   renderDriverHome({driver:{...base,deposit_contract:'500.00',deposit_paid:'0.00',deposit_balance:'500.00'},files:[],mileage:{}});
+   const zero={paid:document.getElementById('dv-deposit-paid').textContent,balance:document.getElementById('dv-deposit-balance').textContent};
+   renderDriverHome({driver:{...base,deposit_contract:'500.00',deposit_paid:'650.00',deposit_balance:'-150.00'},files:[],mileage:{}});
+   return{unknown,zero,excess:document.getElementById('dv-deposit-balance').textContent};
+  },r=>{
+   assert.deepEqual(r.unknown,{contract:'Не указано',paid:'Не подтверждено',balance:'Не рассчитана',rent:'$675'});
+   assert.deepEqual(r.zero,{paid:'$0.00',balance:'$500.00'});
+   assert.equal(r.excess,'Переплата $150.00');
+  });
+  await check('Admin changes only the confirmed deposit amount',async()=>{
+   const driver={id:'101',name:'Demo',car_number:'DEMO',deposit_contract:'1000.00',deposit_paid:'425.00',deposit_balance:'575.00'};
+   state.currentDriver=driver;let sent;
+   api=async(p,o={})=>{if(p==='/api/fleet')return new Promise(()=>{});if(o.method==='PATCH'){sent=JSON.parse(o.body);return{};}return{driver,files:[]};};
+   showEditDriver();document.getElementById('edit-deposit-paid').value='500';await submitEditDriver();
+   return{sent,contract:document.getElementById('edit-deposit-contract').value};
+  },r=>{assert.deepEqual(r.sent,{deposit_paid:'500'});assert.equal(r.contract,'1000.00');});
+  await check('New cabinet preserves deposit fields and explains uncertain button delivery',async()=>{
+   let sent;
+   api=async(p,o={})=>{
+    if(p==='/api/fleet')return new Promise(()=>{});
+    if(p==='/drivers'&&o.method==='POST'){sent=JSON.parse(o.body);return{success:true,onboarding:{notification:'unknown'}};}
+    if(p==='/drivers')return[];
+    throw new Error('Unexpected route: '+p);
+   };
+   showAddDriver();
+   for(const [id,value] of [['add-id','123'],['add-name','Demo'],['add-deposit-contract','1000'],['add-deposit-paid','0']])document.getElementById(id).value=value;
+   await submitAddDriver();
+   return{contract:sent.deposit_contract,paid:sent.deposit_paid,modal:document.getElementById('modal-text').textContent,open:document.getElementById('modal').classList.contains('open')};
+  },r=>{assert.deepEqual(r,{contract:'1000',paid:'0',modal:'Доставка кнопки входа не подтверждена. Попросите водителя открыть бота и нажать /start. Повторно кабинет не создавайте.',open:true});});
   await check('Archive keeps the card and documents; restore uses dedicated actions',async()=>{
    const driver={id:'101',name:'Demo',car_number:'T100001C',version:1,archived:false};
    const files=[{name:'license',url:'https://example.invalid/license.jpg'}];
