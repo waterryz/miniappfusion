@@ -484,6 +484,7 @@
       <div id="field-check" style="margin:12px 0 0;display:none"></div>
       <div class="actions-wrap" style="padding:14px 0 0">
         <button class="action-btn" data-active-driver onclick="openServiceNotes(state.currentDriver.id)">📝 К следующему сервису</button>
+        <button class="action-btn" onclick="openServiceReports(state.currentDriver.id)">🧾 Отчёты о сервисе</button>
         <button class="action-btn primary" data-active-driver onclick="openDriverPreview()">👁 Личный кабинет</button>
         <button class="action-btn" data-active-driver style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="runFieldCheck()">🔎 Проверить заполнение</button>
         <button class="action-btn" data-active-driver style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showEditDriver()">✏️ Редактировать данные</button>
@@ -494,6 +495,14 @@
         <button class="action-btn primary" id="restore-driver-btn" onclick="confirmRestoreDriver()" hidden>↩ Восстановить</button>
       </div>
     </div>
+  </div>
+  <!-- SERVICE REPORT RECEIPTS (admin, read-only) -->
+  <div class="screen" id="screen-service-reports">
+    <div class="header">
+      <button class="back-btn" onclick="showScreen('profile')">←</button>
+      <div class="header-info"><div class="header-title">Отчёты о сервисе</div><div class="header-sub" id="service-reports-driver"></div></div>
+    </div>
+    <div class="scroll-body" style="padding:14px 16px" id="service-reports-list" role="status" aria-live="polite"></div>
   </div>
   <!-- ODOMETER CHECK (admin): сверка пробега по фото одометра -->
   <div class="screen" id="screen-odo">
@@ -1605,6 +1614,50 @@ async function openDriver(id) {
     state.currentMileage = data.mileage || {};
     renderProfile(data.driver, data.files); showScreen('profile');
   } catch(e) { toast('Ошибка загрузки','error'); showScreen('drivers'); }
+}
+const SERVICE_REPORT_ISSUES = {
+  photos_unreadable:'Не все фото прочитаны', receipt_unverified:'Ресит не подтверждён',
+  odometer_unverified:'Пробег не подтверждён', date_unverified:'Дата не прочитана',
+  plate_mismatch:'Номер машины не совпал', vehicle_unverified:'Машина не определена',
+  works_unverified:'Работы не прочитаны', line_prices_unverified:'Цены строк не проверены',
+  total_unverified:'Итог не прочитан', total_mismatch:'Итог не совпал со строками',
+  oil_details_unverified:'Неясны масло, вязкость или количество',
+  brake_details_unverified:'Неясны работа с тормозами или ось',
+  vision_warnings:'Есть неуверенно прочитанные данные',
+  driver_clarification_pending:'Уточнение водителя ожидает проверки',
+};
+async function openServiceReports(driverId) {
+  const id=String(driverId);
+  const driver=state.currentDriver;
+  if(!driver || String(driver.id)!==id) return;
+  document.getElementById('service-reports-driver').textContent=driver.name+' · '+(driver.car_number||'—');
+  const list=document.getElementById('service-reports-list');
+  list.textContent='Загружаю отчёты…'; showScreen('service-reports');
+  try {
+    const data=await api(`/workflow/records?uid=${encodeURIComponent(id)}&kind=report`);
+    if(String(state.currentDriver?.id)!==id) return;
+    const records=(data.records||[]).filter(r=>r.kind==='report' && r.body?.category==='service');
+    records.sort((a,b)=>String(b.received_at).localeCompare(String(a.received_at)));
+    if(!records.length) { list.textContent='Отчётов о сервисе пока нет.'; return; }
+    list.innerHTML=records.map(r=>{
+      const b=r.body||{}, validation=b.validation||{};
+      const issues=(validation.issues||[]).map(code=>SERVICE_REPORT_ISSUES[code]||code);
+      const driverNotice=(r.notices||[]).filter(n=>n.recipient==='driver' && n.version===validation.version).at(-1);
+      const delivery=driverNotice?.status==='delivered'?'доставлен'
+        :driverNotice?.status==='failed'?'не доставлен'
+        :driverNotice?.status==='unknown'?'доставка не подтверждена':'не подтверждён';
+      const history=b.history||[{version:1,photos:b.photos||[],comment:b.comment||'',at:r.received_at}];
+      return `<div class="info-block" style="margin:0 0 12px;padding:14px">
+        <strong>№ ${esc(r.id)}</strong> · ${esc(vehicleTime(r.received_at))}<br>
+        Машина: ${esc(b.car||'—')} · Статус: ${esc(b.status==='complete'?'Комплектен':b.status==='needs_supplements'?'Нужны дополнения':'На проверке')}<br>
+        Запрос водителю: ${esc(delivery)}<br>
+        ${issues.length?'Недостатки: '+issues.map(esc).join('; '):'Недостатков по проверке не выявлено'}<br>
+        ${history.map(h=>`<small>Версия ${esc(h.version)} · ${esc(vehicleTime(h.at))} · фото: ${esc((h.photos||[]).length)}${h.comment?' · '+esc(h.comment):''}</small>`).join('<br>')}
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.textContent='Не удалось загрузить отчёты. Откройте раздел ещё раз.';
+  }
 }
 function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
 // «0.9529 · −4.7%» вместо голого числа: 0.95 сам по себе ничего не говорит.
