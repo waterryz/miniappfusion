@@ -282,6 +282,7 @@
     .profile-settings input,.profile-settings select,.profile-settings button { font:inherit; min-height:44px; padding:8px; max-width:100%; }
     #dv-nickname { font-size:15px; margin:4px 0; overflow-wrap:anywhere; }
   </style>
+  <link rel="stylesheet" href="cabinet-identity.css">
 </head>
 <body>
 <div id="app">
@@ -319,6 +320,7 @@
     <div class="pf-scroll">
       <!-- HERO: арендатор + машина -->
       <div class="pf-hero">
+        <div class="pf-identity-brand"><img src="assets/prime-quality-badge-steel-v1.webp" alt="Prime Fusion"><div><strong>PRIME FUSION</strong><small>DRIVER ACCOUNT</small></div></div>
         <div class="pf-hero-top">
           <div class="pf-avatar" id="dv-avatar">👤</div>
           <div class="pf-hero-main">
@@ -335,16 +337,17 @@
           <span id="dv-limit">—</span>
         </div>
         <div class="pf-hero-plate"><span>🪪</span><span id="dv-plate">—</span></div>
+
+      </div>
         <details id="dv-customize"><summary id="dv-customize-label">Оформление кабинета</summary>
           <form class="profile-settings" onsubmit="saveProfilePreferences(event)">
             <label><span id="nickname-label">Ник (отдельно от официального имени)</span><input id="profile-nickname" maxlength="40" autocomplete="nickname"></label>
-            <label><span id="theme-label">Материал шапки</span><select id="profile-theme"></select></label>
+            <label><span id="theme-label">Материал плашки</span><select id="profile-theme"></select></label>
             <label><span id="avatar-label">Аватар</span><select id="profile-avatar"></select></label>
             <button id="profile-save" type="submit">Сохранить</button>
             <span id="profile-status" role="status"></span>
           </form>
         </details>
-      </div>
       <!-- PAYMENT: недельный платёж -->
       <div class="pf-card">
         <div class="pf-card-head"><span class="pf-ico">📅</span> <span id="i18n-pay-head">Следующий платёж</span></div>
@@ -1166,10 +1169,23 @@ function renderPreferences(d) {
   document.getElementById('dv-customize').hidden=!!state.dvPreview;
   setText('dv-customize-label',RU?'Оформление кабинета':'Customize account');
   setText('nickname-label',RU?'Ник (отдельно от официального имени)':'Nickname (separate from legal name)');
-  setText('theme-label',RU?'Материал шапки':'Header material');
+  setText('theme-label',RU?'Материал плашки':'Nameplate material');
   setText('avatar-label',RU?'Аватар':'Avatar');
   setText('profile-save',RU?'Сохранить':'Save');
+  document.querySelector('.pf-identity-brand small').textContent=RU?'КАБИНЕТ ВОДИТЕЛЯ':'DRIVER ACCOUNT';
 }
+function previewProfilePreferences() {
+  if(state.dvPreview) return;
+  const theme=document.getElementById('profile-theme').value;
+  if(['plain','rust','steel','brass','wood'].includes(theme)) document.querySelector('#screen-driver-home .pf-hero').dataset.theme=theme;
+  setText('dv-avatar',PROFILE_AVATARS[document.getElementById('profile-avatar').value] || PROFILE_AVATARS['man-1']);
+  const nickname=document.getElementById('profile-nickname').value.trim();
+  setText('dv-nickname',nickname ? (RU?'Ник: ':'Nickname: ')+nickname : '');
+  setText('profile-status',RU?'Предпросмотр · изменения не сохранены':'Preview · changes not saved');
+}
+document.getElementById('profile-theme').addEventListener('change',previewProfilePreferences);
+document.getElementById('profile-avatar').addEventListener('change',previewProfilePreferences);
+document.getElementById('profile-nickname').addEventListener('input',previewProfilePreferences);
 async function saveProfilePreferences(event) {
   event.preventDefault();
   if(state.dvPreview) return;

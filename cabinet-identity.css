@@ -1,0 +1,37 @@
+/* Reuse the approved 24 September brass plate; preserve square corner artwork. */
+#screen-driver-home {--text:#203d35;--text-secondary:#4b5b50;--accent:#345c49;--muted:#5c685c;--num:Arial,sans-serif;background:#252a27 url('assets/asphalt.webp') center/420px;font-family:Arial,sans-serif;}
+#screen-driver-home > .logo-bar {height:0;min-height:0;padding:0;border:0;overflow:visible;background:none;z-index:4;}
+#screen-driver-home > .logo-bar > :not(#dv-back) {display:none;}
+#dv-back {position:absolute;top:12px;left:12px;}
+#screen-driver-home .pf-scroll {padding:12px;gap:12px;background:#f4f3e9;margin:0 8px;min-height:100%;}
+#screen-driver-home .pf-hero {isolation:isolate;position:relative;background:none!important;border:0;border-radius:4px;padding:18px 18px 15px;color:#252c21;box-shadow:0 3px 7px #15241f44;}
+#screen-driver-home .pf-hero::before {content:'';position:absolute;inset:0;z-index:-1;border:22px solid transparent;border-image:url('assets/brass.webp') 60 fill stretch;pointer-events:none;}
+#screen-driver-home .pf-hero[data-theme=steel]::before {filter:grayscale(1) brightness(1.22);}
+#screen-driver-home .pf-hero[data-theme=rust]::before {filter:sepia(.45) saturate(1.15) brightness(.92);}
+#screen-driver-home .pf-hero[data-theme=plain]::before {border:1px solid #acb4a3;border-image:none;background:#e9eddf;}
+#screen-driver-home .pf-hero[data-theme=wood]::before {border:1px solid #91704b;border-image:none;background:repeating-linear-gradient(3deg,#d3b78b 0 2px,#d9c09a 2px 5px,#cfb083 5px 7px,#dfc8a1 7px 20px);box-shadow:inset 0 0 0 5px #72533144;}
+.pf-identity-brand {display:flex;gap:9px;align-items:center;padding-bottom:10px;margin-bottom:12px;border-bottom:1px solid #36342144;}
+.pf-identity-brand img {height:38px;width:38px;object-fit:contain;}
+.pf-identity-brand strong {font-size:18px;letter-spacing:.08em;font-weight:900;}
+.pf-identity-brand small {display:block;font-size:10px;letter-spacing:.16em;margin-top:3px;}
+#screen-driver-home .pf-hero-name {font:800 22px/1.18 Arial,sans-serif;white-space:normal;overflow-wrap:anywhere;color:#222b22;}
+#screen-driver-home .pf-avatar {width:48px;height:52px;flex-shrink:0;background:#ffffff38;border:1px solid #4b472f55;border-radius:8px;font-size:34px;display:grid;place-items:center;}
+#screen-driver-home .pf-hero-car {font-size:14px;white-space:normal;color:#303e32;line-height:1.45;margin-top:7px;}
+#screen-driver-home #dv-nickname {font-size:15px;margin:5px 0;color:#354430;}
+#screen-driver-home .pf-hero-meta {display:none;}
+#screen-driver-home .pf-hero-plate {font:700 15px/1.3 Arial,sans-serif;letter-spacing:.08em;color:#283c2d;margin-top:12px;padding-top:9px;border-color:#443b2c44;}
+#screen-driver-home .pf-card {border:1px solid #c9cec1;border-radius:6px;box-shadow:0 2px 0 #bac1b255;background:#fffef8;padding:16px;}
+#screen-driver-home .pf-card-head {font:700 15px/1.3 Arial,sans-serif;text-transform:none;color:#3d5646;letter-spacing:0;}
+#screen-driver-home .pf-pay-date {font:700 19px/1.25 Arial,sans-serif;}
+#screen-driver-home .pf-amount-val {font:800 29px/1.1 Arial,sans-serif;color:#224838;}
+#screen-driver-home .pf-pay-sub,#screen-driver-home .pf-amount-lbl {font-size:13px;}
+#screen-driver-home .pf-bar-fill {background:#819961;}
+#dv-customize {background:#eeeee2;border:1px solid #c7cdbd;border-radius:5px;padding:0 12px;}
+#dv-customize summary {font:700 14px/1.4 Arial,sans-serif;padding:11px 0;cursor:pointer;color:#345442;}
+.profile-settings {padding-bottom:12px;}
+.profile-settings input,.profile-settings select {background:#fffef8;color:#253d32;border:1px solid #a9b5a1;border-radius:5px;width:100%;font-size:16px;}
+.profile-settings button {background:#345743;color:white;border:0;border-radius:5px;font-weight:700;}
+.profile-settings label {color:#354d3f;}
+.pf-family-link {text-align:center;font:12px/1.5 Arial,sans-serif;color:#52674f;padding:8px;}
+.pf-family-link a {color:inherit;text-underline-offset:3px;}
+@media(max-width:350px){#screen-driver-home .pf-scroll{padding:8px;margin:0 5px}.pf-identity-brand strong{font-size:16px}#screen-driver-home .pf-hero{padding:16px}#screen-driver-home .pf-hero-name{font-size:20px}}
