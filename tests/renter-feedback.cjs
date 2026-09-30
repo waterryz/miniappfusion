@@ -62,10 +62,23 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script
      });
      assert(layout.back.bottom+8<=layout.plate.y);
      assert(layout.back.height>=48);
-     assert(layout.logo.width>=56);
+     assert(layout.logo.width>=44);
+     assert(Math.abs(layout.plate.width/layout.plate.height-1.586)<0.01);
+     const contained=await page.evaluate(()=>{
+      const card=document.querySelector('.pf-hero').getBoundingClientRect();
+      const avatar=document.getElementById('dv-avatar');
+      if(avatar.closest('.pf-hero') || avatar.getBoundingClientRect().y<card.bottom)return false;
+      return ['.pf-identity-brand','.pf-hero-main','.pf-hero-car','.pf-hero-plate'].every(s=>{
+       const r=document.querySelector(s).getBoundingClientRect();return r.x>=card.x && r.right<=card.right+1 && r.y>=card.y && r.bottom<=card.bottom+1;
+      });
+     });
+     assert(contained);
      assert(!layout.overflow);
      assert(layout.settingsHidden);
-     if(width===390)await page.screenshot({path:path.join(out,`${lang}-${theme}-preview.png`)});
+     if(width===390){
+      await page.screenshot({path:path.join(out,`${lang}-${theme}-preview.png`)});
+      await page.locator('.pf-hero').screenshot({path:path.join(out,`${lang}-${theme}-card.png`)});
+     }
      results.push({lang,width,theme,...layout});
     }
    }

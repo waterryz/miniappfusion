@@ -325,7 +325,6 @@
       <div class="pf-hero">
         <div class="pf-identity-brand"><img src="assets/prime-quality-badge-steel-v1.webp" alt="Prime Fusion"><div><strong>PRIME FUSION</strong><small>DRIVER ACCOUNT</small></div></div>
         <div class="pf-hero-top">
-          <div class="pf-avatar" id="dv-avatar">👤</div>
           <div class="pf-hero-main">
             <div class="pf-hero-name" id="dv-name">—</div>
             <div id="dv-nickname"></div>
@@ -343,6 +342,7 @@
         <div class="pf-hero-plate"><span id="dv-plate">—</span></div>
 
       </div>
+        <div class="pf-personal-bar"><div class="pf-avatar" id="dv-avatar">👤</div><div><strong id="dv-personal-label">Личный профиль</strong><span id="dv-personal-hint">Аватар и оформление — в настройках ниже</span></div></div>
         <div id="dv-preview-notice" hidden><p id="dv-preview-text">Режим просмотра. Здесь нельзя менять оформление арендатора.</p><button class="action-btn" id="dv-open-own" onclick="loadDriverHome()">Открыть мой кабинет</button></div>
         <details id="dv-customize"><summary><span id="dv-customize-label">Настроить мой кабинет</span><small id="dv-customize-hint">Аватар · никнейм · материал плашки</small></summary>
           <form class="profile-settings" onsubmit="saveProfilePreferences(event)">
@@ -1189,6 +1189,8 @@ function renderPreferences(d) {
   setText('dv-nickname',d.nickname ? (RU?'Ник: ':'Nickname: ')+d.nickname : '');
   document.querySelector('#screen-driver-home .pf-hero').dataset.theme=themes[d.header_theme] ? d.header_theme : 'brass';
   document.getElementById('dv-customize').hidden=!!state.dvPreview;
+  setText('dv-personal-label',RU?'Личный профиль':'Personal profile');
+  setText('dv-personal-hint',state.dvPreview ? (RU?'Аватар арендатора':'Renter’s avatar') : (RU?'Аватар и оформление — в настройках ниже':'Avatar and appearance — settings below'));
   setText('dv-customize-label',RU?'Настроить мой кабинет':'Customize my account');
   setText('dv-customize-hint',RU?'Аватар · никнейм · материал плашки':'Avatar · nickname · nameplate material');
   document.getElementById('dv-preview-notice').hidden=!state.dvPreview;
