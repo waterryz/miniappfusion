@@ -63,7 +63,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script
      assert(layout.back.bottom+8<=layout.plate.y);
      assert(layout.back.height>=48);
      assert(layout.logo.width>=44);
-     assert(Math.abs(layout.plate.width/layout.plate.height-1.586)<0.01);
+     assert(layout.plate.height<185);
      const contained=await page.evaluate(()=>{
       const card=document.querySelector('.pf-hero').getBoundingClientRect();
       const avatar=document.getElementById('dv-avatar');

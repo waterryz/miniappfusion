@@ -68,9 +68,9 @@
 .material-request{border-top:1px solid #c7cdbd}
 @media(max-width:350px){.pf-identity-brand strong{font-size:18px}.pf-identity-brand small{font-size:12px;letter-spacing:.02em}#screen-driver-home .pf-hero-name{font-size:23px}.pf-identity-brand{gap:7px}.pf-identity-brand img{width:32px;height:32px}}
 
-/* Credit-card proportions: branding, identity and vehicle in four compact rows. */
-#screen-driver-home .pf-hero{width:100%;aspect-ratio:1.586;box-sizing:border-box;padding:16px 20px;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:44px minmax(40px,1fr) auto 22px;gap:4px 10px;border-radius:9px;min-height:0;flex-shrink:0}
-#screen-driver-home .pf-hero::before{border:0;border-image:none;background:url('assets/brass-polished-v2.png') center/100% 100% no-repeat;border-radius:9px}
+/* Slim identity plate. Content sets height; corners are scaled uniformly. */
+#screen-driver-home .pf-hero{width:100%;aspect-ratio:auto;box-sizing:border-box;padding:14px 23px;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:44px auto auto 22px;gap:5px 10px;border-radius:9px;min-height:0;flex-shrink:0}
+#screen-driver-home .pf-hero::before{border:24px solid transparent;border-image:url('assets/brass-polished-v2.png') 110 fill stretch;background:none;border-radius:9px}
 #screen-driver-home .pf-hero::after{display:none}
 #screen-driver-home .pf-hero[data-theme=brass]::before{filter:none}
 #screen-driver-home .pf-hero[data-theme=steel]::before{filter:grayscale(1) brightness(1.08)}
@@ -92,7 +92,7 @@
 #screen-driver-home .pf-hero-car{grid-column:1/-1;grid-row:3;font-size:14px;line-height:1.2;margin:0;overflow-wrap:anywhere}
 #screen-driver-home .pf-hero-plate{grid-column:1/-1;grid-row:4;margin:0;padding:0;border:0;font-size:19px;line-height:1.15;letter-spacing:.08em;align-self:end}
 @media(max-width:350px){
- #screen-driver-home .pf-hero{padding:13px 18px;grid-template-rows:40px minmax(36px,1fr) auto 20px;gap:3px 8px}
+ #screen-driver-home .pf-hero{padding:14px 22px;grid-template-rows:40px auto auto 20px;gap:4px 8px}
  .pf-identity-brand{gap:8px}
  .pf-identity-brand img{width:44px;height:44px}
  .pf-identity-brand strong{font-size:17px}
