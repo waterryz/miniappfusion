@@ -270,6 +270,17 @@
     .toast { box-shadow: 0 6px 24px rgba(16,24,40,0.16); }
     .modal { background: var(--card); box-shadow: 0 -6px 30px rgba(16,24,40,0.18); }
     .modal-btn.cancel { background: var(--surface); }
+    #screen-driver-home { overflow-y:auto; touch-action:pan-y; }
+    #screen-driver-home .pf-scroll { flex:none; overflow:visible; }
+    .pf-hero[data-theme="steel"] { background:repeating-linear-gradient(0deg,#d2d5d5 0 1px,#e4e7e7 1px 3px); }
+    .pf-hero[data-theme="brass"] { background:linear-gradient(110deg,#b69a59,#f2e2ad 45%,#c9ae69); }
+    .pf-hero[data-theme="rust"] { background:radial-gradient(ellipse at 0 0,#a96d45,transparent 65%),linear-gradient(120deg,#d8c9aa,#c8b493); }
+    .pf-hero[data-theme="wood"] { background:repeating-linear-gradient(5deg,#dfc8a4 0 3px,#d5bb92 3px 6px,#e5d1af 6px 15px); }
+    .pf-hero[data-theme] { color:#182c29; }
+    .profile-settings { display:grid; gap:10px; margin-top:12px; }
+    .profile-settings label { display:grid; gap:5px; font-size:14px; }
+    .profile-settings input,.profile-settings select,.profile-settings button { font:inherit; min-height:44px; padding:8px; max-width:100%; }
+    #dv-nickname { font-size:15px; margin:4px 0; overflow-wrap:anywhere; }
   </style>
 </head>
 <body>
@@ -309,9 +320,10 @@
       <!-- HERO: арендатор + машина -->
       <div class="pf-hero">
         <div class="pf-hero-top">
-          <div class="pf-avatar">👤</div>
+          <div class="pf-avatar" id="dv-avatar">👤</div>
           <div class="pf-hero-main">
             <div class="pf-hero-name" id="dv-name">—</div>
+            <div id="dv-nickname"></div>
             <div class="pf-hero-car" id="dv-car">—</div>
           </div>
         </div>
@@ -323,6 +335,15 @@
           <span id="dv-limit">—</span>
         </div>
         <div class="pf-hero-plate"><span>🪪</span><span id="dv-plate">—</span></div>
+        <details id="dv-customize"><summary id="dv-customize-label">Оформление кабинета</summary>
+          <form class="profile-settings" onsubmit="saveProfilePreferences(event)">
+            <label><span id="nickname-label">Ник (отдельно от официального имени)</span><input id="profile-nickname" maxlength="40" autocomplete="nickname"></label>
+            <label><span id="theme-label">Материал шапки</span><select id="profile-theme"></select></label>
+            <label><span id="avatar-label">Аватар</span><select id="profile-avatar"></select></label>
+            <button id="profile-save" type="submit">Сохранить</button>
+            <span id="profile-status" role="status"></span>
+          </form>
+        </details>
       </div>
       <!-- PAYMENT: недельный платёж -->
       <div class="pf-card">
@@ -715,7 +736,14 @@
       <div class="form-group">
         <div class="form-label">Telegram ID · Имя</div>
         <input class="form-input" id="edit-idname" type="text" disabled style="opacity:0.65" />
-        <div class="form-hint">ID и имя менять нельзя — имя привязано к хранилищу документов.</div>
+        <div class="form-hint">ID и привязка документов сохраняются. Официальное имя уточняется ниже по документу.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="edit-first-name">First name · по документу латиницей</label>
+        <input class="form-input" id="edit-first-name" maxlength="80" autocomplete="off">
+        <label class="form-label" for="edit-last-name">Last name · по документу латиницей</label>
+        <input class="form-input" id="edit-last-name" maxlength="80" autocomplete="off">
+        <div class="form-hint">Не угадывайте написание. Если документ не проверен, оставьте оба поля пустыми.</div>
       </div>
       <div class="form-group">
         <div class="form-label">Модель авто</div>
@@ -944,7 +972,7 @@ function applyLang() {
   applyLangTxt('notes-help', 'Write what needs checking at the next service. Example: “The brakes squeak. Please check the front left wheel.”');
   applyLangTxt('notes-label', 'Your note');
   document.getElementById('notes-text').placeholder = 'A couple of sentences about the car';
-  applyLangTxt('notes-visibility-label', 'Show to the tenant of this car');
+  applyLangTxt('notes-visibility-label', 'Show to the renter of this car');
   applyLangTxt('notes-save', 'Save note');
   applyLangTxt('notes-history-label', 'Completed at service');
   applyLangTxt('notes-retry', 'Load notes again');
@@ -1121,6 +1149,39 @@ async function loadDriverHome() {
   }
 }
 // Рендер кабинета. Используется и водителем (/driver/me), и админом (просмотр /driver/{id}).
+const PROFILE_AVATARS = {'man-1':'👨🏻','man-2':'👨🏽','man-3':'👨🏿',
+  'woman-1':'👩🏻','woman-2':'👩🏽','woman-3':'👩🏿',
+  'bearded-woman-1':'🧔🏻‍♀️','bearded-woman-2':'🧔🏽‍♀️','bearded-woman-3':'🧔🏿‍♀️'};
+function renderPreferences(d) {
+  const themes=RU ? {plain:'Обычная',rust:'Ржавый металл',steel:'Сталь',brass:'Латунь',wood:'Дерево'}
+    : {plain:'Plain',rust:'Rusty metal',steel:'Steel',brass:'Brass',wood:'Wood'};
+  document.getElementById('profile-theme').innerHTML=Object.entries(themes).map(([id,label])=>`<option value="${id}">${label}</option>`).join('');
+  document.getElementById('profile-avatar').innerHTML=Object.entries(PROFILE_AVATARS).map(([id,label])=>`<option value="${id}">${label} ${id.split('-').pop()}</option>`).join('');
+  document.getElementById('profile-theme').value=themes[d.header_theme] ? d.header_theme : 'plain';
+  document.getElementById('profile-avatar').value=PROFILE_AVATARS[d.avatar] ? d.avatar : 'man-1';
+  document.getElementById('profile-nickname').value=d.nickname || '';
+  setText('dv-avatar',PROFILE_AVATARS[d.avatar] || PROFILE_AVATARS['man-1']);
+  setText('dv-nickname',d.nickname ? (RU?'Ник: ':'Nickname: ')+d.nickname : '');
+  document.querySelector('#screen-driver-home .pf-hero').dataset.theme=themes[d.header_theme] ? d.header_theme : 'plain';
+  document.getElementById('dv-customize').hidden=!!state.dvPreview;
+  setText('dv-customize-label',RU?'Оформление кабинета':'Customize account');
+  setText('nickname-label',RU?'Ник (отдельно от официального имени)':'Nickname (separate from legal name)');
+  setText('theme-label',RU?'Материал шапки':'Header material');
+  setText('avatar-label',RU?'Аватар':'Avatar');
+  setText('profile-save',RU?'Сохранить':'Save');
+}
+async function saveProfilePreferences(event) {
+  event.preventDefault();
+  if(state.dvPreview) return;
+  const button=document.getElementById('profile-save'); button.disabled=true;
+  try {
+    const body={nickname:document.getElementById('profile-nickname').value.trim(),header_theme:document.getElementById('profile-theme').value,avatar:document.getElementById('profile-avatar').value};
+    const saved=await api('/driver/me/preferences',{method:'PATCH',body:JSON.stringify(body)});
+    renderPreferences(saved);
+    setText('profile-status',RU?'Сохранено':'Saved');
+  } catch(e) {setText('profile-status',(RU?'Не сохранено: ':'Not saved: ')+e.message);}
+  finally {button.disabled=false;}
+}
 function renderDriverHome(data) {
   ++state.mileageRequest; ++state.serviceRequest;
   const d = data.driver || {};
@@ -1143,6 +1204,7 @@ function renderDriverHome(data) {
   let carLine = (year ? year + ' ' : '') + (d.car_model || '—');
   if (trim && !(d.car_model || '').toLowerCase().includes(trim.toLowerCase())) carLine += ' ' + trim;
   setText('dv-name', d.name || '—');
+  renderPreferences(d);
   setText('dv-car', carLine);
   setText('dv-plate', d.car_number || '—');
   const t = parseTariff(d.tariff || '');
@@ -1271,7 +1333,7 @@ async function loadServiceMileage(deviceId, sinceDate) {
     loading.style.display = 'none';
     body.style.display = 'block';
     const numEl = document.getElementById('dv-svc-remain');
-    numEl.textContent = RU ? 'Укажите дату сервиса' : 'Set service date';
+    numEl.textContent = RU ? 'Дата сервиса не подтверждена' : 'Service date not confirmed';
     numEl.style.color = 'var(--muted)';
     numEl.style.fontSize = '15px';
     document.getElementById('dv-svc-unit').textContent = '';
@@ -1572,18 +1634,18 @@ function driverByDevice(deviceId) {
     d => d.planet_gps_device_id && String(d.planet_gps_device_id) === String(deviceId)
   ) || null;
 }
-function renderDriverList(drivers) {
+function renderDriverList(drivers, offset=0) {
   const el = document.getElementById('driver-list');
   if (!drivers.length) { el.innerHTML = state.archiveView
     ? `<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Архив пуст</div></div>`
     : `<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">Нет водителей</div><div class="empty-sub">Нажмите + чтобы добавить</div></div>`; return; }
   const n = drivers.length, s = n===1?'ь':n<5?'я':'ей';
-  el.innerHTML = `<div class="slabel">${n} водител${s}</div>` + drivers.map(d => `
+  el.innerHTML = `<div class="slabel">${n} водител${s}</div>` + drivers.map((d,i) => `
     <div class="driver-card" onclick="openDriver('${d.id}')">
       <div class="d-avatar">🚗</div>
       <div class="d-info">
         <div class="d-name" style="display:flex;align-items:center;gap:6px">
-          ${esc(d.name)}
+          ${offset+i+1}. ${esc(d.name)}
           ${d.planet_gps_device_id ? '<div class="gps-dot" title="GPS подключён"></div>' : ''}
         </div>
         <div class="d-plate">${esc(d.car_number)}</div>
@@ -1863,6 +1925,8 @@ function showEditDriver() {
   const d = state.currentDriver;
   document.getElementById('edit-sub').textContent = d.name;
   document.getElementById('edit-idname').value = `${d.id} · ${d.name}`;
+  document.getElementById('edit-first-name').value = d.legal_first_name || '';
+  document.getElementById('edit-last-name').value = d.legal_last_name || '';
   document.getElementById('edit-model').value = d.car_model || '';
   document.getElementById('edit-year').value = d.car_year || '';
   document.getElementById('edit-trim').value = d.car_trim || '';
@@ -1910,6 +1974,7 @@ function checkEditReady() {
 }
 function editDriverBody() {
   return {
+      legal_first_name: val('edit-first-name'), legal_last_name: val('edit-last-name'),
       car_model: val('edit-model'), car_year: val('edit-year'), car_trim: val('edit-trim'),
       car_number: val('edit-number'), tariff: val('edit-tariff'),
       monthly_mileage_limit: val('edit-limit'), weekly_price: val('edit-price'),
@@ -2435,7 +2500,7 @@ function renderServiceNotes(data) {
   for(const note of (data.notes || []).slice().reverse()) {
     const card=document.createElement('article'); card.className='service-note';
     const meta=document.createElement('small');
-    const who=note.author_role==='owner' ? (RU?'Владелец':'Owner') : (RU?'Арендатор':'Tenant');
+    const who=note.author_role==='owner' ? (RU?'Владелец':'Owner') : (RU?'Арендатор':'Renter');
     const date=new Date(note.created_at).toLocaleDateString(RU?'ru-RU':'en-US');
     meta.textContent=who+' · '+date+(view.admin && note.visibility==='internal' ? (RU?' · внутренняя':' · internal') : '');
     const text=document.createElement('p'); text.textContent=note.text;
