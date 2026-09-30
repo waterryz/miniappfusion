@@ -68,6 +68,8 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script
       const card=document.querySelector('.pf-hero').getBoundingClientRect();
       const avatar=document.getElementById('dv-avatar');
       if(avatar.closest('.pf-hero') || avatar.getBoundingClientRect().y<card.bottom)return false;
+      const nickname=document.getElementById('dv-nickname');
+      if(nickname.closest('.pf-hero') || nickname.getBoundingClientRect().y<card.bottom)return false;
       return ['.pf-identity-brand','.pf-hero-main','.pf-hero-car','.pf-hero-plate'].every(s=>{
        const r=document.querySelector(s).getBoundingClientRect();return r.x>=card.x && r.right<=card.right+1 && r.y>=card.y && r.bottom<=card.bottom+1;
       });

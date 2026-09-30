@@ -82,11 +82,12 @@
 #screen-driver-home .pf-hero-top{display:contents}
 #screen-driver-home .pf-hero-main{grid-column:1;grid-row:2;min-width:0;align-self:center}
 #screen-driver-home .pf-hero-name{font-size:20px;line-height:1.12;overflow-wrap:anywhere}
-#screen-driver-home #dv-nickname{font-size:13px;line-height:1.2;margin:3px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#screen-driver-home #dv-nickname{font-size:16px;line-height:1.3;margin:3px 0 0;white-space:normal;overflow-wrap:anywhere}
 #screen-driver-home #dv-nickname:empty{display:none}
 #screen-driver-home .pf-personal-bar{display:flex;align-items:center;gap:12px;padding:4px 0;color:#203d35}
 #screen-driver-home .pf-personal-bar .pf-avatar{width:52px;height:52px;font-size:38px;border-radius:50%;background:#fffef8;border:1px solid #c9cec1}
 .pf-personal-bar strong{font-size:16px;line-height:1.3}
+.pf-personal-bar>div:last-child{min-width:0}
 .pf-personal-bar span{display:block;font-size:13px;line-height:1.4;margin-top:3px;color:#4b5b50}
 #screen-driver-home .pf-hero-car{grid-column:1/-1;grid-row:3;font-size:14px;line-height:1.2;margin:0;overflow-wrap:anywhere}
 #screen-driver-home .pf-hero-plate{grid-column:1/-1;grid-row:4;margin:0;padding:0;border:0;font-size:19px;line-height:1.15;letter-spacing:.08em;align-self:end}
