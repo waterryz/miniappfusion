@@ -312,23 +312,25 @@
   ══════════════════════════════════════════ -->
   <div class="screen" id="screen-driver-home">
     <div class="logo-bar">
-      <button class="back-btn" id="dv-back" onclick="exitDriverPreview()" style="display:none;width:36px;height:36px;font-size:18px;margin-right:2px;">←</button>
+
       <div class="logo-mark"><img src="https://res.cloudinary.com/dimqgnupo/image/upload/v1776772340/photo_2026-01-28_21-59-27_dnx6gl.jpg" alt="Prime Fusion" /></div>
       <div class="logo-name">Prime Fusion</div>
       <div class="logo-tag" id="dv-role">Driver</div>
     </div>
     <div class="pf-scroll">
+      <button class="back-btn" id="dv-back" onclick="exitDriverPreview()" style="display:none;">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg><span id="dv-back-label">Назад</span>
+      </button>
       <!-- HERO: арендатор + машина -->
       <div class="pf-hero">
         <div class="pf-identity-brand"><img src="assets/prime-quality-badge-steel-v1.webp" alt="Prime Fusion"><div><strong>PRIME FUSION</strong><small>DRIVER ACCOUNT</small></div></div>
         <div class="pf-hero-top">
-          <div class="pf-avatar" id="dv-avatar">👤</div>
           <div class="pf-hero-main">
             <div class="pf-hero-name" id="dv-name">—</div>
-            <div id="dv-nickname"></div>
-            <div class="pf-hero-car" id="dv-car">—</div>
+
           </div>
         </div>
+        <div class="pf-hero-car" id="dv-car">—</div>
         <div class="pf-hero-meta">
           <span class="pf-tariff-chip" id="dv-tariff">—</span>
           <span class="pf-meta-sep"></span>
@@ -336,10 +338,12 @@
           <span class="pf-meta-sep"></span>
           <span id="dv-limit">—</span>
         </div>
-        <div class="pf-hero-plate"><span>🪪</span><span id="dv-plate">—</span></div>
+        <div class="pf-hero-plate"><span id="dv-plate">—</span></div>
 
       </div>
-        <details id="dv-customize"><summary id="dv-customize-label">Оформление кабинета</summary>
+        <div class="pf-personal-bar"><div class="pf-avatar" id="dv-avatar">👤</div><div><strong id="dv-personal-label">Личный профиль</strong><div id="dv-nickname"></div><span id="dv-personal-hint">Аватар и оформление — в настройках ниже</span></div></div>
+        <div id="dv-preview-notice" hidden><p id="dv-preview-text">Режим просмотра. Здесь нельзя менять оформление арендатора.</p><button class="action-btn" id="dv-open-own" onclick="loadDriverHome()">Открыть мой кабинет</button></div>
+        <details id="dv-customize"><summary><span id="dv-customize-label">Настроить мой кабинет</span><small id="dv-customize-hint">Аватар · никнейм · материал плашки</small></summary>
           <form class="profile-settings" onsubmit="saveProfilePreferences(event)">
             <label><span id="nickname-label">Ник (отдельно от официального имени)</span><input id="profile-nickname" maxlength="40" autocomplete="nickname"></label>
             <label><span id="theme-label">Материал плашки</span><select id="profile-theme"></select></label>
@@ -357,6 +361,7 @@
             </form>
           </details>
         </details>
+        <button class="action-btn" id="dv-administration" hidden onclick="openAdminHome()">Администрирование</button>
       <!-- PAYMENT: недельный платёж -->
       <div class="pf-card">
         <div class="pf-card-head"><span class="pf-ico">📅</span> <span id="i18n-pay-head">Следующий платёж</span></div>
@@ -488,6 +493,7 @@
       <button id="drivers-archive" onclick="switchDriverView(true)">Архив</button>
     </div>
     <div class="actions-wrap" style="padding:4px 16px 8px">
+      <button class="action-btn" id="admin-own-account" onclick="loadDriverHome()">Мой кабинет · аватар и оформление</button>
       <button class="action-btn" onclick="openVehicles()">🚘 Карточки автомобилей</button>
     </div>
     <div class="scroll-body" id="driver-list"></div>
@@ -1025,12 +1031,9 @@ async function init() {
   try {
     const me = await api('/me');
     dbg.push('/me → ' + JSON.stringify(me));
-    if (me && me.is_admin) {
-      await loadDrivers();
-      showScreen('drivers');
-      return;
-    }
-    dbg.push('is_admin=false → открываю кабинет водителя');
+    state.isAdmin = !!(me && me.is_admin);
+    setText('admin-own-account', RU ? 'Мой кабинет · аватар и оформление' : 'My account · avatar and appearance');
+    dbg.push('Открываю собственный кабинет');
     try {
       const data = await api('/driver/me');
       state.dvPreview = false;
@@ -1038,6 +1041,10 @@ async function init() {
       showScreen('driver-home');
       return;
     } catch (e2) {
+      if (state.isAdmin && (e2.status === 403 || e2.status === 404)) {
+        await openAdminHome();
+        return;
+      }
       dbg.push('/driver/me ✕ ' + e2.message);
       showAccessError(e2);
     }
@@ -1160,6 +1167,11 @@ async function loadDriverHome() {
     showAccessError(e);
   }
 }
+async function openAdminHome() {
+  if (!state.isAdmin) return;
+  try { await loadDrivers(); showScreen('drivers'); }
+  catch (e) { toast(e.message, 'error'); }
+}
 // Рендер кабинета. Используется и водителем (/driver/me), и админом (просмотр /driver/{id}).
 const PROFILE_AVATARS = {'man-1':'👨🏻','man-2':'👨🏽','man-3':'👨🏿',
   'woman-1':'👩🏻','woman-2':'👩🏽','woman-3':'👩🏿',
@@ -1176,7 +1188,13 @@ function renderPreferences(d) {
   setText('dv-nickname',d.nickname ? (RU?'Ник: ':'Nickname: ')+d.nickname : '');
   document.querySelector('#screen-driver-home .pf-hero').dataset.theme=themes[d.header_theme] ? d.header_theme : 'brass';
   document.getElementById('dv-customize').hidden=!!state.dvPreview;
-  setText('dv-customize-label',RU?'Оформление кабинета':'Customize account');
+  setText('dv-personal-label',RU?'Личный профиль':'Personal profile');
+  setText('dv-personal-hint',state.dvPreview ? (RU?'Аватар арендатора':'Renter’s avatar') : (RU?'Аватар и оформление — в настройках ниже':'Avatar and appearance — settings below'));
+  setText('dv-customize-label',RU?'Настроить мой кабинет':'Customize my account');
+  setText('dv-customize-hint',RU?'Аватар · никнейм · материал плашки':'Avatar · nickname · nameplate material');
+  document.getElementById('dv-preview-notice').hidden=!state.dvPreview;
+  setText('dv-preview-text',RU?'Режим просмотра. Здесь нельзя менять оформление арендатора.':'Preview mode. The renter’s appearance cannot be changed here.');
+  setText('dv-open-own',RU?'Открыть мой кабинет':'Open my account');
   setText('nickname-label',RU?'Ник (отдельно от официального имени)':'Nickname (separate from legal name)');
   setText('theme-label',RU?'Материал плашки':'Nameplate material');
   setText('avatar-label',RU?'Аватар':'Avatar');
@@ -1234,9 +1252,12 @@ function renderDriverHome(data) {
   state.dvFilesAvailable = data.files_available !== false;
   // режим просмотра админом: показать «назад», спрятать загрузку
   const preview = !!state.dvPreview;
+  document.getElementById('dv-administration').hidden = !state.isAdmin || preview;
+  setText('dv-administration', RU ? 'Администрирование' : 'Administration');
   document.getElementById('dv-service-notes').style.display = preview ? 'none' : ''; 
   const back = document.getElementById('dv-back');
   if (back) back.style.display = preview ? 'flex' : 'none';
+  setText('dv-back-label', RU ? 'Назад' : 'Back');
   const role = document.getElementById('dv-role');
   if (role) role.textContent = preview ? (RU ? 'Просмотр' : 'Preview') : 'Driver';
   const upBtn = document.getElementById('dv-upload-btn');
