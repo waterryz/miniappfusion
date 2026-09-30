@@ -347,6 +347,15 @@
             <button id="profile-save" type="submit">Сохранить</button>
             <span id="profile-status" role="status"></span>
           </form>
+          <details class="material-request"><summary id="material-request-label">Заказать свой материал</summary>
+            <form class="profile-settings" onsubmit="sendMaterialRequest(event)">
+              <select id="appearance-kind" aria-label="Request type"><option value="material">Материал плашки</option><option value="avatar">Аватар</option></select>
+              <label for="material-description" id="material-description-label">Какой материал вы хотите?</label>
+              <textarea id="material-description" required minlength="3" maxlength="500" rows="3"></textarea>
+              <button id="material-send" type="submit">Отправить пожелание</button>
+              <span id="material-status" role="status"></span>
+            </form>
+          </details>
         </details>
       <!-- PAYMENT: недельный платёж -->
       <div class="pf-card">
@@ -1156,28 +1165,33 @@ const PROFILE_AVATARS = {'man-1':'👨🏻','man-2':'👨🏽','man-3':'👨🏿
   'woman-1':'👩🏻','woman-2':'👩🏽','woman-3':'👩🏿',
   'bearded-woman-1':'🧔🏻‍♀️','bearded-woman-2':'🧔🏽‍♀️','bearded-woman-3':'🧔🏿‍♀️'};
 function renderPreferences(d) {
-  const themes=RU ? {plain:'Обычная',rust:'Ржавый металл',steel:'Сталь',brass:'Латунь',wood:'Дерево'}
-    : {plain:'Plain',rust:'Rusty metal',steel:'Steel',brass:'Brass',wood:'Wood'};
+  const themes=RU ? {brass:'Натёртая латунь',steel:'Полированное железо',wood:'Обожжённое дерево'}
+    : {brass:'Hand-polished brass',steel:'Polished iron',wood:'Charred wood'};
   document.getElementById('profile-theme').innerHTML=Object.entries(themes).map(([id,label])=>`<option value="${id}">${label}</option>`).join('');
   document.getElementById('profile-avatar').innerHTML=Object.entries(PROFILE_AVATARS).map(([id,label])=>`<option value="${id}">${label} ${id.split('-').pop()}</option>`).join('');
-  document.getElementById('profile-theme').value=themes[d.header_theme] ? d.header_theme : 'plain';
+  document.getElementById('profile-theme').value=themes[d.header_theme] ? d.header_theme : 'brass';
   document.getElementById('profile-avatar').value=PROFILE_AVATARS[d.avatar] ? d.avatar : 'man-1';
   document.getElementById('profile-nickname').value=d.nickname || '';
   setText('dv-avatar',PROFILE_AVATARS[d.avatar] || PROFILE_AVATARS['man-1']);
   setText('dv-nickname',d.nickname ? (RU?'Ник: ':'Nickname: ')+d.nickname : '');
-  document.querySelector('#screen-driver-home .pf-hero').dataset.theme=themes[d.header_theme] ? d.header_theme : 'plain';
+  document.querySelector('#screen-driver-home .pf-hero').dataset.theme=themes[d.header_theme] ? d.header_theme : 'brass';
   document.getElementById('dv-customize').hidden=!!state.dvPreview;
   setText('dv-customize-label',RU?'Оформление кабинета':'Customize account');
   setText('nickname-label',RU?'Ник (отдельно от официального имени)':'Nickname (separate from legal name)');
   setText('theme-label',RU?'Материал плашки':'Nameplate material');
   setText('avatar-label',RU?'Аватар':'Avatar');
   setText('profile-save',RU?'Сохранить':'Save');
+  setText('material-request-label',RU?'Заказать материал или аватар':'Request a material or avatar');
+  setText('material-description-label',RU?'Опишите, что вы хотите':'Describe what you would like');
+  document.querySelector('#appearance-kind option[value=material]').textContent=RU?'Материал плашки':'Nameplate material';
+  document.querySelector('#appearance-kind option[value=avatar]').textContent=RU?'Аватар':'Avatar';
+  setText('material-send',RU?'Отправить пожелание':'Send request');
   document.querySelector('.pf-identity-brand small').textContent=RU?'КАБИНЕТ ВОДИТЕЛЯ':'DRIVER ACCOUNT';
 }
 function previewProfilePreferences() {
   if(state.dvPreview) return;
   const theme=document.getElementById('profile-theme').value;
-  if(['plain','rust','steel','brass','wood'].includes(theme)) document.querySelector('#screen-driver-home .pf-hero').dataset.theme=theme;
+  if(['steel','brass','wood'].includes(theme)) document.querySelector('#screen-driver-home .pf-hero').dataset.theme=theme;
   setText('dv-avatar',PROFILE_AVATARS[document.getElementById('profile-avatar').value] || PROFILE_AVATARS['man-1']);
   const nickname=document.getElementById('profile-nickname').value.trim();
   setText('dv-nickname',nickname ? (RU?'Ник: ':'Nickname: ')+nickname : '');
@@ -1196,6 +1210,19 @@ async function saveProfilePreferences(event) {
     renderPreferences(saved);
     setText('profile-status',RU?'Сохранено':'Saved');
   } catch(e) {setText('profile-status',(RU?'Не сохранено: ':'Not saved: ')+e.message);}
+  finally {button.disabled=false;}
+}
+async function sendMaterialRequest(event) {
+  event.preventDefault();
+  if(state.dvPreview) return;
+  const button=document.getElementById('material-send');
+  if(button.disabled) return;
+  button.disabled=true;
+  try {
+    const receipt=await api('/driver/me/appearance-request',{method:'POST',body:JSON.stringify({kind:document.getElementById('appearance-kind').value,text:document.getElementById('material-description').value.trim()})});
+    if(!receipt.saved || !receipt.id) throw new Error(RU?'Нет подтверждения сохранения':'No saved receipt');
+    setText('material-status',(RU?'Заявка № ':'Request #')+receipt.id+(receipt.delivery==='delivered' ? (RU?' передана компании.':' sent to the company.') : (RU?' сохранена. Передача уведомления пока не подтверждена.':' saved. Notification delivery is not yet confirmed.')));
+  } catch(e) {setText('material-status',(RU?'Не удалось подтвердить отправку: ':'Could not confirm submission: ')+e.message);}
   finally {button.disabled=false;}
 }
 function renderDriverHome(data) {

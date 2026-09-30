@@ -174,7 +174,17 @@ const results=[];
       injected:document.querySelectorAll('#dv-nickname b').length,
       avatars:document.getElementById('profile-avatar').options.length,
       themes:document.getElementById('profile-theme').options.length};
-  },r=>{assert.equal(r.name,'Test Driver');assert.equal(r.injected,0);assert.equal(r.avatars,9);assert.equal(r.themes,5);assert.equal(r.calls[0].path,'/driver/me/preferences');assert.deepEqual(Object.keys(r.calls[0].body).sort(),['avatar','header_theme','nickname']);},'profile-steel.png');
+  },r=>{assert.equal(r.name,'Test Driver');assert.equal(r.injected,0);assert.equal(r.avatars,9);assert.equal(r.themes,3);assert.equal(r.calls[0].path,'/driver/me/preferences');assert.deepEqual(Object.keys(r.calls[0].body).sort(),['avatar','header_theme','nickname']);},'profile-steel.png');
+  await check('Appearance requests send kind only with text and block admin preview',async()=>{
+    const calls=[];state.dvPreview=false;
+    api=async(path,opts)=>{calls.push({path,body:JSON.parse(opts.body)});return {saved:true,id:'demo-123',delivery:'pending'};};
+    document.getElementById('appearance-kind').value='avatar';
+    document.getElementById('material-description').value='A pilot portrait';
+    await sendMaterialRequest({preventDefault(){}});
+    const status=document.getElementById('material-status').textContent;
+    state.dvPreview=true;await sendMaterialRequest({preventDefault(){}});state.dvPreview=false;
+    return {calls,status};
+  },r=>{assert.equal(r.calls.length,1);assert.equal(r.calls[0].path,'/driver/me/appearance-request');assert.deepEqual(r.calls[0].body,{kind:'avatar',text:'A pilot portrait'});assert.ok(r.status.includes('demo-123'));});
   await check('Admin list numbering supports later pages',()=>{
     renderDriverList([{id:'1',name:'First Driver'},{id:'2',name:'Second Driver'}],20);
     return document.getElementById('driver-list').textContent;

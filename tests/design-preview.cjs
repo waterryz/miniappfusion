@@ -11,5 +11,7 @@ await page.evaluate(()=>{state.dvPreview=false;api=async()=>({});renderDriverHom
 await page.screenshot({path:path.join(out,'01-brass-mobile.png')});
 await page.evaluate(()=>{document.querySelector('.pf-hero').dataset.theme='steel';document.getElementById('profile-theme').value='steel';document.getElementById('dv-customize').open=true;document.getElementById('screen-driver-home').scrollTop=0;});
 await page.screenshot({path:path.join(out,'02-steel-settings-mobile.png')});
+await page.evaluate(()=>{document.querySelector('.pf-hero').dataset.theme='wood';document.getElementById('profile-theme').value='wood';document.getElementById('dv-customize').open=false;document.getElementById('screen-driver-home').scrollTop=0;});
+await page.screenshot({path:path.join(out,'03-wood-mobile.png')});
 const checks=[];for(const width of [320,390,430]){await page.setViewportSize({width,height:844});checks.push(await page.evaluate(()=>({width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth,headerHeight:document.querySelector('#screen-driver-home>.logo-bar').getBoundingClientRect().height,brand:document.querySelector('.pf-identity-brand').textContent,plateHeight:document.querySelector('.pf-hero').getBoundingClientRect().height})));}
 fs.writeFileSync(path.join(out,'layout-checks.json'),JSON.stringify(checks,null,2));console.log(JSON.stringify(checks));await browser.close();})();

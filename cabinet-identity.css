@@ -35,3 +35,24 @@
 .pf-family-link {text-align:center;font:12px/1.5 Arial,sans-serif;color:#52674f;padding:8px;}
 .pf-family-link a {color:inherit;text-underline-offset:3px;}
 @media(max-width:350px){#screen-driver-home .pf-scroll{padding:8px;margin:0 5px}.pf-identity-brand strong{font-size:16px}#screen-driver-home .pf-hero{padding:16px}#screen-driver-home .pf-hero-name{font-size:20px}}
+/* Readable mobile identity plates: three materials, softly hand-polished metal. */
+#screen-driver-home .pf-hero::after{content:'';position:absolute;inset:6px;z-index:-1;pointer-events:none;background:linear-gradient(115deg,transparent 12%,#fff9dc26 33%,#fff9dc0a 57%,transparent 78%);border-radius:3px}
+#screen-driver-home .pf-hero[data-theme=brass]::before{filter:saturate(.82) brightness(1.09)}
+#screen-driver-home .pf-hero[data-theme=steel]::before{filter:grayscale(1) brightness(1.32) contrast(.86)}
+#screen-driver-home .pf-hero[data-theme=wood]::before{border:1px solid #5d4028;border-image:none;background:#b89463 url('assets/nameplate-wood.svg') center/cover;box-shadow:inset 0 0 12px #25180f88;border-radius:5px}
+#screen-driver-home .pf-hero[data-theme=wood]{color:#23190f;text-shadow:0 1px 0 #edc58b66}
+#screen-driver-home .pf-hero[data-theme=wood] .pf-identity-brand img{filter:sepia(1) saturate(.7) brightness(.44);mix-blend-mode:multiply}
+#screen-driver-home .pf-hero[data-theme=wood] :is(.pf-hero-name,.pf-hero-car,.pf-hero-plate,#dv-nickname){color:#261d12}
+.pf-identity-brand strong{font-size:20px;letter-spacing:.035em}
+.pf-identity-brand small{font-size:12px;letter-spacing:.08em;font-weight:700}
+#screen-driver-home .pf-hero-name{font-size:25px}
+#screen-driver-home .pf-hero-car,#screen-driver-home #dv-nickname{font-size:16px}
+#screen-driver-home .pf-hero-plate{font-size:18px}
+#screen-driver-home .pf-card-head{font-size:17px}
+#screen-driver-home .pf-pay-sub,#screen-driver-home .pf-amount-lbl,.pf-family-link{font-size:14px}
+#dv-customize summary,.profile-settings label{font-size:16px;line-height:1.4}
+.profile-settings textarea{box-sizing:border-box;width:100%;padding:10px;background:#fffef8;color:#253d32;border:1px solid #a9b5a1;border-radius:5px;font:16px/1.5 Arial,sans-serif;resize:vertical}
+.profile-settings button{font-size:16px;min-height:46px;padding:10px}
+#profile-status,#material-status{font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.material-request{border-top:1px solid #c7cdbd}
+@media(max-width:350px){.pf-identity-brand strong{font-size:18px}.pf-identity-brand small{font-size:12px;letter-spacing:.02em}#screen-driver-home .pf-hero-name{font-size:23px}.pf-identity-brand{gap:7px}.pf-identity-brand img{width:32px;height:32px}}
