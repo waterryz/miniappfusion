@@ -1,6 +1,6 @@
 const fs=require('fs'),path=require('path'),assert=require('assert/strict');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8').replace(/<script\b[^>]*\bsrc=[^>]*><\/script>/g,'').replace(/<link\b[^>]*>/g,'').replace(/^init\(\);$/m,'');
+const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8').replace(/<script\b[^>]*\bsrc=[^>]*><\/script>/g,'').replace(/<link\b[^>]*>/g,'').replace(/^init\(\);$/m,'').replace('</head>','<style>'+fs.readFileSync(path.join(__dirname,'../cabinet-identity.css'),'utf8')+'</style></head>');
 const results=[];
 (async()=>{
  const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHANNEL?{channel:process.env.PLAYWRIGHT_CHANNEL}:{})});
@@ -159,6 +159,43 @@ const results=[];
     overflow:document.documentElement.scrollWidth>innerWidth};
   },r=>assert.deepEqual(r,{screen:'screen-service-reports',hasId:true,hasIssue:true,
    hasDelivery:true,versions:2,injectedImages:0,overflow:false}),'service-reports.png');
+  await check('Profile saves only appearance and keeps legal name separate',async()=>{
+    state.dvPreview=false;
+    renderDriverHome({driver:{name:'Test Driver',car_model:'Toyota Sienna',car_year:'2025',car_number:'DEMO'},files:[],mileage:{}});
+    showScreen('driver-home');
+    const calls=[];
+    api=async(path,opts)=>{calls.push({path,body:JSON.parse(opts.body)});return JSON.parse(opts.body);};
+    document.getElementById('profile-nickname').value='<b>Nickname</b>';
+    document.getElementById('profile-theme').value='steel';
+    document.getElementById('profile-avatar').value='bearded-woman-3';
+    await saveProfilePreferences({preventDefault(){}});
+    return {calls,name:document.getElementById('dv-name').textContent,
+      nickname:document.getElementById('dv-nickname').textContent,
+      injected:document.querySelectorAll('#dv-nickname b').length,
+      avatars:document.getElementById('profile-avatar').options.length,
+      themes:document.getElementById('profile-theme').options.length};
+  },r=>{assert.equal(r.name,'Test Driver');assert.equal(r.injected,0);assert.equal(r.avatars,9);assert.equal(r.themes,3);assert.equal(r.calls[0].path,'/driver/me/preferences');assert.deepEqual(Object.keys(r.calls[0].body).sort(),['avatar','header_theme','nickname']);},'profile-steel.png');
+  await check('Appearance requests send kind only with text and block admin preview',async()=>{
+    const calls=[];state.dvPreview=false;
+    api=async(path,opts)=>{calls.push({path,body:JSON.parse(opts.body)});return {saved:true,id:'demo-123',delivery:'pending'};};
+    document.getElementById('appearance-kind').value='avatar';
+    document.getElementById('material-description').value='A pilot portrait';
+    await sendMaterialRequest({preventDefault(){}});
+    const status=document.getElementById('material-status').textContent;
+    state.dvPreview=true;await sendMaterialRequest({preventDefault(){}});state.dvPreview=false;
+    return {calls,status};
+  },r=>{assert.equal(r.calls.length,1);assert.equal(r.calls[0].path,'/driver/me/appearance-request');assert.deepEqual(r.calls[0].body,{kind:'avatar',text:'A pilot portrait'});assert.ok(r.status.includes('demo-123'));});
+  await check('Admin list numbering supports later pages',()=>{
+    renderDriverList([{id:'1',name:'First Driver'},{id:'2',name:'Second Driver'}],20);
+    return document.getElementById('driver-list').textContent;
+  },r=>{assert.ok(r.includes('21. First Driver'));assert.ok(r.includes('22. Second Driver'));});
+  const scrollPage=await context.newPage();
+  await scrollPage.goto('https://miniapp.test/');
+  await scrollPage.evaluate(()=>{renderDriverHome({driver:{name:'Test Driver',car_number:'DEMO'},files:[],mileage:{}});showScreen('driver-home');});
+  await scrollPage.mouse.move(150,30); await scrollPage.mouse.wheel(0,450);
+  await scrollPage.waitForFunction(()=>document.getElementById('screen-driver-home').scrollTop>0);
+  results.push({name:'Wheel gesture starting on brand header scrolls account'});
+  await scrollPage.close();
   fs.writeFileSync(path.join(__dirname,'results.json'),JSON.stringify(results,null,2));console.log(JSON.stringify({passed:results.length,tests:results.map(r=>r.name)},null,2));
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
