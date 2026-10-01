@@ -364,17 +364,18 @@
         <button class="action-btn" id="dv-administration" hidden onclick="openAdminHome()">Администрирование</button>
       <!-- PAYMENT: недельный платёж -->
       <div class="pf-card">
-        <div class="pf-card-head"><span class="pf-ico">📅</span> <span id="i18n-pay-head">Следующий платёж</span></div>
+        <div class="pf-card-head"><span class="pf-ico">📅</span> <span id="i18n-pay-head">График аренды</span></div>
         <div class="pf-pay-row">
           <div style="min-width:0">
             <div class="pf-pay-date" id="dv-pay-date">—</div>
             <div class="pf-pay-sub" id="dv-pay-sub">—</div>
           </div>
           <div class="pf-pay-amount">
-            <div class="pf-amount-lbl" id="i18n-amount-lbl">Сумма</div>
+            <div class="pf-amount-lbl" id="i18n-amount-lbl">В неделю</div>
             <div class="pf-amount-val" id="dv-pay-amount">—</div>
           </div>
         </div>
+        <div class="pf-pay-sub" id="dv-pay-note" style="margin-top:10px"></div>
         <!-- Бесплатная неделя: показывается, только если админ задал дату -->
         <div class="pf-free" id="dv-free-week" style="display:none">
           <span class="pf-ico">🎁</span>
@@ -394,6 +395,7 @@
       <!-- MILEAGE: пробег -->
       <div class="pf-card">
         <div class="pf-card-head"><span class="pf-ico">🛣</span> <span id="i18n-miles-head">Пробег за текущий месяц</span></div>
+        <div class="pf-pay-sub" id="dv-miles-note" role="status"></div>
         <div class="mileage-loading" id="dv-miles-loading"><div class="spinner"></div><span id="i18n-miles-loading">Загрузка пробега…</span></div>
         <div id="dv-miles-body" style="display:none">
           <div class="pf-miles-big"><span id="dv-miles-done">—</span> <span class="pf-miles-of">/ <span id="dv-miles-limit">—</span> <span id="i18n-miles-unit">миль</span></span></div>
@@ -402,7 +404,7 @@
           <div class="pf-mini-grid">
             <div class="pf-mini"><div class="pf-mini-lbl" id="i18n-rem-lbl">Осталось</div><div class="pf-mini-val" id="dv-remaining">—</div><div class="pf-mini-unit" id="i18n-rem-unit">миль</div></div>
             <div class="pf-mini"><div class="pf-mini-lbl" id="i18n-over-lbl">Перерасход</div><div class="pf-mini-val" id="dv-over-miles">—</div><div class="pf-mini-unit" id="i18n-over-unit">миль</div></div>
-            <div class="pf-mini"><div class="pf-mini-lbl" id="i18n-sur-lbl">Доплата</div><div class="pf-mini-val" id="dv-over-cost">—</div><div class="pf-mini-unit">$0.25/mi</div></div>
+            <div class="pf-mini"><div class="pf-mini-lbl" id="i18n-sur-lbl">Оценка</div><div class="pf-mini-val" id="dv-over-cost">—</div><div class="pf-mini-unit">$0.25/mi</div></div>
           </div>
         </div>
       </div>
@@ -1000,8 +1002,8 @@ function applyLang() {
   applyLangTxt('i18n-wip-pill', '⚙ In development');
   applyLangTxt('i18n-wip-title', 'Coming soon');
   applyLangTxt('i18n-wip-sub', 'This section is under development. Stay tuned.');
-  applyLangTxt('i18n-pay-head', 'Next payment');
-  applyLangTxt('i18n-amount-lbl', 'Amount');
+  applyLangTxt('i18n-pay-head', 'Rental schedule');
+  applyLangTxt('i18n-amount-lbl', 'Per week');
   applyLangTxt('i18n-deposit-head', 'Deposit');
   applyLangTxt('i18n-deposit-contract', 'Agreement amount');
   applyLangTxt('i18n-deposit-paid', 'Confirmed received');
@@ -1011,7 +1013,7 @@ function applyLang() {
   applyLangTxt('i18n-miles-unit', 'mi');
   applyLangTxt('i18n-rem-lbl', 'Remaining'); applyLangTxt('i18n-rem-unit', 'mi');
   applyLangTxt('i18n-over-lbl', 'Overage'); applyLangTxt('i18n-over-unit', 'mi');
-  applyLangTxt('i18n-sur-lbl', 'Surcharge');
+  applyLangTxt('i18n-sur-lbl', 'Estimate');
   applyLangTxt('i18n-svc-head', 'Service · every 7,000 mi');
   applyLangTxt('i18n-svc-loading', 'Loading mileage…');
   applyLangTxt('dv-svc-unit', 'mi to service');
@@ -1121,7 +1123,9 @@ function nextPaymentInfo(weekdayStr) {
   if (weekdayStr === '' || weekdayStr === null || weekdayStr === undefined) return null;
   const wd = parseInt(weekdayStr, 10);
   if (isNaN(wd) || wd < 0 || wd > 6) return null;
-  const today = new Date();
+  const parts = new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York',year:'numeric',month:'numeric',day:'numeric'}).formatToParts(new Date());
+  const part = k => Number(parts.find(p=>p.type===k).value);
+  const today = new Date(part('year'), part('month')-1, part('day'));
   const diff = (wd - today.getDay() + 7) % 7;
   const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + diff);
   return {
@@ -1279,10 +1283,15 @@ function renderDriverHome(data) {
   setText('dv-price', price != null ? '$' + price + '/нед' : '—');
   // лимит миль: кастомный (из админки) важнее тарифного
   const customLimit = _num(mil.limit);
-  const limit = customLimit != null ? customLimit : (t.miles != null ? t.miles : null);
+  let limit = customLimit != null ? customLimit : (t.miles != null ? t.miles : null);
+  t.limitUnconfirmed = limit != null && limit >= 99999;
+  t.priceFromLabel = customPrice == null && t.price != null;
+  t.limitFromLabel = customLimit == null && t.miles != null;
+  if (t.limitUnconfirmed) { limit = null; t.unlimited = false; }
   setText('dv-limit', limit != null ? limit.toLocaleString() + (RU ? ' mi/мес' : ' mi/mo') : (t.unlimited ? (RU ? 'Безлимит' : 'Unlimited') : '—'));
   // ── PAYMENT ──
   const pay = nextPaymentInfo(d.payment_weekday);
+  setText('dv-pay-note', (RU ? 'График по карточке. Оплаты и задолженность здесь не учтены.' : 'Card schedule. Payments and outstanding balance are not included.') + (t.priceFromLabel ? (RU ? ' Ставка взята из названия тарифа — требуется сверка.' : ' Rate taken from the tariff label — verification needed.') : ''));
   setText('dv-pay-amount', price != null ? '$' + price : '—');
   setText('dv-pay-date', pay ? pay.date : '—');
   setText('dv-pay-sub', pay ? pay.sub : (RU ? 'День платежа не задан' : 'Payment day not set'));
@@ -1340,19 +1349,27 @@ async function loadMonthlyMileage(deviceId, limit, t, resetDate) {
   // Если задана дата пересадки — считаем месячный пробег с неё (обнуление).
   if (resetDate) path += '?since=' + encodeURIComponent(resetDate);
   try {
-    let r;
-    try { r = await api(path, {}, FLEET_API); }
-    catch (e1) { r = await api(path, {}, API); }
+    const r = await api(path, {}, FLEET_API);
     if (requestId === state.mileageRequest) renderMiles(_num(r && r.mileage), limit, t);
   } catch (e) {
-    if (requestId === state.mileageRequest) renderMiles(null, limit, t);
+    if (requestId === state.mileageRequest) {
+      renderMiles(null, limit, t);
+      for (const id of ['dv-remaining','dv-over-miles','dv-over-cost']) setText(id, '—');
+      setText('dv-miles-note', e.status === 409
+        ? (RU ? 'Привязка GPS требует проверки. Пробег и доплата не рассчитаны.' : 'GPS assignment needs verification. Mileage and extra charge are unavailable.')
+        : (RU ? 'Пробег недоступен. Доплата не рассчитана.' : 'Mileage unavailable. Extra charge not calculated.'));
+    }
   }
 }
 // Отрисовка карточки пробега: done — пройдено за месяц (миль) или null.
 function renderMiles(done, limit, t) {
   document.getElementById('dv-miles-loading').style.display = 'none';
   document.getElementById('dv-miles-body').style.display = 'block';
-  setText('dv-miles-done', done != null ? Math.round(done).toLocaleString() : '—');
+  const milesText = n => n.toLocaleString(RU ? 'ru-RU' : 'en-US', {maximumFractionDigits:2});
+  setText('dv-miles-done', done != null ? milesText(done) : '—');
+  setText('dv-miles-note', t.limitUnconfirmed
+    ? (RU ? 'Лимит требует подтверждения. Доплата не рассчитана.' : 'Mileage limit needs confirmation. Extra charge not calculated.')
+    : (t.limitFromLabel ? (RU ? 'Лимит взят из названия тарифа. ' : 'Limit taken from the tariff label. ') : '') + (RU ? 'Оценка по GPS, не счёт к оплате.' : 'GPS estimate, not an invoice.'));
   const bar = document.getElementById('dv-miles-bar');
   const remEl = document.getElementById('dv-remaining');
   const ovmEl = document.getElementById('dv-over-miles');
@@ -1366,7 +1383,7 @@ function renderMiles(done, limit, t) {
       const remaining = limit - done;
       const over = remaining < 0 ? Math.abs(remaining) : 0;
       setText('dv-remaining', remaining >= 0 ? Math.round(remaining).toLocaleString() : '0');
-      setText('dv-over-miles', Math.round(over).toLocaleString());
+      setText('dv-over-miles', milesText(over));
       setText('dv-over-cost', '$' + (over * 0.25).toFixed(2));
       remEl.style.color = remaining >= 0 ? 'var(--green)' : 'var(--red)';
       ovmEl.style.color = over > 0 ? 'var(--red)' : 'var(--text)';
@@ -1381,8 +1398,8 @@ function renderMiles(done, limit, t) {
     setText('dv-miles-limit', t.unlimited ? '∞' : '—');
     setText('dv-miles-pct', '');
     setText('dv-remaining', t.unlimited ? '∞' : '—');
-    setText('dv-over-miles', '0');
-    setText('dv-over-cost', '$0');
+    setText('dv-over-miles', t.unlimited ? '0' : '—');
+    setText('dv-over-cost', t.unlimited ? '$0' : '—');
     ovmEl.style.color = 'var(--text)'; ovcEl.style.color = 'var(--green)';
     bar.style.width = '0%';
   }
@@ -1424,7 +1441,10 @@ async function loadServiceMileage(deviceId, sinceDate) {
     const driven = _num(r && r.mileage);
     renderService(driven != null ? (SERVICE_INTERVAL - driven) : null, null);
   } catch (e) {
-    if (requestId === state.serviceRequest) renderService(null, null);
+    if (requestId === state.serviceRequest) {
+      renderService(null, null);
+      if (e.status === 409) setText('dv-svc-note', RU ? 'Привязка GPS требует проверки.' : 'GPS assignment needs verification.');
+    }
   }
 }
 // Строка «сейчас 128 970 mi · сверка 8 авг» под пробегом следующего ТО.
