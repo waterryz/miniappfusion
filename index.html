@@ -1035,6 +1035,10 @@ async function init() {
     dbg.push('/me → ' + JSON.stringify(me));
     state.isAdmin = !!(me && me.is_admin);
     setText('admin-own-account', RU ? 'Мой кабинет · аватар и оформление' : 'My account · avatar and appearance');
+    if (state.isAdmin && new URLSearchParams(location.search).get('view') === 'admin') {
+      await openAdminHome();
+      return;
+    }
     dbg.push('Открываю собственный кабинет');
     try {
       const data = await api('/driver/me');
@@ -1173,8 +1177,20 @@ async function loadDriverHome() {
 }
 async function openAdminHome() {
   if (!state.isAdmin) return;
-  try { await loadDrivers(); showScreen('drivers'); }
-  catch (e) { toast(e.message, 'error'); }
+  state.archiveView = false;
+  document.getElementById('search-input').value = '';
+  document.getElementById('drivers-active').classList.add('active');
+  document.getElementById('drivers-archive').classList.remove('active');
+  showScreen('drivers');
+  setText('driver-list', RU ? 'Загружаем арендаторов…' : 'Loading renter accounts…');
+  try { await loadDrivers(); }
+  catch (e) {
+    const list = document.getElementById('driver-list');
+    list.textContent = RU ? 'Не удалось загрузить список. ' : 'Could not load the list. ';
+    const retry = document.createElement('button');
+    retry.className = 'action-btn'; retry.textContent = RU ? 'Повторить' : 'Retry';
+    retry.onclick = openAdminHome; list.appendChild(retry);
+  }
 }
 // Рендер кабинета. Используется и водителем (/driver/me), и админом (просмотр /driver/{id}).
 const PROFILE_AVATARS = {'man-1':'👨🏻','man-2':'👨🏽','man-3':'👨🏿',
@@ -1696,13 +1712,13 @@ function renderMap(vehicles) {
   if (_mapMarkers.length > 0) _map.fitBounds(L.featureGroup(_mapMarkers).getBounds().pad(0.15));
 }
 async function loadDrivers() {
-  const data = await api('/drivers');
+  const data = await api('/drivers?summary=1');
   state.drivers = data;
   filterDrivers();
 }
 async function switchDriverView(archived) {
   if (archived) {
-    try { state.archivedDrivers = await api('/drivers?only_archived=1'); }
+    try { state.archivedDrivers = await api('/drivers?only_archived=1&summary=1'); }
     catch (e) { toast('Не удалось загрузить архив: ' + e.message, 'error'); return; }
   }
   state.archiveView = archived;

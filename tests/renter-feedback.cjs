@@ -26,7 +26,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script
      if(p==='/me')return {is_admin:true};
      if(p==='/driver/me')return {driver:demoDriver,files:[],mileage:{}};
      if(p==='/driver/me/preferences'){Object.assign(demoDriver,JSON.parse(o.body));return {...demoDriver};}
-     if(p==='/drivers')return [demoDriver];
+     if(p==='/drivers?summary=1')return [demoDriver];
      return {};
     };
     await init();
@@ -92,7 +92,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script
    await page.screenshot({path:path.join(out,`${lang}-settings.png`)});
    assert.deepEqual(errors,[]);
    // Admin without an assigned account still reaches administration. Auth errors do not bypass login.
-   await page.evaluate(async()=>{api=async p=>{if(p==='/me')return{is_admin:true};if(p==='/driver/me')throw Object.assign(new Error('No driver'),{status:404});if(p==='/drivers')return [];return {};};await init();});
+   await page.evaluate(async()=>{api=async p=>{if(p==='/me')return{is_admin:true};if(p==='/driver/me')throw Object.assign(new Error('No driver'),{status:404});if(p==='/drivers?summary=1')return [];return {};};await init();});
    assert(await page.locator('#screen-drivers').evaluate(e=>e.classList.contains('active')));
    await page.evaluate(async()=>{api=async p=>{if(p==='/me')return{is_admin:true};throw Object.assign(new Error('Expired'),{status:401});};await init();});
    assert(await page.locator('#screen-wip').evaluate(e=>e.classList.contains('active')));

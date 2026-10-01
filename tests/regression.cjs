@@ -49,7 +49,7 @@ const results=[];
    api=async(p,o={})=>{
     if(p==='/api/fleet')return new Promise(()=>{});
     if(p==='/drivers'&&o.method==='POST'){sent=JSON.parse(o.body);return{success:true,onboarding:{notification:'unknown'}};}
-    if(p==='/drivers')return[];
+    if(p==='/drivers?summary=1')return[];
     throw new Error('Unexpected route: '+p);
    };
    showAddDriver();
@@ -65,8 +65,8 @@ const results=[];
     calls.push([p,o.method||'GET']);
     if(p==='/driver/101/archive'){driver.archived=true;driver.version=2;return{success:true};}
     if(p==='/driver/101/restore'){driver.archived=false;driver.version=3;return{success:true};}
-    if(p==='/drivers')return driver.archived?[]:[{...driver,file_count:1}];
-    if(p==='/drivers?only_archived=1')return driver.archived?[{...driver,file_count:1}]:[];
+    if(p==='/drivers?summary=1')return driver.archived?[]:[{...driver,file_count:1}];
+    if(p==='/drivers?only_archived=1&summary=1')return driver.archived?[{...driver,file_count:1}]:[];
     if(p==='/driver/101')return{driver:{...driver},files};
     throw new Error('Unexpected route: '+p);
    };
