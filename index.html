@@ -976,7 +976,7 @@ const state = {
   initData: '', pendingAction: null,
   fleetData: [], fleetInterval: null,
   vehicleItems: [], vehicleBack: 'drivers',
-  currentTab: 'drivers',
+  currentTab: 'drivers', navigationRequest: 0,
   // driver self-view
   dvFiles: [], dvFilesAvailable: true, dvLbIndex: 0, mileageRequest: 0, serviceRequest: 0,
 };
@@ -1027,11 +1027,13 @@ async function init() {
   applyLang();
   if (tg) { tg.ready(); tg.expand(); state.initData = tg.initData || ''; }
   showScreen('loading');
+  const navigation = state.navigationRequest;
   const dbg = [];
   dbg.push('initData: ' + (state.initData ? (state.initData.length + ' симв.') : 'ПУСТО ⚠'));
   if (tg && tg.platform) dbg.push('platform: ' + tg.platform);
   try {
     const me = await api('/me');
+    if (navigation !== state.navigationRequest) return;
     dbg.push('/me → ' + JSON.stringify(me));
     state.isAdmin = !!(me && me.is_admin);
     setText('admin-own-account', RU ? 'Мой кабинет · аватар и оформление' : 'My account · avatar and appearance');
@@ -1042,11 +1044,13 @@ async function init() {
     dbg.push('Открываю собственный кабинет');
     try {
       const data = await api('/driver/me');
+      if (navigation !== state.navigationRequest) return;
       state.dvPreview = false;
       renderDriverHome(data);
       showScreen('driver-home');
       return;
     } catch (e2) {
+      if (navigation !== state.navigationRequest) return;
       if (state.isAdmin && (e2.status === 403 || e2.status === 404)) {
         await openAdminHome();
         return;
@@ -1055,6 +1059,7 @@ async function init() {
       showAccessError(e2);
     }
   } catch (e) {
+    if (navigation !== state.navigationRequest) return;
     dbg.push('/me ✕ ' + e.message);
     showAccessError(e);
   }
@@ -1166,12 +1171,15 @@ function freeWeekInfo(dateStr) {
   return { date: label, sub, past: days < 0 };
 }
 async function loadDriverHome() {
+  const navigation = ++state.navigationRequest;
   try {
     const data = await api('/driver/me');
+    if (navigation !== state.navigationRequest) return;
     state.dvPreview = false;
     renderDriverHome(data);
     showScreen('driver-home');
   } catch (e) {
+    if (navigation !== state.navigationRequest) return;
     showAccessError(e);
   }
 }
@@ -1655,6 +1663,7 @@ async function openVehicleHistory(plate, fromList=false) {
   } catch (error) { body.textContent = 'Не удалось открыть историю: '+error.message; }
 }
 function showScreen(n) {
+  ++state.navigationRequest;
   if (n !== 'driver-home' && document.getElementById('screen-driver-home').classList.contains('active')) {
     ++state.mileageRequest; ++state.serviceRequest;
   }
@@ -1769,13 +1778,15 @@ function showDrivers() {
 }
 async function openDriver(id) {
   showScreen('loading');
+  const navigation = state.navigationRequest;
   try {
     const data = await api(`/driver/${id}`);
+    if (navigation !== state.navigationRequest) return;
     state.currentDriver = data.driver; state.currentFiles = data.files;
     state.currentFilesAvailable = data.files_available !== false;
     state.currentMileage = data.mileage || {};
     renderProfile(data.driver, data.files); showScreen('profile');
-  } catch(e) { toast('Ошибка загрузки','error'); showScreen('drivers'); }
+  } catch(e) { if (navigation !== state.navigationRequest) return; toast('Ошибка загрузки','error'); showScreen('drivers'); }
 }
 const SERVICE_REPORT_ISSUES = {
   photos_unreadable:'Не все фото прочитаны', receipt_unverified:'Ресит не подтверждён',
