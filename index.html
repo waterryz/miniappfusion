@@ -283,6 +283,8 @@
     #dv-nickname { font-size:15px; margin:4px 0; overflow-wrap:anywhere; }
   </style>
   <link rel="stylesheet" href="cabinet-identity.css">
+  <link rel="stylesheet" href="ticket-history.css">
+  <link rel="stylesheet" href="bonus-trial.css">
 </head>
 <body>
 <div id="app">
@@ -362,7 +364,10 @@
           </details>
         </details>
         <button class="action-btn" id="dv-administration" hidden onclick="openAdminHome()">Администрирование</button>
-      <!-- PAYMENT: недельный платёж -->
+      <section id="dv-ticket-history" aria-label="История тикетов"></section>
+      <section id="dv-bonus-trial" aria-label="Бонусные баллы"></section>
+
+    <!-- PAYMENT: недельный платёж -->
       <div class="pf-card">
         <div class="pf-card-head"><span class="pf-ico">📅</span> <span id="i18n-pay-head">График аренды</span></div>
         <div class="pf-pay-row">
@@ -957,6 +962,8 @@
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<script src="ticket-history.js"></script>
+<script src="bonus-trial.js"></script>
 <script>
 const API = 'https://tg-bot-prime-fusion-production.up.railway.app';
 // Весь бэкенд (водители + PlanetGPS) собран на одном сервисе. Константу
@@ -1271,6 +1278,22 @@ async function sendMaterialRequest(event) {
   } catch(e) {setText('material-status',(RU?'Не удалось подтвердить отправку: ':'Could not confirm submission: ')+e.message);}
   finally {button.disabled=false;}
 }
+let ticketHistoryPanel = null;
+let bonusTrialPanel = null;
+function loadBonusTrial(driverId, preview) {
+  const root=document.getElementById('dv-bonus-trial');
+  if(bonusTrialPanel)bonusTrialPanel.destroy();
+  if(!window.BonusTrial){root.textContent=RU?'Баланс временно недоступен.':'Balance temporarily unavailable.';return;}
+  const path=preview?'/driver/'+encodeURIComponent(driverId)+'/bonus-trial':'/driver/me/bonus-trial';
+  bonusTrialPanel=BonusTrial.mount(root,{language:RU?'ru':'en',load:()=>api(path)});
+}
+function loadTicketHistory(driverId, preview) {
+  const root=document.getElementById('dv-ticket-history');
+  if(ticketHistoryPanel)ticketHistoryPanel.destroy();
+  if(!window.TicketHistory){root.textContent=RU?'История тикетов недоступна.':'Ticket history unavailable.';return;}
+  const path=preview?'/driver/'+encodeURIComponent(driverId)+'/tickets':'/driver/me/tickets';
+  ticketHistoryPanel=TicketHistory.mount(root,{language:RU?'ru':'en',preview:!!preview,load:()=>api(path)});
+}
 function renderDriverHome(data) {
   ++state.mileageRequest; ++state.serviceRequest;
   const d = data.driver || {};
@@ -1290,6 +1313,8 @@ function renderDriverHome(data) {
   if (role) role.textContent = preview ? (RU ? 'Просмотр' : 'Preview') : 'Driver';
   const upBtn = document.getElementById('dv-upload-btn');
   if (upBtn) upBtn.style.display = preview ? 'none' : '';
+  loadTicketHistory(d.id, state.dvPreview);
+  loadBonusTrial(d.id, state.dvPreview);
   // ── HERO ──
   const year = String(d.car_year || '').trim();
   const trim = String(d.car_trim || '').trim();
