@@ -155,15 +155,22 @@
   function mount(root, opts) {
     let records=[], selected='all', generation=0,alive=true,expiryReloaded=false;
     const lang=['ru','en','ka'].includes(opts.language)?opts.language:'ru', text=labels[lang];
-    const admin=opts.preview===true;
+    const owner=opts.preview===true;
+    let admin=owner&&typeof global.matchMedia==='function'&&global.matchMedia('(min-width:900px)').matches;
     root.replaceChildren(); root.classList.add('ticket-history');root.classList.toggle('th-admin',admin);root.classList.toggle('th-renter',!admin);
+    root.classList.toggle('th-owner',owner);
     const header=node('div','th-heading');
     header.append(node('h2','',opts.preview?text.preview:text.title));
     const refresh=node('button','th-refresh',text.refresh); refresh.type='button'; header.append(refresh); root.append(header);
-    if(admin)root.append(node('p','th-note',text.separate));
+    const ownerNote=node('p','th-note',text.separate);ownerNote.hidden=!admin;if(owner)root.append(ownerNote);
     const status=node('p','th-status'); status.setAttribute('role','status'); root.append(status);
     const filters=node('div','th-filters'); filters.setAttribute('aria-label',text.title); root.append(filters);
     const list=node('div','th-list'); root.append(list);
+    if(owner){
+      const names={ru:{full:'Подробно',short:'Кратко'},en:{full:'Details',short:'Compact'},ka:{full:'დეტალურად',short:'მოკლედ'}}[lang];
+      const toggle=node('button','th-view-toggle',admin?names.short:names.full);toggle.type='button';toggle.setAttribute('aria-pressed',String(admin));header.append(toggle);
+      toggle.onclick=()=>{admin=!admin;selected='all';root.classList.toggle('th-admin',admin);root.classList.toggle('th-renter',!admin);ownerNote.hidden=!admin;toggle.textContent=admin?names.short:names.full;toggle.setAttribute('aria-pressed',String(admin));status.textContent=admin&&records.length?text.noTotals:'';render();tick();};
+    }
     function render() {
       filters.replaceChildren(); list.replaceChildren();
       const matches=(r,key)=>key==='all'||(admin?(r.payment?.categories||[]).includes(key):key==='closed'?renterSettled(r):!renterSettled(r));

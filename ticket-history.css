@@ -51,8 +51,14 @@
 .th-renter .th-dispute-form{font-size:16px}.th-renter textarea{font-size:16px}
 .th-renter .th-desktop-detail{display:none}
 .th-renter button:focus-visible,.th-renter summary:focus-visible{outline:3px solid #587fc3;outline-offset:3px}
+.th-owner .th-view-toggle{font:inherit;font-size:16px;min-height:44px;padding:10px 12px;border:1px solid #c9ceda;border-radius:10px;background:#f6f7fa;color:inherit;cursor:pointer}
+.th-owner .th-heading{flex-wrap:wrap}.th-owner .th-heading h2{flex:1 1 180px}
+.th-owner .th-view-toggle:focus-visible{outline:3px solid #587fc3;outline-offset:3px}
 @media(min-width:768px){.th-renter .th-desktop-detail{display:block}}
 @media(max-width:767px){
+ .th-owner .th-heading h2{flex-basis:100%}
+ .th-admin .th-note,.th-admin .th-status,.th-admin .th-filter,.th-admin .th-badge,.th-admin .th-fields,.th-admin .th-notifications,.th-admin .th-hold,.th-admin .th-test{font-size:16px}
+ .th-admin .th-filter,.th-admin .th-refresh,.th-admin .th-notifications summary{min-height:44px}
  .th-renter{padding:14px;margin:14px 0}
  .th-renter .th-ticket{padding:14px}
  .th-renter .th-list{grid-template-columns:minmax(0,1fr)}
