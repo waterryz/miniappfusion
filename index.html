@@ -285,6 +285,7 @@
   <link rel="stylesheet" href="cabinet-identity.css">
   <link rel="stylesheet" href="ticket-history.css?v=20261026-readable2">
   <link rel="stylesheet" href="bonus-trial.css">
+  <link rel="stylesheet" href="birthday-day.css?v=20261026">
 </head>
 <body>
 <div id="app">
@@ -365,6 +366,7 @@
         </details>
         <button class="action-btn" id="dv-administration" hidden onclick="openAdminHome()">Администрирование</button>
       <section id="dv-ticket-history" aria-label="История тикетов"></section>
+      <section id="dv-birthday-day" aria-label="День рождения"></section>
       <section id="dv-bonus-trial" aria-label="Бонусные баллы"></section>
 
     <!-- PAYMENT: недельный платёж -->
@@ -726,6 +728,10 @@
         <div class="form-hint">Подтверждённый остаток по прежней акции. Пусто — не рассчитан, 0 — дней не осталось.</div>
       </div>
       <div class="form-group">
+        <label class="form-label" for="add-birthday">День рождения · месяц-день (MM-DD)</label>
+        <input class="form-input" id="add-birthday" placeholder="11-02" maxlength="5" />
+      </div>
+      <div class="form-group">
         <div class="form-label">Сервис: пробег на последнем ТО, mi <span style="color:var(--muted);font-weight:400;text-transform:none">(необяз.)</span></div>
         <input class="form-input" id="add-svc-mi" type="text" inputmode="numeric" placeholder="44850" />
       </div>
@@ -839,6 +845,10 @@
         <div class="form-label">Бесплатных дней на 1 января 2027</div>
         <input class="form-input" id="edit-free-days" type="number" min="0" max="366" step="1" inputmode="numeric" />
         <div class="form-hint">Пусто — не рассчитан. Введите 0, если аванс уже покрыл льготу.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="edit-birthday">День рождения · месяц-день (MM-DD)</label>
+        <input class="form-input" id="edit-birthday" placeholder="11-02" maxlength="5" />
       </div>
       <div class="form-group">
         <div class="form-label">Сервис: пробег на последнем ТО, mi</div>
@@ -964,6 +974,7 @@
 <div class="toast" id="toast"></div>
 <script src="ticket-history.js?v=20261026-readable2"></script>
 <script src="bonus-trial.js"></script>
+<script src="birthday-day.js?v=20261026"></script>
 <script>
 const API = 'https://tg-bot-prime-fusion-production.up.railway.app';
 // Весь бэкенд (водители + PlanetGPS) собран на одном сервисе. Константу
@@ -1261,6 +1272,13 @@ async function sendMaterialRequest(event) {
 }
 let ticketHistoryPanel = null;
 let bonusTrialPanel = null;
+let birthdayDayPanel = null;
+function loadBirthdayDay(driverId, preview) {
+  const root=document.getElementById("dv-birthday-day");birthdayDayPanel?.destroy();
+  if(!window.BirthdayDay)return;
+  const path=preview?"/driver/"+encodeURIComponent(driverId)+"/birthday":"/driver/me/birthday";
+  birthdayDayPanel=BirthdayDay.mount(root,{language:RU?"ru":"en",preview:!!preview || !!state.isAdmin,load:()=>api(path),save:body=>api(path,{method:"POST",body:JSON.stringify(body)}),upload:(kind,body)=>api("/driver/me/upload",{method:"POST",body:JSON.stringify(body)})});
+}
 function loadBonusTrial(driverId, preview) {
   const root=document.getElementById('dv-bonus-trial');
   if(bonusTrialPanel)bonusTrialPanel.destroy();
@@ -1296,6 +1314,7 @@ function renderDriverHome(data) {
   if (upBtn) upBtn.style.display = preview ? 'none' : '';
   loadTicketHistory(d.id, state.dvPreview);
   loadBonusTrial(d.id, state.dvPreview);
+  loadBirthdayDay(d.id,state.dvPreview);
   // ── HERO ──
   const year = String(d.car_year || '').trim();
   const trim = String(d.car_trim || '').trim();
@@ -2055,6 +2074,7 @@ function showEditDriver() {
   document.getElementById('edit-deposit-paid').value = d.deposit_paid == null ? '' : d.deposit_paid;
   document.getElementById('edit-payday').value = (d.payment_weekday === '' || d.payment_weekday == null) ? '' : String(d.payment_weekday);
   document.getElementById('edit-free-days').value = d.free_days_2027 ?? '';
+  document.getElementById('edit-birthday').value = d.birthday_month_day ?? '';
   document.getElementById('edit-svc-mi').value = d.last_service_mileage || '';
   document.getElementById('edit-svc-date').value = d.last_service_date || '';
   document.getElementById('edit-dmv-date').value = d.dmv_inspection_date || '';
@@ -2096,6 +2116,7 @@ function editDriverBody() {
       planet_gps_device_id: val('edit-gps'),
       payment_weekday: val('edit-payday'),
       free_days_2027: val('edit-free-days'),
+      birthday_month_day: val('edit-birthday'),
       last_service_mileage: val('edit-svc-mi'), last_service_date: val('edit-svc-date'),
       dmv_inspection_date: val('edit-dmv-date'),
       mileage_reset_date: val('edit-reset-date'),
@@ -2338,7 +2359,7 @@ async function submitUpload() {
 
 function showAddDriver() {
   ['add-id','add-name','add-model','add-year','add-trim','add-number','add-limit','add-price','add-deposit-contract','add-deposit-paid','add-svc-mi'].forEach(id=>document.getElementById(id).value='');
-  ['add-tariff','add-payday','add-free-days','add-svc-date','add-dmv-date','add-reset-date'].forEach(id=>document.getElementById(id).value='');
+  ['add-tariff','add-payday','add-free-days','add-birthday','add-svc-date','add-dmv-date','add-reset-date'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('add-btn').disabled=true;
   document.getElementById('add-btn').textContent='Добавить водителя';
   showScreen('add');
@@ -2358,6 +2379,7 @@ async function submitAddDriver() {
       deposit_contract: val('add-deposit-contract'), deposit_paid: val('add-deposit-paid'),
       planet_gps_device_id: val('add-gps'), payment_weekday: val('add-payday'),
       free_days_2027: val('add-free-days'),
+      birthday_month_day: val('add-birthday'),
       last_service_mileage: val('add-svc-mi'),
       last_service_date: val('add-svc-date'), dmv_inspection_date: val('add-dmv-date'),
       mileage_reset_date: val('add-reset-date'),
