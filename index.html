@@ -1484,6 +1484,10 @@ async function loadServiceMileage(deviceId, sinceDate) {
       renderService(st.miles_to_service, st);
       return;
     }
+    if (st && st.last_known_service) {
+      renderService(st.last_known_service.remaining, st);
+      return;
+    }
     // Фолбэк на старую схему: «сырой» GPS с даты сервиса.
     const driven = _num(r && r.mileage);
     renderService(driven != null ? (SERVICE_INTERVAL - driven) : null, null);
@@ -1525,6 +1529,14 @@ function renderService(remaining, st) {
     numEl.style.fontSize = '30px';
     unitEl.textContent = RU ? 'миль до ТО' : 'mi to service';
     noteEl.textContent = '';
+    return;
+  }
+  if (st && st.last_known_service && st.miles_to_service == null) {
+    numEl.textContent = Math.round(remaining).toLocaleString();
+    numEl.style.color = 'var(--muted)';
+    numEl.style.fontSize = '30px';
+    unitEl.textContent = RU ? 'миль до ТО' : 'mi to service';
+    noteEl.textContent = (RU ? 'По данным на ' : 'As of ') + st.last_known_service.as_of.slice(0, 10);
     return;
   }
   if (remaining <= 0) {
