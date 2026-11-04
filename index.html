@@ -1453,7 +1453,9 @@ function renderMiles(done, limit, t) {
 }
 // Загрузка пробега с даты последнего сервиса (GPS) → «сколько миль до ТО».
 const serviceDisplayCache = new Map();
+let serviceRefreshTimer;
 async function loadServiceMileage(deviceId, sinceDate, serviceBase) {
+  clearTimeout(serviceRefreshTimer);
   const requestId = ++state.serviceRequest;
   const cacheKey = JSON.stringify([deviceId, sinceDate, serviceBase]);
   const previous = serviceDisplayCache.get(cacheKey);
@@ -1502,6 +1504,13 @@ async function loadServiceMileage(deviceId, sinceDate, serviceBase) {
       renderService(previous ? previous.remaining : null, previous ? {last_known_service:previous} : null);
       if (e.status === 409) setText('dv-svc-note', RU ? 'Привязка GPS требует проверки.' : 'GPS assignment needs verification.');
     }
+  } finally {
+    if (requestId === state.serviceRequest) serviceRefreshTimer = setTimeout(() => {
+      if (requestId === state.serviceRequest && !document.hidden &&
+          document.getElementById('screen-driver-home').classList.contains('active')) {
+        loadServiceMileage(deviceId, sinceDate, serviceBase);
+      }
+    }, 300000);
   }
 }
 // Строка «сейчас 128 970 mi · сверка 8 авг» под пробегом следующего ТО.
@@ -1542,7 +1551,10 @@ function renderService(remaining, st) {
     numEl.style.color = 'var(--muted)';
     numEl.style.fontSize = '30px';
     unitEl.textContent = RU ? 'миль до ТО' : 'mi to service';
-    noteEl.textContent = (RU ? 'По данным на ' : 'As of ') + st.last_known_service.as_of.slice(0, 10);
+    const asOf = st.last_known_service.as_of;
+    const when = asOf.length === 10 ? asOf : new Date(asOf).toLocaleString(RU ? 'ru-RU' : 'en-US',
+      {timeZone:'America/New_York', dateStyle:'medium', timeStyle:'short'});
+    noteEl.textContent = (RU ? 'По данным на ' : 'As of ') + when;
     return;
   }
   if (remaining <= 0) {
