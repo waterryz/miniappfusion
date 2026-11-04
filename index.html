@@ -1379,7 +1379,7 @@ function renderDriverHome(data) {
       ? (RU ? 'ТО на пробеге <strong>' : 'Service at <strong>') + (svcMi + SERVICE_INTERVAL).toLocaleString() + ' mi</strong>'
       : '';
   }
-  loadServiceMileage(deviceId, (d.last_service_date || '').trim());
+  loadServiceMileage(deviceId, (d.last_service_date || '').trim(), d.last_service_mileage);
   // ── DOCUMENTS ──
   renderDvDocs(files, state.dvFilesAvailable);
 }
@@ -1452,8 +1452,11 @@ function renderMiles(done, limit, t) {
   }
 }
 // Загрузка пробега с даты последнего сервиса (GPS) → «сколько миль до ТО».
-async function loadServiceMileage(deviceId, sinceDate) {
+const serviceDisplayCache = new Map();
+async function loadServiceMileage(deviceId, sinceDate, serviceBase) {
   const requestId = ++state.serviceRequest;
+  const cacheKey = JSON.stringify([deviceId, sinceDate, serviceBase]);
+  const previous = serviceDisplayCache.get(cacheKey);
   const loading = document.getElementById('dv-svc-loading');
   const body = document.getElementById('dv-svc-body');
   // нет даты сервиса → просим её указать
@@ -1470,8 +1473,9 @@ async function loadServiceMileage(deviceId, sinceDate) {
     return;
   }
   if (!deviceId) { renderService(null); return; }
+  if (previous) renderService(previous.remaining, {last_known_service:previous});
   loading.style.display = 'flex';
-  body.style.display = 'none';
+  body.style.display = previous ? 'block' : 'none';
   try {
     const path = '/api/service-mileage/' + encodeURIComponent(deviceId) + '?since=' + encodeURIComponent(sinceDate);
     const r = await api(path, {}, FLEET_API);
@@ -1481,7 +1485,13 @@ async function loadServiceMileage(deviceId, sinceDate) {
     if (requestId !== state.serviceRequest) return;
     const st = r && r.state;
     if (st && st.miles_to_service != null) {
+      if (st.service_as_of) serviceDisplayCache.set(cacheKey, {remaining:st.miles_to_service, as_of:st.service_as_of});
       renderService(st.miles_to_service, st);
+      return;
+    }
+    if (st && st.last_known_service) {
+      serviceDisplayCache.set(cacheKey, st.last_known_service);
+      renderService(st.last_known_service.remaining, st);
       return;
     }
     // Фолбэк на старую схему: «сырой» GPS с даты сервиса.
@@ -1489,7 +1499,7 @@ async function loadServiceMileage(deviceId, sinceDate) {
     renderService(driven != null ? (SERVICE_INTERVAL - driven) : null, null);
   } catch (e) {
     if (requestId === state.serviceRequest) {
-      renderService(null, null);
+      renderService(previous ? previous.remaining : null, previous ? {last_known_service:previous} : null);
       if (e.status === 409) setText('dv-svc-note', RU ? 'Привязка GPS требует проверки.' : 'GPS assignment needs verification.');
     }
   }
@@ -1525,6 +1535,14 @@ function renderService(remaining, st) {
     numEl.style.fontSize = '30px';
     unitEl.textContent = RU ? 'миль до ТО' : 'mi to service';
     noteEl.textContent = '';
+    return;
+  }
+  if (st && st.last_known_service && st.miles_to_service == null) {
+    numEl.textContent = Math.round(remaining).toLocaleString();
+    numEl.style.color = 'var(--muted)';
+    numEl.style.fontSize = '30px';
+    unitEl.textContent = RU ? 'миль до ТО' : 'mi to service';
+    noteEl.textContent = (RU ? 'По данным на ' : 'As of ') + st.last_known_service.as_of.slice(0, 10);
     return;
   }
   if (remaining <= 0) {
