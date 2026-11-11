@@ -7,6 +7,7 @@
 #vehicle-history-body :focus-visible { outline:3px solid #427d66; outline-offset:2px; }
 .vd-list-item { width:100%; text-align:left; color:var(--text); }
 .vd-list-plate { color:var(--vd-ink); font-weight:750; }
+.vd-list-driver { white-space:normal; font-size:15px; color:var(--text-secondary); margin-top:3px; }
 .vd-card { background:var(--card); border:1px solid var(--vd-line); border-radius:14px; padding:16px; margin-bottom:12px; }
 .vd-hero { background:#f5faf6; border-top:3px solid #387653; }
 .vd-hero h2 { font-size:clamp(22px,5vw,28px); line-height:1.18; margin:8px 0 10px; }

@@ -28,6 +28,29 @@ const VehicleDossier = (() => {
   const money = cents => Number.isSafeInteger(cents) ? currency.format(cents/100) : missing;
   const miles = value => Number.isFinite(value) ? number.format(value/1000)+' mi' : missing;
   const joined = values => Array.isArray(values) ? values.filter(v=>v!=null && v!=='').join(' · ') : '';
+  function passportField(record,key,field) {
+    const identity=record.dossier?.identity||record.identity;
+    const rows=identity?.[key]||record[key]||[];
+    if (rows.length===1) return String(rows[0]);
+    const passportRows=(record.dossier?.events||[]).filter(e=>e.kind==='identity' && (!e.plate||e.plate===record.plate));
+    const values=[...new Set(passportRows.map(e=>e[field]).filter(Boolean))];
+    return values.length===1?String(values[0]):'';
+  }
+  function vehicleLabel(record) {
+    return joined([passportField(record,'models','model')||'Модель уточняется',
+      passportField(record,'trims','trim'),passportField(record,'years','year')]);
+  }
+  function drivers(record) {
+    const active=joined((record.current_drivers||[]).map(d=>d.name));
+    const operator=record.designation==='operator'||(record.current_drivers?.length===1 && record.current_drivers[0].designation==='operator');
+    if (active) return [(record.assignment_status==='ambiguous'?'Несколько назначений · ':operator?'Оператор · ':'Водитель · ')+active];
+    const result=['Действующий водитель не указан'];
+    const last=record.dossier?.last_assignment_record||record.last_assignment_record;
+    if (last?.tenant_name) result.push('Последняя запись · '+last.tenant_name+(when(last.at)?' · '+when(last.at):''));
+    const archived=joined((record.archived_cards||[]).map(d=>d.name));
+    if (archived) result.push('Архив · '+archived);
+    return result;
+  }
   function when(value) {
     if (!value) return '';
     const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -82,11 +105,10 @@ const VehicleDossier = (() => {
       const rows=result.items || [];
       body().replaceChildren();
       for (const row of rows) {
-        const driver=joined((row.current_drivers||[]).map(d=>d.name));
         const item=button('','driver-card vd-list-item',()=>detail(row.plate,true));
         const info=el('span','d-info');
-        info.append(el('span','vd-list-plate',row.plate),el('div','d-name',joined(row.models)||'Модель уточняется'),
-          el('span','d-plate',row.assignment_status==='ambiguous'?'Несколько назначений':driver||'Водитель не указан'));
+        info.append(el('span','vd-list-plate',row.plate),el('div','d-name',vehicleLabel(row)));
+        for (const line of drivers(row)) info.append(el('div','vd-list-driver',line));
         item.append(info);
         body().append(item);
       }
@@ -177,6 +199,7 @@ const VehicleDossier = (() => {
       ['Городской API',when(sources.open_data_as_of)||'Дата не получена'],
       ['CityPay',when(sources.citypay_as_of)||'Дата не получена'],
       ['GPS',when(sources.fleet_as_of)||'Дата не получена']];
+    if (record.current_assignments_as_of) rows.unshift(['Назначение водителя сверено',when(record.current_assignments_as_of)||record.current_assignments_as_of]);
     section.append(fields(rows));
     return section;
   }
@@ -185,8 +208,8 @@ const VehicleDossier = (() => {
     const identity=dossier?.identity||{};
     const passport=card('Паспорт автомобиля');
     passport.append(fields([
-      ['Номер',record.plate],['Модель',joined(identity.models)||joined(record.models)||missing],
-      ['Год',joined(identity.years)||missing],['Комплектация',joined(identity.trims)||missing],
+      ['Номер',record.plate],['Модель',passportField(record,'models','model')||missing],
+      ['Год',passportField(record,'years','year')||missing],['Комплектация',passportField(record,'trims','trim')||missing],
       ['Цвет',joined(identity.colors)||missing],['VIN',identity.selected_vin||record.vin||joined(identity.vins)||missing],
       ['Номер TLC',joined(identity.tlc_numbers)||missing]
     ]));
@@ -361,8 +384,8 @@ const VehicleDossier = (() => {
     const hero=card();
     hero.classList.add('vd-hero');
     hero.append(el('span','vd-plate',record.plate),
-      el('h2','',joined(dossier?.identity?.models)||joined(record.models)||'Модель уточняется'),
-      el('div','vd-driver','Водитель · '+(joined((record.current_drivers||[]).map(d=>d.name))||'Назначение не указано')));
+      el('h2','',vehicleLabel(record)));
+    for (const line of drivers(record)) hero.append(el('div','vd-driver',line));
     if (vin) hero.append(el('p','vd-caption','Показаны только записи, связанные с выбранным VIN.'));
     else if (record.assignment_status==='ambiguous') hero.append(el('p','vd-warning','Номер указан у нескольких действующих водителей. Требуется сверка.'));
     if (!dossier || dossier.sources?.crm!=='available' || dossier.sources?.events!=='available') {

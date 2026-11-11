@@ -4,7 +4,7 @@ const path = require('node:path');
 const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const app = path.resolve(__dirname,'..');
 const fixture = {
-  plate:'DEMO11', models:['Toyota Sienna'], current_drivers:[{name:'Демо · Алексей'}],
+  plate:'DEMO11', models:['Toyota Sienna Hybrid (WAV)'], current_drivers:[{name:'Демо · Алексей'}],
   archived_cards:[{name:'Демо · Анна'}], assignment_status:'assigned', coverage_note:'Ранние периоды требуют сверки.',
   dossier:{
     identity:{models:['Toyota Sienna'],years:[2024],trims:['LE'],vins:['TEST0000000000001'],colors:['Серебристый']},
@@ -57,9 +57,13 @@ async function run() {
     await page.evaluate(async()=>{state.isAdmin=false;await openVehicleHistory('DEMO11');await openVehicles()});
     assert.equal(await page.evaluate(()=>requests.length),0);
     await page.evaluate(async()=>{state.isAdmin=true;await openVehicles()});
+    assert.match(await page.locator('.vd-list-item').innerText(),/Toyota Sienna · LE · 2024/);
+    assert.match(await page.locator('.vd-list-item').innerText(),/Водитель · Демо · Алексей/);
     await page.getByRole('button',{name:/DEMO11/}).click();
     const scope=page.locator('#vehicle-history-body');
     await scope.getByRole('heading',{name:'Паспорт автомобиля'}).waitFor();
+    assert.equal(await scope.locator('.vd-hero h2').innerText(),'Toyota Sienna · LE · 2024');
+    assert.match(await scope.locator('.vd-driver').innerText(),/Демо · Алексей/);
     assert.match(await scope.innerText(),/650,00/);
     assert.match(await scope.innerText(),/0 ч/);
     assert.match(await scope.innerText(),/содержит пропуски/);
@@ -117,6 +121,16 @@ async function run() {
     assert.match(await scope.innerText(),/Поступило по аренде \(банк\)\s+Нет данных/);
     assert.match(await scope.innerText(),/Простой по журналу\s+27 июл.*17 авг/);
     assert.match(await scope.innerText(),/точных часов нет/);
+    await page.evaluate(async()=>{
+      record.current_drivers=[];record.assignment_status='unassigned_or_unverified';
+      record.dossier.last_assignment_record={tenant_name:'Демо · Борис',at:'2025-12-01'};
+      await openVehicleHistory('DEMO11');
+    });
+    assert.match(await scope.locator('.vd-hero').innerText(),/Действующий водитель не указан/);
+    assert.match(await scope.locator('.vd-hero').innerText(),/Архив · Демо · Анна/);
+    assert.match(await scope.locator('.vd-hero').innerText(),/Последняя запись · Демо · Борис/);
+    await page.evaluate(async()=>{record.current_drivers=[{name:'Демо',designation:'operator'}];record.assignment_status='assigned';await openVehicleHistory('DEMO11');});
+    assert.match(await scope.locator('.vd-driver').innerText(),/Оператор · Демо/);
     await page.evaluate(async f=>{window.record=f;await openVehicleHistory('DEMO11')},fixture);
     await page.evaluate(()=>{document.getElementById('vehicle-screen-sub').textContent='Демонстрационный пример · вымышленные данные';});
     for (const width of [320,390,1024]) {
