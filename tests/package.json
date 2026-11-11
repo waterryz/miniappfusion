@@ -1,5 +1,5 @@
 {
   "private": true,
-  "scripts": {"test": "node regression.cjs"},
+  "scripts": {"test": "node regression.cjs && node vehicle-dossier.cjs"},
   "devDependencies": {"playwright": "1.62.1"}
 }
