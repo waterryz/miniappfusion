@@ -44,6 +44,9 @@ const VehicleDossier = (() => {
     const active=joined((record.current_drivers||[]).map(d=>d.name));
     const operator=record.designation==='operator'||(record.current_drivers?.length===1 && record.current_drivers[0].designation==='operator');
     if (active) return [(record.assignment_status==='ambiguous'?'Несколько назначений · ':operator?'Оператор · ':'Водитель · ')+active];
+    if (record.assignment_status==='owner_unassigned') {
+      return record.expected_driver_name?['Без арендатора','Ожидает передачи: '+record.expected_driver_name]:['Без арендатора'];
+    }
     const result=['Действующий водитель не указан'];
     const last=record.dossier?.last_assignment_record||record.last_assignment_record;
     if (last?.tenant_name) result.push('Последняя запись · '+last.tenant_name+(when(last.at)?' · '+when(last.at):''));
@@ -143,7 +146,7 @@ const VehicleDossier = (() => {
     const row=el('article','vd-event');
     const dates=[when(e.at) || 'Дата не указана'];
     if (e.end_at) dates.push((e.kind==='rent'?'до ':'')+(when(e.end_at)||'дата уточняется')+(e.kind==='rent'?' (исключительно)':''));
-    row.append(el('div','vd-event-meta',dates.join(' — ')+' · '+(kinds[e.kind]||'Событие')),
+    row.append(el('div','vd-event-meta',dates.join(' — ')+' · '+(e.assignment_state==='no_current_driver'?'Статус аренды':kinds[e.kind]||'Событие')),
       el('h4','',e.title||kinds[e.kind]||'Событие'));
     if (!when(e.at) && when(e.observed_at)) row.append(el('p','vd-caption','Дата записи в источнике · '+when(e.observed_at)));
     if (e.tenant_name) row.append(el('p','',e.tenant_name));
@@ -240,9 +243,13 @@ const VehicleDossier = (() => {
     if (m.stale||m.complete_to_as_of===false||s.stale||s.data_issue) maintenance.append(el('p','vd-warning','GPS или расчёт ТО содержит пропуски. Сверьте даты показаний.'));
     maintenance.append(button('Записи об обслуживании','vd-secondary',()=>view.go('history','service')));
     const drivers=card('Водители и передачи');
-    drivers.append(fields([['Текущие водители',joined((record.current_drivers||[]).map(d=>d.name))||'Назначение не указано'],
-      ['Архивные карточки',joined((record.archived_cards||[]).map(d=>d.name))||'В реестре нет записей']]),
-      button('Хронология передач','vd-secondary',()=>view.go('history','drivers')));
+    const ownerFree=record.assignment_status==='owner_unassigned' && !record.current_drivers?.length;
+    const driverRows=[['Текущее назначение',joined((record.current_drivers||[]).map(d=>d.name))||(ownerFree?'Без арендатора':'Назначение не указано')]];
+    if (ownerFree) {
+      if (record.expected_driver_name) driverRows.push(['Ожидает передачи',record.expected_driver_name]);
+      if (when(record.assignment_observed_at)) driverRows.push(['Статус проверен',when(record.assignment_observed_at)]);
+    } else driverRows.push(['Архивные карточки',joined((record.archived_cards||[]).map(d=>d.name))||'В реестре нет записей']);
+    drivers.append(fields(driverRows),button('Хронология передач','vd-secondary',()=>view.go('history','drivers')));
     const recent=card('Последние события');
     for (const item of view.events.slice(0,2)) recent.append(eventRow(item));
     if (!view.events.length) recent.append(el('p','vd-empty','В полученных источниках записей нет.'));
@@ -267,6 +274,9 @@ const VehicleDossier = (() => {
       const events=view.events.filter(e=>key==='all'||(key==='expenses' && Number.isSafeInteger(e.cost_cents))||
         [e.kind,...(e.tags||[])].some(kind=>filters[key][1].includes(kind)));
       rows.replaceChildren(...events.slice(0,view.limit).map(eventRow));
+      if (key==='drivers' && view.record.archived_cards?.length) rows.append(fields([
+        ['В архивных карточках',joined(view.record.archived_cards.map(d=>d.name))]
+      ]));
       if (!events.length) rows.append(el('p','vd-empty',documents?'Связанных документов в полученных источниках нет.':'В полученных источниках таких записей нет.'));
       more.hidden=events.length<=view.limit;
     }

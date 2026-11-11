@@ -129,7 +129,16 @@ async function run() {
     assert.match(await scope.locator('.vd-hero').innerText(),/Действующий водитель не указан/);
     assert.match(await scope.locator('.vd-hero').innerText(),/Архив · Демо · Анна/);
     assert.match(await scope.locator('.vd-hero').innerText(),/Последняя запись · Демо · Борис/);
-    await page.evaluate(async()=>{record.current_drivers=[{name:'Демо',designation:'operator'}];record.assignment_status='assigned';await openVehicleHistory('DEMO11');});
+    await page.evaluate(async()=>{record.assignment_status='owner_unassigned';record.expected_driver_name='Пример кандидата';await openVehicles();});
+    assert.match(await scope.locator('.vd-list-item').innerText(),/Без арендатора/);
+    assert.match(await scope.locator('.vd-list-item').innerText(),/Ожидает передачи: Пример кандидата/);
+    await scope.locator('.vd-list-item').click();
+    assert(!((await scope.locator('.vd-hero').innerText()).includes('Демо · Анна')));
+    await scope.getByRole('button',{name:'Хронология передач'}).click();
+    assert.match(await scope.innerText(),/В архивных карточках\s*Демо · Анна/);
+    await page.evaluate(async()=>{delete record.expected_driver_name;await openVehicleHistory('DEMO11');});
+    assert.equal(await scope.locator('.vd-driver').innerText(),'Без арендатора');
+    await page.evaluate(async()=>{record.current_drivers=[{name:'Демо',designation:'operator'}];record.expected_driver_name='Пример кандидата';await openVehicleHistory('DEMO11');});
     assert.match(await scope.locator('.vd-driver').innerText(),/Оператор · Демо/);
     await page.evaluate(async f=>{window.record=f;await openVehicleHistory('DEMO11')},fixture);
     await page.evaluate(()=>{document.getElementById('vehicle-screen-sub').textContent='Демонстрационный пример · вымышленные данные';});
