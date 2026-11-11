@@ -8,11 +8,12 @@ const results=[];
  await context.route('**/*',r=>r.request().url()==='https://miniapp.test/'?r.fulfill({contentType:'text/html',body:html}):r.abort());
  async function check(name,fn,verify,screenshot){
   const page=await context.newPage(); const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  try{await page.goto('https://miniapp.test/');const data=await page.evaluate(fn);verify(data);assert.deepEqual(errors,[]);results.push({name,result:data});if(screenshot)await page.screenshot({path:path.join(__dirname,screenshot)});}
+  try{await page.goto('https://miniapp.test/');await page.addScriptTag({path:path.join(__dirname,'../vehicle-dossier.js')});const data=await page.evaluate(fn);verify(data);assert.deepEqual(errors,[]);results.push({name,result:data});if(screenshot)await page.screenshot({path:path.join(__dirname,screenshot)});}
   finally{await page.close();}
  }
  try{
-  await check('Vehicle history is read only and does not label notes as completed service',async()=>{
+  await check('Legacy admin vehicle history preserves transfers and service notes',async()=>{
+   state.isAdmin=true;
    const paths=[];
    api=async path=>{
     paths.push(path);
