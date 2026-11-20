@@ -349,6 +349,12 @@
         <div id="dv-preview-notice" hidden><p id="dv-preview-text">Режим просмотра. Здесь нельзя менять оформление арендатора.</p><button class="action-btn" id="dv-open-own" onclick="loadDriverHome()">Открыть мой кабинет</button></div>
         <details id="dv-customize"><summary><span id="dv-customize-label">Настроить мой кабинет</span><small id="dv-customize-hint">Аватар · никнейм · материал плашки</small></summary>
           <form class="profile-settings" onsubmit="saveProfilePreferences(event)">
+<label><span id="personal-display-name-label">Имя в кабинете</span><input id="personal-display-name" maxlength="100" type="text" autocomplete="name"></label>
+<label><span id="personal-email-label">Контактный email</span><input id="personal-email" maxlength="254" type="email" autocomplete="email"></label>
+<label><span id="personal-phone-label">Контактный телефон</span><input id="personal-phone" maxlength="32" type="tel" autocomplete="tel"></label>
+<label><span id="personal-city-label">Город</span><input id="personal-city" maxlength="100" type="text" autocomplete="address-level2"></label>
+<label><span id="personal-bio-label">О себе</span><input id="personal-bio" maxlength="500" type="text" autocomplete="off"></label>
+<p id="personal-safety-hint">Личные сведения для связи. Официальное имя и телефон входа подтверждает администрация.</p>
             <label><span id="nickname-label">Ник (отдельно от официального имени)</span><input id="profile-nickname" maxlength="40" autocomplete="nickname"></label>
             <label><span id="theme-label">Материал плашки</span><select id="profile-theme"></select></label>
             <label><span id="avatar-label">Аватар</span><select id="profile-avatar"></select></label>
@@ -1206,6 +1212,8 @@ const PROFILE_AVATARS = {'man-1':'👨🏻','man-2':'👨🏽','man-3':'👨🏿
   'woman-1':'👩🏻','woman-2':'👩🏽','woman-3':'👩🏿',
   'bearded-woman-1':'🧔🏻‍♀️','bearded-woman-2':'🧔🏽‍♀️','bearded-woman-3':'🧔🏿‍♀️'};
 function renderPreferences(d) {
+  const profileName=document.getElementById('dv-name');
+  if(profileName)profileName.textContent=d.profile_display_name || profileName.dataset.officialName || d.name || '—';
   const themes=RU ? {brass:'Натёртая латунь',steel:'Полированное железо',wood:'Обожжённое дерево'}
     : {brass:'Hand-polished brass',steel:'Polished iron',wood:'Charred wood'};
   document.getElementById('profile-theme').innerHTML=Object.entries(themes).map(([id,label])=>`<option value="${id}">${label}</option>`).join('');
@@ -1213,8 +1221,19 @@ function renderPreferences(d) {
   document.getElementById('profile-theme').value=themes[d.header_theme] ? d.header_theme : 'brass';
   document.getElementById('profile-avatar').value=PROFILE_AVATARS[d.avatar] ? d.avatar : 'man-1';
   document.getElementById('profile-nickname').value=d.nickname || '';
+  document.getElementById('personal-display-name').value=d.profile_display_name || '';
+  setText('personal-display-name-label',RU?'Имя в кабинете':'Name displayed in account');
+  document.getElementById('personal-email').value=d.profile_email || '';
+  setText('personal-email-label',RU?'Контактный email':'Contact email');
+  document.getElementById('personal-phone').value=d.profile_phone || '';
+  setText('personal-phone-label',RU?'Контактный телефон':'Contact phone');
+  document.getElementById('personal-city').value=d.profile_city || '';
+  setText('personal-city-label',RU?'Город':'City');
+  document.getElementById('personal-bio').value=d.profile_bio || '';
+  setText('personal-bio-label',RU?'О себе':'About me');
+  setText('personal-safety-hint',RU?'Личные сведения для связи. Официальное имя и телефон входа подтверждает администрация.':'Personal contact details. Legal name and sign-in phone are verified by the administration.');
   setText('dv-avatar',PROFILE_AVATARS[d.avatar] || PROFILE_AVATARS['man-1']);
-  setText('dv-nickname',d.nickname ? (RU?'Ник: ':'Nickname: ')+d.nickname : '');
+  setText('dv-nickname',[d.profile_display_name,d.nickname].filter(Boolean).join(' · '));
   document.querySelector('#screen-driver-home .pf-hero').dataset.theme=themes[d.header_theme] ? d.header_theme : 'brass';
   document.getElementById('dv-customize').hidden=!!state.dvPreview;
   setText('dv-personal-label',RU?'Личный профиль':'Personal profile');
@@ -1253,6 +1272,11 @@ async function saveProfilePreferences(event) {
   const button=document.getElementById('profile-save'); button.disabled=true;
   try {
     const body={nickname:document.getElementById('profile-nickname').value.trim(),header_theme:document.getElementById('profile-theme').value,avatar:document.getElementById('profile-avatar').value};
+    body.profile_display_name=document.getElementById('personal-display-name').value.trim();
+    body.profile_email=document.getElementById('personal-email').value.trim();
+    body.profile_phone=document.getElementById('personal-phone').value.trim();
+    body.profile_city=document.getElementById('personal-city').value.trim();
+    body.profile_bio=document.getElementById('personal-bio').value.trim();
     const saved=await api('/driver/me/preferences',{method:'PATCH',body:JSON.stringify(body)});
     renderPreferences(saved);
     setText('profile-status',RU?'Сохранено':'Saved');
@@ -1322,7 +1346,8 @@ function renderDriverHome(data) {
   const trim = String(d.car_trim || '').trim();
   let carLine = (year ? year + ' ' : '') + (d.car_model || '—');
   if (trim && !(d.car_model || '').toLowerCase().includes(trim.toLowerCase())) carLine += ' ' + trim;
-  setText('dv-name', d.name || '—');
+  document.getElementById('dv-name').dataset.officialName=d.name || '—';
+  setText('dv-name', d.profile_display_name || d.name || '—');
   renderPreferences(d);
   setText('dv-car', carLine);
   setText('dv-plate', d.car_number || '—');
